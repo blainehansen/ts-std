@@ -1,0 +1,25 @@
+{
+  "name": "ts-monads",
+  "version": "0.1.0",
+  "description": "A library for doing typesafe work with options that could return nothing or could error. Also includes many extensions of native prototypes to allow incredibly productive use.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "typescript",
+    "monads",
+    "monad",
+    "rust",
+    "option",
+    "result",
+    "safe",
+    "fallible",
+    "maybe",
+    "nothing",
+    "null",
+    "error"
+  ],
+  "author": "",
+  "license": "MIT"
+}
