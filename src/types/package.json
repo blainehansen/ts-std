@@ -1,0 +1,27 @@
+{
+	"name": "@ts-actually-safe/types",
+	"version": "0.1.0",
+	"description": "The base types used to make typescript actually safe, by removing and wrapping things that throw exceptions.",
+	"author": "Blaine Hansen <faichenshing@gmail.com>",
+	"homepage": "https://github.com/blainehansen/ts-actually-safe#readme",
+	"license": "MIT",
+	"main": "dist/index.js",
+	"typings": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/blainehansen/ts-actually-safe.git"
+	},
+	"scripts": {
+		"test": "mocha -r ts-node/register lib/**/*.spec.ts",
+		"build": "rm -rf dist/* && tsc"
+	},
+	"bugs": {
+		"url": "https://github.com/blainehansen/ts-actually-safe/issues"
+	}
+}
