@@ -1,8 +1,3 @@
-import { Result, Ok, Err } from './result'
-import { Maybe, Some, None } from './maybe'
-
-export {
-	Result, Ok, Err
-	Maybe, Some, None
-}
-
+export { Result, Ok, Err } from './result'
+export { Maybe, Some, None } from './maybe'
+export { Unshift } from './utils'

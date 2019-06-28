@@ -13,6 +13,13 @@
 	"publishConfig": {
 		"access": "public"
 	},
+	"dependencies": {
+		"@ts-actually-safe/types": "^0.1.0",
+		"vue": "^2.6.10"
+	},
+	"peerDependencies": {
+		"vue": "^2.6.0"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/blainehansen/ts-actually-safe.git"
@@ -23,5 +30,8 @@
 	},
 	"bugs": {
 		"url": "https://github.com/blainehansen/ts-actually-safe/issues"
+	},
+	"devDependencies": {
+		"vue": "^2.6.10"
 	}
 }

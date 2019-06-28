@@ -1,4 +1,4 @@
-export default 'a'
+export * from './result'
 
 
 // type Constructor<T, A extends any[]> = { new(...args: any[]): T }

@@ -23,5 +23,8 @@
 	},
 	"bugs": {
 		"url": "https://github.com/blainehansen/ts-actually-safe/issues"
+	},
+	"dependencies": {
+		"vue": "^2.6.10"
 	}
 }
