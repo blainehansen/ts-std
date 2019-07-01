@@ -2,18 +2,14 @@ import Vue, { PropOptions, VNode } from 'vue'
 
 import { Result } from '@ts-actually-safe/types'
 
+import { renderScopedIfPossible } from './utils'
+
 export default Vue.extend({
-	name: 'result',
+	name: 'raw-promise',
 
 	functional: true,
 
 	props: {
-		result: {
-			type: Object,
-			validator: Result.is_result,
-			required: true,
-		} as PropOptions<Result<any, any>>,
-
 		tag: {
 			type: String,
 			validator(tag: string) {
@@ -21,12 +17,17 @@ export default Vue.extend({
 			},
 			default: 'div',
 		} as PropOptions<string>,
+
+		promise: {
+			type: Object,
+			validator: promise =>
+				promise && typeof promise.then === 'function' && typeof promise.catch === 'function',
+			required: true,
+		} as PropOptions<Promise<any>>,
 	},
 
 	render(el, context): VNode {
 		const { tag, result } = context.props
-
-		// check for existence of other slots, perhaps they aren't scoped?
 
 		return el(
 			tag,
