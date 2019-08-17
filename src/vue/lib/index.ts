@@ -92,3 +92,19 @@ export * from './result'
 // }
 
 // new Thing()
+
+
+// class VueAsync<T> {
+// 	constructor(readonly transformer: (response: T) => , readonly http: HttpObject) {}
+
+// 	static data(transformer?: (response: T) => , http?: HttpObject) {
+// 		return new VueAsyncData(this.transformer, )
+// 	}
+
+// 	static computed() {
+// 		//
+// 	}
+// }
+
+
+// class AsyncData

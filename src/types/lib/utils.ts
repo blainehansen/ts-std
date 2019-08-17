@@ -1,3 +1,9 @@
+export class Panic extends Error {}
+
+export type Req<T> = NonNullable<T>
+
+export type TryFunc<T> = () => Req<T>
+
 export type Unshift<Item, List extends any[]> =
 	((first: Item, ...rest: List) => any) extends ((...list: infer R) => any) ? R : never
 
@@ -89,3 +95,52 @@ type FoldingFunctions<L extends Func[]> = {
 
 type Z = FoldingFunctions<[() => string, (v: number) => boolean]>
 
+
+// type Args = [number, boolean, string]
+// type K = Args[number]
+
+// // interface Decoder<T> {
+// //     decode(obj: any): Result<T>
+// // }
+
+// type Decoder<T> = {
+// 		decode: (obj: any) => Result<T>
+// }
+
+
+// type Result<T> = [true, T] | [false, undefined]
+
+// type DecoderTuple<T extends any[]> = { [K in keyof T]: Decoder<T[K]> }
+
+// function oneOf<L extends any[]>(obj: any, ...decoders: DecoderTuple<L>): Result<L[number]> {
+// 	for (const decoder of decoders) {
+// 		const [successful, value] = decoder.decode(obj)
+// 		if (successful) return [true, value]
+// 	}
+
+// 	return [false, undefined]
+// }
+
+
+// const str = {
+// 	decode(obj: any): Result<string> {
+// 		if (typeof obj === 'string') return [true, obj]
+// 		else return [false, undefined]
+// 	}
+// }
+// const num = {
+// 	decode(obj: any): Result<number> {
+// 		if (typeof obj === 'number') return [true, obj]
+// 		else return [false, undefined]
+// 	}
+// }
+// const bool = {
+// 	decode(obj: any): Result<boolean> {
+// 		if (typeof obj === 'boolean') return [true, obj]
+// 		else return [false, undefined]
+// 	}
+// }
+
+// const o: any = 'd'
+
+// const a = oneOf(o, str, num, bool)
