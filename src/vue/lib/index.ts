@@ -32,7 +32,7 @@ export * from './result'
 // }
 
 // // function asyncData<T, R, K extends keyof T>(fn: () => R) {
-// function asyncData<T, R>(fn: () => R);
+// function asyncData<T, R>(fn: () => R)
 // function asyncData<T, T>(fn: (this: T) => R) {
 // 	return function(target: T, propertyName: string | symbol) {
 // 		const val = (target as any)[propertyName]
@@ -95,16 +95,121 @@ export * from './result'
 
 
 // class VueAsync<T> {
-// 	constructor(readonly transformer: (response: T) => , readonly http: HttpObject) {}
+// 	constructor() {}
 
-// 	static data(transformer?: (response: T) => , http?: HttpObject) {
-// 		return new VueAsyncData(this.transformer, )
+// 	data() {
+// 		return new VueAsyncData()
 // 	}
 
-// 	static computed() {
+// 	computed() {
 // 		//
 // 	}
 // }
 
+// class VueAsyncData<T, V extends Vue, W extends (keyof V)[]> {
+// 	private _promise: Promise<T>
+// 	private _value: T
 
-// class AsyncData
+// 	constructor(
+// 		readonly watch: W,
+// 		readonly fn: (deps: { [K in keyof W]: V[K] }) => Promise<T>,
+// 	) {
+
+// 	}
+
+// 	get promise() {
+// 		return this._promise
+// 	}
+// 	get value() {
+// 		return this._value
+// 	}
+// }
+
+
+
+export class IceCreamComponent {
+	@Emoji()
+	flavor = 'vanilla'
+}
+
+
+// Property Decorator
+function Emoji() {
+	return function(target: Object, key: string | symbol) {
+
+		let val = target[key]
+
+		const getter = () => {
+			return val
+		}
+		const setter = (next) => {
+			console.log('updating flavor...')
+			val = `${next}`
+		}
+
+		Object.defineProperty(target, key, {
+			get: getter,
+			set: setter,
+			enumerable: true,
+			configurable: true,
+		})
+	}
+}
+
+
+
+
+
+
+type AsyncData<T, E extends Error> = {
+	readonly promise: Promise<T>,
+	readonly value: T,
+	readonly error: E,
+	readonly loading: boolean,
+	readonly refresh: () => void
+}
+
+type Obj<C, K extends keyof C> = { [A in K]: C[A] }
+
+type AsyncDataOptions<T> = {
+
+}
+
+// type NoDefaultAsyncDataOptions<T> = AsyncDataOptions
+
+function data<T, C, K extends keyof C>(self: C, attrs: K[],
+	fn: (this: C) => Promise<T>,
+	default?: T,
+): AsyncData<T> {
+	let [promise, value] = default !== undefined
+		?	[Promise.resolve(default), default]
+		: [Promise.resolve(null), null]
+
+	let error = null
+	let loading = false
+
+	self.$watch(
+		function(this: C) {
+			return pick(this, attrs)
+		},
+		function(obj: Obj<C, K>) {
+			const p = fn(obj)
+			if (is_promise(p)) {
+				loading = true
+				promise = p
+				p.then(v => { value = v })
+			}
+		},
+		{ deep: true, immediate: !lazy },
+	)
+
+	return { promise, value, error, loading }
+}
+
+class Comp {
+	id = 3
+
+	// @data(['id'], async({ id }) => fetch(id))
+	// post!: AsyncData<number>
+	post_id = data(() => Promise.resolve(this.id))
+}

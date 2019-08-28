@@ -96,6 +96,83 @@ type FoldingFunctions<L extends Func[]> = {
 type Z = FoldingFunctions<[() => string, (v: number) => boolean]>
 
 
+
+
+
+
+type RawOptions<T> = {
+	default?: T,
+	lazy?: true,
+	fn: () => T,
+}
+
+type DetermineReturn<T, O extends RawOptions<T>> = {
+	promise: O['default'] extends undefined
+		? O['lazy'] extends undefined
+			? Promise<T | null>
+			: Promise<T | null> | null
+		: O['lazy'] extends undefined
+			? Promise<T>
+			: Promise<T> | null,
+	value: O['default'] extends undefined
+		? T | null
+		: T,
+}
+
+function t<T, O extends RawOptions<T>>(opt: O): DetermineReturn<T, O> {
+	throw new Error("")
+}
+
+const a = t({ fn: () => 4 })
+
+console.log(a.value + 4)
+
+
+type MushyReturn<T> = {
+	promise: Promise<T | null> | null,
+	value: T | null,
+}
+
+type Overwrite<A, B> = {
+	[K in Exclude<keyof A, keyof B>]: A[K]
+} & B
+
+
+type DetermineReturn<O> =
+	O extends RawOptions<infer T>
+	?  O['default'] extends undefined
+		// there isn't a default, so the null stays
+		? DetermineReturnLazy<T, O, MushyReturn<T>>
+		// there is a default, so we kill the null
+		: DetermineReturnLazy<T, O, Overwrite<MushyReturn<T>, { promise: Promise<T | null>, value: T }>>
+	: never
+
+
+type DetermineReturnLazy<T, O extends RawOptions<T>, S extends MushyReturn<T>> =
+	O['lazy'] extends undefined
+	// it isn't lazy, so we kill the null from promise
+	? Overwrite<S, { promise: NonNullable<S['promise']> }>
+	// it is lazy, so we keep the null on promise, and we're done
+	: S
+
+
+function thing<T>(
+	opt: RawOptions<T>,
+): DetermineReturn<typeof opt> {
+	throw new Error("")
+}
+
+const a = thing({ fn: () => 4 })
+
+console.log(a.value + 4)
+
+
+
+
+
+
+
+
 // type Args = [number, boolean, string]
 // type K = Args[number]
 
