@@ -73,7 +73,7 @@ class MaybeSome<T> implements MaybeLike<T> {
 		const others_maybe = _join(args)
 		return others_maybe.is_some()
 			? new MaybeJoinSome([this.value as T, ...others_maybe.expect(maybe_invariant_message) as L] as Unshift<T, L>)
-			: new MaybeJoinNone()
+			: new MaybeJoinNone
 	}
 }
 
@@ -123,14 +123,11 @@ class MaybeNone<T> implements MaybeLike<T> {
 		throw new Panic(message)
 	}
 	join<L extends any[]>(..._args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>> {
-		return new MaybeJoinNone()
+		return new MaybeJoinNone
 	}
 }
 
-export function None<T>(): Maybe<T> {
-	return new MaybeNone()
-}
-
+export const None = new MaybeNone<any>()
 
 export type MaybeTuple<L extends any[]> = { [K in keyof L]: Maybe<L[K]> }
 
@@ -154,15 +151,15 @@ class MaybeJoinSome<L extends any[]> {
 
 class MaybeJoinNone<L extends any[]> {
 	combine<T>(_fn: (...args: L) => Req<T>): Maybe<T> {
-		return None()
+		return None
 	}
 
 	and_then_combine<T>(_fn: (...args: L) => Maybe<T>): Maybe<T> {
-		return None()
+		return None
 	}
 
 	into_maybe(): Maybe<L> {
-		return None()
+		return None
 	}
 }
 
@@ -180,7 +177,7 @@ function _join<L extends any[]>(maybes: MaybeTuple<L>): Maybe<L> {
 
 export namespace Maybe {
 	export function from_nullable<T>(value: Req<T> | null | undefined): Maybe<T> {
-		if (value === null || value === undefined) return None()
+		if (value === null || value === undefined) return None
 		else return Some(value)
 	}
 
@@ -202,7 +199,7 @@ export namespace Maybe {
 		const others_maybe = _join(maybes)
 		return others_maybe.is_some()
 			? new MaybeJoinSome(others_maybe.expect(maybe_invariant_message) as Req<L>)
-			: new MaybeJoinNone()
+			: new MaybeJoinNone
 	}
 
 	export function attempt<T, F extends TryFunc<T>>(fn: F): Maybe<T> {
@@ -210,7 +207,7 @@ export namespace Maybe {
 			return Some(fn())
 		}
 		catch (_) {
-			return None()
+			return None
 		}
 	}
 }

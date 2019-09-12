@@ -8,17 +8,17 @@ const im = "type invariant broken!"
 const pm = "actually should happen"
 
 describe('Maybe basic api', () => {
-	const cases: Maybe<number>[] = [Some(1), None()]
+	const cases: Maybe<number>[] = [Some(1), None]
 	for (const r of cases) {
 		const is_some = r.is_some()
 		const message = is_some ? 'Some' : 'None'
 		const changed: Maybe<string> = r.change(n => `n is: ${n}`)
 		const or_some = r.or(Some(2))
-		const or_none = r.or(None())
+		const or_none = r.or(None)
 		const and_some = r.and(Some(2))
-		const and_none = r.and(None())
-		const and_then_some: Maybe<boolean> = r.and_then(n => n === 1 ? Some(true) : None())
-		const and_then_none: Maybe<string> = r.and_then(n => n === 2 ? Some('two') : None())
+		const and_none = r.and(None)
+		const and_then_some: Maybe<boolean> = r.and_then(n => n === 1 ? Some(true) : None)
+		const and_then_none: Maybe<string> = r.and_then(n => n === 2 ? Some('two') : None)
 		const to_undef = r.to_undef()
 		const default_none = r.default(2)
 
@@ -83,31 +83,31 @@ describe('Maybe joining functions', () => {
 		[true, [1, 1, 1], 3],
 	], [
 		'first none',
-		[None(), Some(1), Some(1)],
+		[None, Some(1), Some(1)],
 		[false, undefined, undefined],
 	], [
 		'second none',
-		[Some(1), None(), Some(1)],
+		[Some(1), None, Some(1)],
 		[false, undefined, undefined],
 	], [
 		'third none',
-		[Some(1), Some(1), None()],
+		[Some(1), Some(1), None],
 		[false, undefined, undefined],
 	], [
 		'firstlast none',
-		[None(), Some(1), None()],
+		[None, Some(1), None],
 		[false, undefined, undefined],
 	], [
 		'lasttwo none',
-		[Some(1), None(), None()],
+		[Some(1), None, None],
 		[false, undefined, undefined],
 	], [
 		'firsttwo none',
-		[None(), None(), Some(1)],
+		[None, None, Some(1)],
 		[false, undefined, undefined],
 	], [
 		'all none',
-		[None(), None(), None()],
+		[None, None, None],
 		[false, undefined, undefined],
 	]]
 
@@ -130,9 +130,9 @@ describe('Maybe joining functions', () => {
 		const join_maybe = join.into_maybe()
 		const join_combined = join.combine(combiner)
 		const join_and_then_some = join
-			.and_then_combine((a: number, b: number, c: number) => true ? Some(combiner(a, b, c)) : None())
+			.and_then_combine((a: number, b: number, c: number) => true ? Some(combiner(a, b, c)) : None)
 		const join_and_then_none = join
-			.and_then_combine((a: number, b: number, c: number) => false ? Some(combiner(a, b, c)) : None())
+			.and_then_combine((a: number, b: number, c: number) => false ? Some(combiner(a, b, c)) : None)
 
 		it(`${message} join`, () => {
 			expect(join_maybe.is_some()).equal(is_some)
@@ -156,9 +156,9 @@ describe('Maybe joining functions', () => {
 		const m_join_maybe = m_join.into_maybe()
 		const m_join_combined = m_join.combine(combiner)
 		const m_join_and_then_some = m_join
-			.and_then_combine((a: number, b: number, c: number) => true ? Some(combiner(a, b, c)) : None())
+			.and_then_combine((a: number, b: number, c: number) => true ? Some(combiner(a, b, c)) : None)
 		const m_join_and_then_none = m_join
-			.and_then_combine((a: number, b: number, c: number) => false ? Some(combiner(a, b, c)) : None())
+			.and_then_combine((a: number, b: number, c: number) => false ? Some(combiner(a, b, c)) : None)
 
 		it(`${message} Maybe.join`, () => {
 			expect(m_join_maybe.is_some()).equal(is_some)
@@ -182,21 +182,21 @@ describe('Maybe joining functions', () => {
 
 describe('Maybe dangerous any casts', () => {
 	it('None.change', () => {
-		const m = None<number>().change(n => n + 1)
+		const m = None.change(n => n + 1)
 		expect(m.is_some()).false
 		expect(m.is_none()).true
 		expect(() => m.expect(pm)).throw(Panic, pm)
 	})
 
 	it('None.and_then', () => {
-		const m = None<number>().and_then(() => Some(1))
+		const m = None.and_then(() => Some(1))
 		expect(m.is_some()).false
 		expect(m.is_none()).true
 		expect(() => m.expect(pm)).throw(Panic, pm)
 	})
 
 	it('None.and', () => {
-		const m = None<number>().and(Some(1))
+		const m = None.and(Some(1))
 		expect(m.is_some()).false
 		expect(m.is_none()).true
 		expect(() => m.expect(pm)).throw(Panic, pm)

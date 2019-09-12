@@ -1,0 +1,34 @@
+{
+  "name": "@ts-actually-safe/json",
+  "version": "0.1.0",
+  "description": "A convenient and highly type-safe typescript json decoder library.",
+  "author": "Blaine Hansen <faichenshing@gmail.com>",
+  "homepage": "https://github.com/blainehansen/ts-actually-safe#readme",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blainehansen/ts-actually-safe.git"
+  },
+  "scripts": {
+    "test": "mocha -r ts-node/register lib/**/*.spec.ts",
+    "build": "rm -rf dist/* && tsc",
+    "preversion": "npm run build && npm test",
+    "postversion": "git push origin master && git push origin master --tags && npm publish"
+  },
+  "bugs": {
+    "url": "https://github.com/blainehansen/ts-actually-safe/issues"
+  },
+  "keywords": [
+    "json",
+    "decoder",
+    "typescript"
+  ],
+  "dependencies": {
+    "@ts-actually-safe/types": "^0.1.0"
+  }
+}

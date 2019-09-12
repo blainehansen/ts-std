@@ -51,7 +51,7 @@ class ResultOk<T, E> implements ResultLike<T, E> {
 		return this.value
 	}
 	err_maybe(): Maybe<E> {
-		return None()
+		return None
 	}
 	err_undef(): E | undefined {
 		return undefined
@@ -111,7 +111,7 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 		return true
 	}
 	ok_maybe(): Maybe<T> {
-		return None()
+		return None
 	}
 	ok_undef(): T | undefined {
 		return undefined
