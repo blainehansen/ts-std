@@ -5,7 +5,7 @@ export interface Decoder<T> {
 	decode<T>(obj: any) => Result<T>,
 }
 
-export type DecoderTuple<T extends any[]> = { [K in keyof T]: Decoder<T[K]> }
+export type DecoderTuple<L extends any[]> = { [K in keyof L]: Decoder<L[K]> }
 
 export function any<L extends any[]>(obj: any, ...decoders: DecoderTuple<L>): Result<L[number]> {
 	for (const decoder of decoders) {
