@@ -1,3 +1,15 @@
+export function assert_boolean_type<T extends boolean>(expectTrue: T extends true ? true : false) {}
+export function assert_is_type<T, U>(expectTrue: IsType<T, U> extends true ? true : false) {}
+export function assert_is_never<T>(expectTrue: IsNever<T> extends true ? true : false) {}
+
+// this uses a gross version of and
+export type IsType<T, U> =
+	[T] extends [U] ? [U] extends [T]
+		? true
+		: false : false
+
+export type IsNever<T> = IsType<T, never>
+
 export type Unshift<Item, List extends any[]> =
 	((first: Item, ...rest: List) => any) extends ((...list: infer R) => any) ? R : never
 
