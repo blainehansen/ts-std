@@ -1,56 +1,79 @@
 import { Result, Ok, Err } from '@ts-actually-safe/types'
 
 export interface Decoder<T> {
-	name: string,
-	decode<T>(obj: any) => Result<T>,
+	readonly name: string,
+	readonly decode<T>(obj: any) => Result<T>,
 }
 
 export type DecoderTuple<L extends any[]> = { [K in keyof L]: Decoder<L[K]> }
 
-export function any<L extends any[]>(obj: any, ...decoders: DecoderTuple<L>): Result<L[number]> {
-	for (const decoder of decoders) {
-		const result = decoder.decode(obj)
-		if (result.is_ok()) return result
+
+class AnyDecoder<L extends any[]> implements Decoder<L[number]> {
+	readonly name: string
+	constructor(private readonly decoders: DecoderTuple<L>) {
+		this.name = 'any: ' + decoders.map(d => d.name).join(', ')
+		this.decoders = decoders
 	}
 
-	return Err("")
-}
+	decode(obj: any) {
+		for (const decoder of decoders) {
+			const result = decoder.decode(obj)
+			if (result.is_ok()) return result
+		}
 
-export function all<L extends ((arg: any) => any)[]>(obj: any, ...decoders: L): Result<FoldingFunctions<L>> {
-	let last_result = obj
-	for (const decoder of decoders) {
-		//
+		return Err(`expected ${this.name}; got ${obj}`)
 	}
-
-	return last_result
 }
+export function any<L extends any[]>(...decoders: DecoderTuple<L>): Decoder<L[number]> {
+	return new AnyDecoder(decoders)
+}
+
+// export class all<L extends any[]> implements Decoder<FoldingFunctions<L>> {
+// 	name: string
+// 	private readonly decoders: DecoderTuple<L>
+// 	constructor(...decoders: DecoderTuple<L>) {
+// 		this.name = 'all: ' + decoders.map(d => d.name).join(', ')
+// 		this.decoders = decoders
+// 	}
+
+// 	decode(obj: any) {
+// 		let last_result = obj
+// 		for (const decoder of decoders) {
+// 			//
+// 		}
+
+// 		return last_result
+// 	}
+// }
 
 
 export const string: Decoder<string> = {
 	name: 'string',
-	decode(obj: any): Result<string> {
+	decode(obj: any) {
 		if (typeof obj === 'string') return Ok(obj)
 		else return Err(`expected string, got ${obj}`)
 	}
-}
+} as const
 export const number: Decoder<number> = {
 	name: 'number',
-	decode(obj: any): Result<number> {
+	decode(obj: any) {
 		if (typeof obj === 'number') return Ok(obj)
 		else return Err(`expected number, got ${obj}`)
 	},
-}
+} as const
 export const boolean: Decoder<boolean> = {
 	name: 'boolean',
-	decode(obj: any): Result<boolean> {
+	decode(obj: any) {
 		if (typeof obj === 'boolean') return Ok(obj)
 		else return Err(`expected boolean, got ${obj}`)
 	},
-}
+} as const
 
 export function exactly<T extends string>(value: T): Decoder<T>
 export function exactly<T extends boolean>(value: T): Decoder<T>
 export function exactly<T extends number>(value: T): Decoder<T>
+export function exactly<L extends any[]>(value: L): Decoder<L>
+export function exactly<T>(value: { [key: string]: T }): Decoder<{ [key: string]: T }>
 export function exactly(value: null): Decoder<null>
 export function exactly(value: undefined): Decoder<undefined>
 
@@ -76,13 +99,13 @@ export const exactly_null = exactly(null)
 
 
 abstract class collection_decoder<T> {
-	name: string
-	constructor(private decoder: Decoder<T>) {
+	readonly name: string
+	constructor(private readonly decoder: Decoder<T>) {
 		this.name = decoder.name
 	}
 }
 
-export class array<T> extends collection_decoder<T> implements Decoder<T[]> {
+class ArrayDecoder<T> extends collection_decoder<T> implements Decoder<T[]> {
 	decode(obj: any) {
 		if (!Array.isArray(obj)) return Err(`expected array, got ${obj}`)
 
@@ -98,8 +121,11 @@ export class array<T> extends collection_decoder<T> implements Decoder<T[]> {
 		return Ok(give)
 	}
 }
+export function array<T>(decoder: Decoder<T>): Decoder<T[]> {
+	return new ArrayDecoder(decoder)
+}
 
-export class dictionary<T> extends collection_decoder<T> implements Decoder<{ [key: string]: T }> {
+class DictionaryDecoder<T> extends collection_decoder<T> implements Decoder<{ [key: string]: T }> {
 	decode(obj: any, in_place = false) {
 		if (!is_object(obj)) return Err(`expecting dictionary of ${this.name}, got ${obj}`)
 
@@ -117,14 +143,29 @@ export class dictionary<T> extends collection_decoder<T> implements Decoder<{ [k
 		return Ok(give)
 	}
 }
-
-export function enum() {
-
+export function dictionary<T>(decoder: Decoder<T>): Decoder<{ [key: string]: T }> {
+	return new DictionaryDecoder(decoder)
 }
 
-export function tuple<L extends any[]>(...decoders: DecoderTuple<L>): Decoder<L> {
-	return function(obj: any): Result<L> {
-		if (!Array.isArray(obj)) return Err(``)
+class EnumDecoder<S extends string, L extends S[]> {
+	readonly name: string
+	constructor() {
+		//
+	}
+
+	decode(obj: any) {
+
+	}
+}
+
+class TupleDecoder<L extends any[]> implements Decoder<L> {
+	readonly name: string
+	constructor(private readonly decoders: DecoderTuple<L>) {
+		this.name = `[${decoders.map(d => d.name).join(', ')}]`
+	}
+
+	decode(obj: any) {
+		if (!Array.isArray(obj)) return Err(`tuple `)
 		if (obj.length !== decoders.length) return Err(``)
 
 		const t = [] as L
@@ -139,16 +180,22 @@ export function tuple<L extends any[]>(...decoders: DecoderTuple<L>): Decoder<L>
 		return t
 	}
 }
-
-
+export function tuple<L extends any[]>(...decoders: DecoderTuple<L>): Decoder<L> {
+	return new TupleDecoder(decoders)
+}
 
 
 function is_object(obj: any): obj is Object {
 	return typeof obj === 'object' && obj !== null && !Array.isArray(obj)
 }
 
-export function object<T>(decoders: { [K in keyof T]: Decoder<T[K]> }, name: string): Decoder<T> {
-	return function(obj: any): T {
+class ObjectDecoder<T> implements Decoder<{ [K in keyof T]: Decoder<T[K]> }> {
+	constructor(
+		private readonly decoders: { [K in keyof T]: Decoder<T[K]> },
+		readonly name: string,
+	) {}
+
+	decode(obj: any) {
 		if (!is_object(obj)) return Err(`Failed to decode a valid ${name}, input is not an object: ${obj}`)
 
 		const t = {} as T
@@ -160,6 +207,9 @@ export function object<T>(decoders: { [K in keyof T]: Decoder<T[K]> }, name: str
 			t[key] = result.unwrap()
 		}
 
-		return t
+		return Ok(t)
 	}
+}
+export function object<T>(decoders: { [K in keyof T]: Decoder<T[K]> }, name: string): Decoder<T> {
+	return new ObjectDecoder
 }

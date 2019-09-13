@@ -23,12 +23,18 @@
   "bugs": {
     "url": "https://github.com/blainehansen/ts-actually-safe/issues"
   },
-  "keywords": [
-    "json",
-    "decoder",
-    "typescript"
-  ],
   "dependencies": {
     "@ts-actually-safe/types": "^0.1.0"
-  }
+  },
+  "keywords": [
+    "json",
+    "validate",
+    "validator",
+    "validation",
+    "deserialize",
+    "deserializer",
+    "deserialization",
+    "decoder",
+    "typescript"
+  ]
 }
