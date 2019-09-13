@@ -25,6 +25,11 @@ export type Unshift<Item, List extends any[]> =
 // }
 
 
+export type KeysOfType<T, U> = {
+	[K in keyof T]: T[K] extends U ? K : never
+}[keyof T]
+export type PickOfType<T, U> = Pick<T, KeysOfType<T, U>>
+
 
 export type Head<L extends any[]> =
 	L extends [any, ...any[]]

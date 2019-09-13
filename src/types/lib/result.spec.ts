@@ -18,7 +18,9 @@ describe('Result basic api', () => {
 		const and_then_ok: Result<boolean> = r.and_then(n => n === 1 ? Ok(true) : Err('different'))
 		const and_then_err: Result<string> = r.and_then(n => n === 2 ? Ok('two') : Err('also'))
 		const ok_undef = r.ok_undef()
+		const ok_null = r.ok_null()
 		const err_undef = r.err_undef()
+		const err_null = r.err_null()
 		const default_ok = r.default(2)
 		const default_err = r.default_err('less bad')
 
@@ -32,7 +34,9 @@ describe('Result basic api', () => {
 				expect(and_then_ok.expect(im)).equal(true)
 				expect(and_then_err.expect_err(im)).equal('also')
 				expect(ok_undef).equal(1)
+				expect(ok_null).equal(1)
 				expect(err_undef).undefined
+				expect(err_null).null
 				expect(default_ok).equal(1)
 				expect(default_err).equal('less bad')
 				r.match({
@@ -49,7 +53,9 @@ describe('Result basic api', () => {
 				expect(and_then_ok.expect_err(im)).equal('bad')
 				expect(and_then_err.expect_err(im)).equal('bad')
 				expect(ok_undef).undefined
+				expect(ok_null).null
 				expect(err_undef).equal('bad')
+				expect(err_null).equal('bad')
 				expect(default_ok).equal(2)
 				expect(default_err).equal('bad')
 				r.match({
@@ -86,44 +92,44 @@ function msg_join(e: string[]) {
 
 describe('Result joining functions', () => {
 	type Triple = [number, number, number]
-	type Case = [boolean, any, any]
+	type Case = [boolean, any, any, number[]]
 	const cases: [string, ResultTuple<Triple, string>, Case][] = [[
 		'all ok',
 		[Ok(1), Ok(1), Ok(1)],
-		[true, [1, 1, 1], 3],
+		[true, [1, 1, 1], 3, [1, 1, 1]],
 	], [
 		'first err',
 		[Err('ugh'), Ok(1), Ok(1)],
-		[false, 'ugh', ['ugh']],
+		[false, 'ugh', ['ugh'], [1, 1]],
 	], [
 		'second err',
 		[Ok(1), Err('ugh'), Ok(1)],
-		[false, 'ugh', ['ugh']],
+		[false, 'ugh', ['ugh'], [1, 1]],
 	], [
 		'third err',
 		[Ok(1), Ok(1), Err('ugh')],
-		[false, 'ugh', ['ugh']],
+		[false, 'ugh', ['ugh'], [1, 1]],
 	], [
 		'firstlast err',
 		[Err('ugh'), Ok(1), Err('ugh')],
-		[false, 'ugh', ['ugh', 'ugh']],
+		[false, 'ugh', ['ugh', 'ugh'], [1]],
 	], [
 		'lasttwo err',
 		[Ok(1), Err('seen'), Err('notseen')],
-		[false, 'seen', ['seen', 'notseen']],
+		[false, 'seen', ['seen', 'notseen'], [1]],
 	], [
 		'firsttwo err',
 		[Err('seen'), Err('notseen'), Ok(1)],
-		[false, 'seen', ['seen', 'notseen']],
+		[false, 'seen', ['seen', 'notseen'], [1]],
 	], [
 		'all err',
 		[Err('seen'), Err('notseen'), Err('notseen')],
-		[false, 'seen', ['seen', 'notseen', 'notseen']],
+		[false, 'seen', ['seen', 'notseen', 'notseen'], []],
 	]]
 
 	const combiner = (a: number, b: number, c: number) => a + b + c
 
-	for (const [message, triple, [is_ok, single, collected]] of cases) {
+	for (const [message, triple, [is_ok, single, combined, filtered]] of cases) {
 		const all = Result.all(triple)
 		it(`${message} all`, () => {
 			expect(all.is_ok()).equal(is_ok)
@@ -141,7 +147,7 @@ describe('Result joining functions', () => {
 			if (is_ok)
 				expect(all_collect_err.expect(im)).eql(single)
 			else
-				expect(all_collect_err.expect_err(im)).eql(collected)
+				expect(all_collect_err.expect_err(im)).eql(combined)
 		})
 
 		const join = Result.join(...triple)
@@ -158,8 +164,8 @@ describe('Result joining functions', () => {
 			expect(join_res.is_err()).equal(!is_ok)
 			if (is_ok) {
 				expect(join_res.expect(im)).eql(single)
-				expect(join_combined.expect(im)).eql(collected)
-				expect(join_and_then_ok.expect(im)).eql(collected)
+				expect(join_combined.expect(im)).eql(combined)
+				expect(join_and_then_ok.expect(im)).eql(combined)
 				expect(join_and_then_err.expect_err(im)).eql('nope')
 			}
 			else {
@@ -183,15 +189,15 @@ describe('Result joining functions', () => {
 			expect(join_collect_res.is_err()).equal(!is_ok)
 			if (is_ok) {
 				expect(join_collect_res.expect(im)).eql(single)
-				expect(join_collect_combined.expect(im)).eql(collected)
-				expect(join_collect_and_then_ok.expect(im)).eql(collected)
+				expect(join_collect_combined.expect(im)).eql(combined)
+				expect(join_collect_and_then_ok.expect(im)).eql(combined)
 				expect(join_collect_and_then_err.expect_err(im)).eql(['nope'])
 			}
 			else {
-				expect(join_collect_res.expect_err(im)).eql(collected)
-				expect(join_collect_combined.expect_err(im)).eql(collected)
-				expect(join_collect_and_then_ok.expect_err(im)).eql(collected)
-				expect(join_collect_and_then_err.expect_err(im)).eql(collected)
+				expect(join_collect_res.expect_err(im)).eql(combined)
+				expect(join_collect_combined.expect_err(im)).eql(combined)
+				expect(join_collect_and_then_ok.expect_err(im)).eql(combined)
+				expect(join_collect_and_then_err.expect_err(im)).eql(combined)
 			}
 		})
 
@@ -209,8 +215,8 @@ describe('Result joining functions', () => {
 			expect(r_join_res.is_err()).equal(!is_ok)
 			if (is_ok) {
 				expect(r_join_res.expect(im)).eql(single)
-				expect(r_join_combined.expect(im)).eql(collected)
-				expect(r_join_and_then_ok.expect(im)).eql(collected)
+				expect(r_join_combined.expect(im)).eql(combined)
+				expect(r_join_and_then_ok.expect(im)).eql(combined)
 				expect(r_join_and_then_err.expect_err(im)).eql('nope')
 			}
 			else {
@@ -234,16 +240,21 @@ describe('Result joining functions', () => {
 			expect(r_join_collect_res.is_err()).equal(!is_ok)
 			if (is_ok) {
 				expect(r_join_collect_res.expect(im)).eql(single)
-				expect(r_join_collect_combined.expect(im)).eql(collected)
-				expect(r_join_collect_and_then_ok.expect(im)).eql(collected)
+				expect(r_join_collect_combined.expect(im)).eql(combined)
+				expect(r_join_collect_and_then_ok.expect(im)).eql(combined)
 				expect(r_join_collect_and_then_err.expect_err(im)).eql(['nope'])
 			}
 			else {
-				expect(r_join_collect_res.expect_err(im)).eql(collected)
-				expect(r_join_collect_combined.expect_err(im)).eql(collected)
-				expect(r_join_collect_and_then_ok.expect_err(im)).eql(collected)
-				expect(r_join_collect_and_then_err.expect_err(im)).eql(collected)
+				expect(r_join_collect_res.expect_err(im)).eql(combined)
+				expect(r_join_collect_combined.expect_err(im)).eql(combined)
+				expect(r_join_collect_and_then_ok.expect_err(im)).eql(combined)
+				expect(r_join_collect_and_then_err.expect_err(im)).eql(combined)
 			}
+		})
+
+		const triple_filtered = Result.filter(triple)
+		it(`${message} Result.filter`, () => {
+			expect(triple_filtered).eql(filtered)
 		})
 	}
 })

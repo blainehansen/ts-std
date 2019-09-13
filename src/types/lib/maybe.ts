@@ -21,6 +21,7 @@ export interface MaybeLike<T> {
 	is_some(): boolean
 	is_none(): boolean
 	to_undef(): T | undefined
+	to_null(): T | null
 	match<U>(fn: MaybeMatch<T, U>): U
 	change<U>(fn: (value: T) => Req<U>): Maybe<U>
 	and_then<U>(fn: (value: T) => Maybe<U>): Maybe<U>
@@ -46,6 +47,9 @@ class MaybeSome<T> implements MaybeLike<T> {
 		return false
 	}
 	to_undef(): T | undefined {
+		return this.value
+	}
+	to_null(): T | null {
 		return this.value
 	}
 	match<U>(fn: MaybeMatch<T, U>): U {
@@ -98,6 +102,9 @@ class MaybeNone<T> implements MaybeLike<T> {
 	to_undef(): T | undefined {
 		return undefined
 	}
+	to_null(): T | null {
+		return null
+	}
 	match<U>(fn: MaybeMatch<T, U>): U {
 		if (is_function(fn.none))
 			return fn.none()
@@ -123,7 +130,7 @@ class MaybeNone<T> implements MaybeLike<T> {
 		throw new Panic(message)
 	}
 	join<L extends any[]>(..._args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>> {
-		return new MaybeJoinNone
+		return new MaybeJoinNone()
 	}
 }
 
@@ -176,7 +183,7 @@ function _join<L extends any[]>(maybes: MaybeTuple<L>): Maybe<L> {
 }
 
 export namespace Maybe {
-	export function from_nullable<T>(value: Req<T> | null | undefined): Maybe<T> {
+	export function from_nillable<T>(value: Req<T> | null | undefined): Maybe<T> {
 		if (value === null || value === undefined) return None
 		else return Some(value)
 	}
@@ -193,6 +200,17 @@ export namespace Maybe {
 
 	export function all<T>(maybes: Maybe<T>[]): Maybe<T[]> {
 		return _join(maybes)
+	}
+
+	export function filter<T>(maybes: Maybe<T>[]): T[] {
+		const give = [] as T[]
+		for (const maybe of maybes) {
+			if (maybe.is_some()) {
+				give.push(maybe.expect(maybe_invariant_message))
+			}
+		}
+
+		return give
 	}
 
 	export function join<L extends any[]>(...maybes: MaybeTuple<L>): MaybeJoin<L> {

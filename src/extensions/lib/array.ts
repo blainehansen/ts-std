@@ -26,3 +26,34 @@ console.log(unfold_by<[string, { val: number }]>(
 		['stuff', { val: 5 }], ['other', { val: 5 }],
 	// { name: 'stuff', value: 5 }, { name: 'other', value: 6 }
 ))
+
+
+// type KeysOfType<T, U> = {
+// 	[K in keyof T]: T[K] extends U ? K : never
+// }[keyof T]
+// type PickOfType<T, U> = Pick<T, KeysOfType<T, U>>
+
+// type B = KeysOfType<{ a: number, b: boolean }, number>
+
+// function sum(this: number[]): number
+// function sum<T>(this: T[], key: KeysOfType<T, number>): number
+// function sum<T>(this: T[], key?: KeysOfType<T, number>): number {
+// 	if (key === undefined)
+// 		return this.reduce((acc, cur) => acc + (cur as any as number), 0)
+// 	else
+// 		return this.reduce((acc, cur) => acc + (cur[key] as any as number), 0)
+// }
+
+
+// interface Array<T> {
+// 	sum(this: number[]): number
+// 	sum(this: T[], key: KeysOfType<T, number>): number
+// }
+// Array.prototype.sum = sum
+
+
+// const a: number = [1, 1, 1].sum()
+// const b: number = [{a: 1, b: true}, {a: 1, b: true}, {a: 1, b: true}].sum('a')
+// console.log(a)
+// console.log(b)
+

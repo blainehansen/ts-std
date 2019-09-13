@@ -1,10 +1,11 @@
 import { Result, Ok, Err } from './src/types/lib'
 
-// const res: Result<number, Error> = Result.attempt(() => {
+// const res = Result.attempt(() => {
 // 	throw new Error("stuff")
 // 	return 3
 // })
 // const n = res.change_err(e => e.message) as Result<number>
+// console.log(n)
 
 const r = Ok(5)
 	.change(n => n + 4)

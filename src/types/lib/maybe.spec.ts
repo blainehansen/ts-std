@@ -20,6 +20,7 @@ describe('Maybe basic api', () => {
 		const and_then_some: Maybe<boolean> = r.and_then(n => n === 1 ? Some(true) : None)
 		const and_then_none: Maybe<string> = r.and_then(n => n === 2 ? Some('two') : None)
 		const to_undef = r.to_undef()
+		const to_null = r.to_null()
 		const default_none = r.default(2)
 
 		it(message, () => {
@@ -34,6 +35,7 @@ describe('Maybe basic api', () => {
 				expect(and_then_some.expect(im)).equal(true)
 				expect(and_then_none.is_none()).true
 				expect(to_undef).equal(1)
+				expect(to_null).equal(1)
 				expect(default_none).equal(1)
 				r.match({
 					some: n => n,
@@ -51,6 +53,7 @@ describe('Maybe basic api', () => {
 				expect(and_then_some.is_none()).true
 				expect(and_then_none.is_none()).true
 				expect(to_undef).undefined
+				expect(to_null).null
 				expect(default_none).equal(2)
 				r.match({
 					some: _ => { expect.fail("matched some on a none"); return 1 },
@@ -76,45 +79,45 @@ function sum(nums: number[]) {
 
 describe('Maybe joining functions', () => {
 	type Triple = [number, number, number]
-	type Case = [boolean, any, any]
+	type Case = [boolean, any, any, number[]]
 	const cases: [string, MaybeTuple<Triple>, Case][] = [[
 		'all some',
 		[Some(1), Some(1), Some(1)],
-		[true, [1, 1, 1], 3],
+		[true, [1, 1, 1], 3, [1, 1, 1]],
 	], [
 		'first none',
 		[None, Some(1), Some(1)],
-		[false, undefined, undefined],
+		[false, undefined, undefined, [1, 1]],
 	], [
 		'second none',
 		[Some(1), None, Some(1)],
-		[false, undefined, undefined],
+		[false, undefined, undefined, [1, 1]],
 	], [
 		'third none',
 		[Some(1), Some(1), None],
-		[false, undefined, undefined],
+		[false, undefined, undefined, [1, 1]],
 	], [
 		'firstlast none',
 		[None, Some(1), None],
-		[false, undefined, undefined],
+		[false, undefined, undefined, [1]],
 	], [
 		'lasttwo none',
 		[Some(1), None, None],
-		[false, undefined, undefined],
+		[false, undefined, undefined, [1]],
 	], [
 		'firsttwo none',
 		[None, None, Some(1)],
-		[false, undefined, undefined],
+		[false, undefined, undefined, [1]],
 	], [
 		'all none',
 		[None, None, None],
-		[false, undefined, undefined],
+		[false, undefined, undefined, []],
 	]]
 
 	const combiner = (a: number, b: number, c: number) => a + b + c
 	// const all_panic =
 
-	for (const [message, triple, [is_some, single, collected]] of cases) {
+	for (const [message, triple, [is_some, single, combined, filtered]] of cases) {
 		const all = Maybe.all(triple)
 		it(`${message} all`, () => {
 			expect(all.is_some()).equal(is_some)
@@ -139,8 +142,8 @@ describe('Maybe joining functions', () => {
 			expect(join_maybe.is_none()).equal(!is_some)
 			if (is_some) {
 				expect(join_maybe.expect(im)).eql(single)
-				expect(join_combined.expect(im)).eql(collected)
-				expect(join_and_then_some.expect(im)).eql(collected)
+				expect(join_combined.expect(im)).eql(combined)
+				expect(join_and_then_some.expect(im)).eql(combined)
 				expect(() => join_and_then_none.expect(pm)).throw(Panic, pm)
 			}
 			else {
@@ -165,8 +168,8 @@ describe('Maybe joining functions', () => {
 			expect(m_join_maybe.is_none()).equal(!is_some)
 			if (is_some) {
 				expect(m_join_maybe.expect(im)).eql(single)
-				expect(m_join_combined.expect(im)).eql(collected)
-				expect(m_join_and_then_some.expect(im)).eql(collected)
+				expect(m_join_combined.expect(im)).eql(combined)
+				expect(m_join_and_then_some.expect(im)).eql(combined)
 				expect(() => m_join_and_then_none.expect(pm)).throw(Panic, pm)
 			}
 			else {
@@ -175,6 +178,11 @@ describe('Maybe joining functions', () => {
 				expect(() => m_join_and_then_some.expect(pm)).throw(Panic, pm)
 				expect(() => m_join_and_then_none.expect(pm)).throw(Panic, pm)
 			}
+		})
+
+		const triple_filtered = Maybe.filter(triple)
+		it(`${message} Maybe.filter`, () => {
+			expect(triple_filtered).eql(filtered)
 		})
 	}
 })

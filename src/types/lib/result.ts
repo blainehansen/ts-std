@@ -18,8 +18,10 @@ export interface ResultLike<T, E> {
 	is_err(): boolean,
 	ok_maybe(): Maybe<T>,
 	ok_undef(): T | undefined,
+	ok_null(): T | null,
 	err_maybe(): Maybe<E>,
 	err_undef(): E | undefined,
+	err_null(): E | null,
 	default(other: Req<T>): T,
 	default_err(other_err: Req<E>): E,
 	expect(message: string): T | never
@@ -50,11 +52,17 @@ class ResultOk<T, E> implements ResultLike<T, E> {
 	ok_undef(): T | undefined {
 		return this.value
 	}
+	ok_null(): T | null {
+		return this.value
+	}
 	err_maybe(): Maybe<E> {
 		return None
 	}
 	err_undef(): E | undefined {
 		return undefined
+	}
+	err_null(): E | null {
+		return null
 	}
 	default(_other: Req<T>): T {
 		return this.value
@@ -116,10 +124,16 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 	ok_undef(): T | undefined {
 		return undefined
 	}
+	ok_null(): T | null {
+		return null
+	}
 	err_maybe(): Maybe<E> {
 		return Some(this.error)
 	}
 	err_undef(): E | undefined {
+		return this.error
+	}
+	err_null(): E | null {
 		return this.error
 	}
 	default(other: Req<T>): T {
@@ -261,9 +275,20 @@ export namespace Result {
 			: new ResultJoinErr(results_join.expect_err(result_invariant_message) as Req<E[]>)
 	}
 
-	export function attempt<T, E extends Error, F extends TryFunc<T>>(
+	export function filter<T, E>(results: Result<T, E>[]): T[] {
+		const give = [] as T[]
+		for (const result of results) {
+			if (result.is_ok()) {
+				give.push(result.expect(result_invariant_message))
+			}
+		}
+
+		return give
+	}
+
+	export function attempt<T, F extends TryFunc<T>>(
 		fn: F,
-	): Result<T, E> {
+	): Result<T, Error> {
 		try {
 			return Ok(fn())
 		}
