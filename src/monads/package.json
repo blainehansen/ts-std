@@ -1,7 +1,7 @@
 {
-	"name": "@ts-actually-safe/types",
+	"name": "@ts-actually-safe/monads",
 	"version": "0.1.0",
-	"description": "Various helpful type definitions. Includes many tricky recursive and functional types.",
+	"description": "Base Maybe and Result types. Used by many other libraries in the ts-actually-safe system.",
 	"author": "Blaine Hansen <faichenshing@gmail.com>",
 	"homepage": "https://github.com/blainehansen/ts-actually-safe#readme",
 	"license": "MIT",
@@ -25,5 +25,8 @@
 	},
 	"bugs": {
 		"url": "https://github.com/blainehansen/ts-actually-safe/issues"
+	},
+	"dependencies": {
+		"@ts-actually-safe/types": "^0.1.0"
 	}
 }

@@ -1,7 +1,7 @@
 import 'mocha'
 import { expect } from 'chai'
 
-import { Panic } from './utils'
+import { Panic } from './common'
 import { Maybe, Some, None, MaybeTuple, MaybeJoin } from './maybe'
 
 const im = "type invariant broken!"

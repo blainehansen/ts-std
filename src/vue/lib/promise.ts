@@ -36,13 +36,12 @@ export default Vue.extend({
 		return el(
 			tag,
 			context.data,
-			result.is_ok()
-				? context.scopedSlots.default(result.unwrap())
-				:	context.scopedSlots.err(result.unwrap_err())
-
-			// result.is_ok()
-			// 	? renderScopedIfPossible('default', context.scopedSlots, context.slots, result.unwrap())
-			// 	: renderScopedIfPossible('err', context.scopedSlots, context.slots, result.unwrap_err())
+			result.match({
+				ok: value => context.scopedSlots.default(value),
+				// renderScopedIfPossible('default', context.scopedSlots, context.slots, value),
+				err: e => context.scopedSlots.err(e),
+				// renderScopedIfPossible('err', context.scopedSlots, context.slots, e)
+			}),
 		)
 	},
 })

@@ -1,18 +1,18 @@
 import Vue, { PropOptions, VNode } from 'vue'
 
-import { Result } from '@ts-actually-safe/types'
+import { Maybe } from '@ts-actually-safe/types'
 
 export default Vue.extend({
-	name: 'result',
+	name: 'maybe',
 
 	functional: true,
 
 	props: {
-		result: {
+		maybe: {
 			type: Object,
-			validator: Result.is_result,
+			validator: Maybe.is_maybe,
 			required: true,
-		} as PropOptions<Result<any, any>>,
+		} as PropOptions<Maybe<any, any>>,
 
 		tag: {
 			type: String,
@@ -24,18 +24,18 @@ export default Vue.extend({
 	},
 
 	render(el, context): VNode {
-		const { tag, result } = context.props
+		const { tag, maybe } = context.props
 
 		// check for existence of other slots, perhaps they aren't scoped?
 
 		return el(
 			tag,
 			context.data,
-			result.match({
-				ok: value => context.scopedSlots.default(value),
+			maybe.match({
+				some: value => context.scopedSlots.default(value),
 				// renderScopedIfPossible('default', context.scopedSlots, context.slots, value),
-				err: e => context.scopedSlots.err(e),
-				// renderScopedIfPossible('err', context.scopedSlots, context.slots, e)
+				none: () => context.scopedSlots.none(),
+				// renderScopedIfPossible('none', context.scopedSlots, context.slots)
 			}),
 		)
 	},

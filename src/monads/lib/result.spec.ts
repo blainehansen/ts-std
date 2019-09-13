@@ -1,7 +1,7 @@
 import 'mocha'
 import { expect } from 'chai'
 
-import { Panic } from './utils'
+import { Panic } from './common'
 import { Result, Ok, Err, ResultTuple, ResultJoin } from './result'
 
 

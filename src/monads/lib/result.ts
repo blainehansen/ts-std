@@ -1,5 +1,8 @@
-import { Unshift, TryFunc, Req, Panic } from './utils'
+import { Unshift } from '@ts-actually-safe/types'
+
+import { Panic, TryFunc, Req } from './common'
 import { Maybe, Some, None } from './maybe'
+
 
 const ResultType = {
 	Ok: Symbol('Result.Ok'),

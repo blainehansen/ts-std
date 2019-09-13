@@ -24,6 +24,7 @@
     "url": "https://github.com/blainehansen/ts-actually-safe/issues"
   },
   "dependencies": {
+    "@ts-actually-safe/monads": "^0.1.0",
     "@ts-actually-safe/types": "^0.1.0"
   },
   "keywords": [

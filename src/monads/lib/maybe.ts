@@ -1,4 +1,6 @@
-import { Unshift, TryFunc, Req, Panic } from './utils'
+import { Unshift } from '@ts-actually-safe/types'
+
+import { Panic, TryFunc, Req } from './common'
 
 const MaybeType = {
 	Some: Symbol("Maybe.Some"),
