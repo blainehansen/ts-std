@@ -1,3 +1,7 @@
+// https://github.com/Microsoft/TypeScript/issues/26223
+// https://www.freecodecamp.org/news/typescript-curry-ramda-types-f747e99744ab/
+// https://github.com/Microsoft/TypeScript/issues/23182
+
 export function assert_boolean_type<T extends boolean>(expectTrue: T extends true ? true : false) {}
 export function assert_is_type<T, U>(expectTrue: IsType<T, U> extends true ? true : false) {}
 export function assert_is_never<T>(expectTrue: IsNever<T> extends true ? true : false) {}
@@ -12,24 +16,6 @@ export type IsNever<T> = IsType<T, never>
 
 export type Unshift<Item, List extends any[]> =
 	((first: Item, ...rest: List) => any) extends ((...list: infer R) => any) ? R : never
-
-// this does it!!!!
-// https://github.com/Microsoft/TypeScript/issues/26223
-
-// https://www.freecodecamp.org/news/typescript-curry-ramda-types-f747e99744ab/
-
-// type S = Unshift<number, [number, boolean, string]>
-
-// const s: S = [3, 9, true, 'st']
-
-// class Res<A> {
-// 	constructor(private val: A) {}
-
-// 	join<L extends any[]>(...rest: L): Unshift<A, L> {
-// 		return [this.val, ...rest] as Unshift<A, L>
-// 	}
-// }
-
 
 export type KeysOfType<T, U> = {
 	[K in keyof T]: T[K] extends U ? K : never
