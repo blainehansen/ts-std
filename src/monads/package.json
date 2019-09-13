@@ -21,7 +21,7 @@
 		"test": "mocha -r ts-node/register lib/**/*.spec.ts",
 		"build": "rm -rf dist/* && tsc",
 		"preversion": "npm run build && npm test",
-		"postversion": "git push origin master && git push origin master --tags && npm publish"
+		"postversion": "npm publish"
 	},
 	"bugs": {
 		"url": "https://github.com/blainehansen/ts-actually-safe/issues"
