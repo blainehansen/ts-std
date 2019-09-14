@@ -250,7 +250,7 @@ function _join_collect_err<L extends any[], E>(results: ResultTuple<L, E>): Resu
 }
 
 export namespace Result {
-	export function is_result<T, E>(res: Result<T, E> | any): res is Result<T, E> {
+	export function is_result(res: Result<any, any> | any): res is Result<any, any> {
 		return res !== null && res !== undefined
 			&& 'type' in res
 			&& (res.type === ResultType.Ok || res.type === ResultType.Err)
