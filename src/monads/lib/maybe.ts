@@ -1,21 +1,54 @@
 import { Unshift } from '@ts-actually-safe/types'
 
-import { Panic, TryFunc, Req } from './common'
+import { Panic, TryFunc } from './common'
 
 const MaybeType = {
 	Some: Symbol("Maybe.Some"),
 	None: Symbol("Maybe.None"),
 } as const
 
+export type ValueOrFunction<T> = T | ((...args: any[]) => T)
+
 export type MaybeMatch<T, U> =
 	| {
-		some: (value: T) => Req<U>,
-		none: () => Req<U>,
+		some: (value: T) => U,
+		none: () => U,
 	}
 	| {
-		some: (value: T) => Req<U>,
-		none: Req<U>,
+		some: (value: T) => U,
+		none: U,
 	}
+
+
+
+// type Box<T> = { v: T }
+
+// type Unbox<T> = {
+// 	0: T extends Box<infer U> ? Unbox<U> : never,
+// 	1: T,
+// }[
+// 	T extends Box<unknown>
+// 		? 0
+// 		: 1
+// ]
+
+// function is_box(box: any): box is Box<any> {
+// 	return 'v' in box
+// }
+
+// function flatten<B extends Box<any>>(box: B): Unbox<B> {
+// 	let current_box = box
+// 	while (is_box(current_box)) {
+// 		current_box = current_box.v
+// 	}
+
+// 	return current_box as Unbox<B>
+// }
+
+// const a = flatten({ v: { v: { v: { v: 5 } } } })
+
+
+
 
 export const maybe_invariant_message = "Maybe library invariant broken!"
 
@@ -25,22 +58,24 @@ export interface MaybeLike<T> {
 	to_undef(): T | undefined
 	to_null(): T | null
 	match<U>(fn: MaybeMatch<T, U>): U
-	change<U>(fn: (value: T) => Req<U>): Maybe<U>
+	change<U>(fn: (value: T) => U): Maybe<U>
 	and_then<U>(fn: (value: T) => Maybe<U>): Maybe<U>
-	// to_result<E>(err: Req<E>): Result<T, E>
+	// to_result<E>(err: E): Result<T, E>
 	or(other: Maybe<T>): Maybe<T>
 	and<U>(other: Maybe<U>): Maybe<U>
 	// xor<T>(other: Maybe<T>): Maybe<T>
-	default(def: Req<T>): T
+	default(def: T): T
 	expect(message: string): T | never
 	join<L extends any[]>(...args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>>
 }
 
 export type Maybe<T> = MaybeSome<T> | MaybeNone<T>
 
+const MaybeJoinNoneSingle = new MaybeJoinNone<any>()
+
 class MaybeSome<T> implements MaybeLike<T> {
 	private readonly type = MaybeType.Some
-	constructor(private readonly value: Req<T>) {}
+	constructor(private readonly value: T) {}
 
 	is_some(): boolean {
 		return true
@@ -57,7 +92,7 @@ class MaybeSome<T> implements MaybeLike<T> {
 	match<U>(fn: MaybeMatch<T, U>): U {
 		return fn.some(this.value)
 	}
-	change<U>(fn: (value: T) => Req<U>): Maybe<U> {
+	change<U>(fn: (value: T) => U): Maybe<U> {
 		return Some(fn(this.value))
 	}
 	and_then<U>(fn: (value: T) => Maybe<U>): Maybe<U> {
@@ -69,7 +104,7 @@ class MaybeSome<T> implements MaybeLike<T> {
 	and<U>(other: Maybe<U>): Maybe<U> {
 		return other
 	}
-	default(_value: Req<T>): T {
+	default(_value: T): T {
 		return this.value
 	}
 	expect(_message: string): T | never {
@@ -79,11 +114,11 @@ class MaybeSome<T> implements MaybeLike<T> {
 		const others_maybe = _join(args)
 		return others_maybe.is_some()
 			? new MaybeJoinSome([this.value as T, ...others_maybe.expect(maybe_invariant_message) as L] as Unshift<T, L>)
-			: new MaybeJoinNone
+			: MaybeJoinNoneSingle
 	}
 }
 
-export function Some<T>(value: Req<T>): Maybe<T> {
+export function Some<T>(value: T): Maybe<T> {
 	return new MaybeSome(value)
 }
 
@@ -113,7 +148,7 @@ class MaybeNone<T> implements MaybeLike<T> {
 		else
 			return fn.none
 	}
-	change<U>(_fn: (value: T) => Req<U>): Maybe<U> {
+	change<U>(_fn: (value: T) => U): Maybe<U> {
 		return this as any as Maybe<U>
 	}
 	and_then<U>(_fn: (value: T) => Maybe<U>): Maybe<U> {
@@ -125,14 +160,14 @@ class MaybeNone<T> implements MaybeLike<T> {
 	and<U>(_other: Maybe<U>): Maybe<U> {
 		return this as any as Maybe<U>
 	}
-	default(other: Req<T>): T {
+	default(other: T): T {
 		return other
 	}
 	expect(message: string): T | never {
 		throw new Panic(message)
 	}
 	join<L extends any[]>(..._args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>> {
-		return new MaybeJoinNone()
+		return MaybeJoinNoneSingle
 	}
 }
 
@@ -145,7 +180,7 @@ export type MaybeJoin<L extends any[]> = MaybeJoinSome<L> | MaybeJoinNone<L>
 class MaybeJoinSome<L extends any[]> {
 	constructor(private readonly values: L) {}
 
-	combine<T>(fn: (...args: L) => Req<T>): Maybe<T> {
+	combine<T>(fn: (...args: L) => T): Maybe<T> {
 		return Some(fn(...this.values))
 	}
 
@@ -154,12 +189,12 @@ class MaybeJoinSome<L extends any[]> {
 	}
 
 	into_maybe(): Maybe<L> {
-		return Some(this.values as Req<L>)
+		return Some(this.values as L)
 	}
 }
 
 class MaybeJoinNone<L extends any[]> {
-	combine<T>(_fn: (...args: L) => Req<T>): Maybe<T> {
+	combine<T>(_fn: (...args: L) => T): Maybe<T> {
 		return None
 	}
 
@@ -175,7 +210,7 @@ class MaybeJoinNone<L extends any[]> {
 
 function _join<L extends any[]>(maybes: MaybeTuple<L>): Maybe<L> {
 	// DANGER: test to ensure type invariant holds
-	const args = [] as any as Req<L>
+	const args = [] as any as L
 	for (const maybe of maybes) {
 		if (maybe.is_some()) args.push(maybe.expect(maybe_invariant_message))
 		else return maybe
@@ -218,7 +253,7 @@ export namespace Maybe {
 	export function join<L extends any[]>(...maybes: MaybeTuple<L>): MaybeJoin<L> {
 		const others_maybe = _join(maybes)
 		return others_maybe.is_some()
-			? new MaybeJoinSome(others_maybe.expect(maybe_invariant_message) as Req<L>)
+			? new MaybeJoinSome(others_maybe.expect(maybe_invariant_message) as L)
 			: new MaybeJoinNone
 	}
 
