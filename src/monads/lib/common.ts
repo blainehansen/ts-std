@@ -1,5 +1,8 @@
+export type FunctionOrValue<A extends any[], T> = T | ((...args: A) => T)
+export type TransformerOrValue<T, U> = FunctionOrValue<[T], U>
+export type ProducerOrValue<U> = FunctionOrValue<[], U>
+
 export class Panic extends Error {}
-export type Req<T> = NonNullable<T>
 export type TryFunc<T> = () => Req<T>
 
 // export interface MonadLike<T> {

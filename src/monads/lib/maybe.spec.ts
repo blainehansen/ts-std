@@ -17,6 +17,8 @@ describe('Maybe basic api', () => {
 		const or_none = r.or(None)
 		const and_some = r.and(Some(2))
 		const and_none = r.and(None)
+		const xor_some = r.xor(Some(2))
+		const xor_none = r.xor(None)
 		const and_then_some: Maybe<boolean> = r.and_then(n => n === 1 ? Some(true) : None)
 		const and_then_none: Maybe<string> = r.and_then(n => n === 2 ? Some('two') : None)
 		const to_undef = r.to_undef()
@@ -32,6 +34,8 @@ describe('Maybe basic api', () => {
 				expect(or_none.expect(im)).equal(1)
 				expect(and_some.expect(im)).equal(2)
 				expect(and_none.is_none()).true
+				expect(xor_some.is_none()).true
+				expect(xor_none.expect(im)).equal(1)
 				expect(and_then_some.expect(im)).equal(true)
 				expect(and_then_none.is_none()).true
 				expect(to_undef).equal(1)
@@ -50,6 +54,8 @@ describe('Maybe basic api', () => {
 				expect(or_none.is_none()).true
 				expect(and_some.is_none()).true
 				expect(and_none.is_none()).true
+				expect(xor_some.expect(im)).equal(2)
+				expect(xor_none.is_none()).true
 				expect(and_then_some.is_none()).true
 				expect(and_then_none.is_none()).true
 				expect(to_undef).undefined

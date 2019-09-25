@@ -2,8 +2,9 @@ import 'mocha'
 import { expect } from 'chai'
 
 import {
-	assert_boolean_type, assert_is_type, assert_is_never,
+	assert_boolean_type, assert_is_type, assert_is_never, assert_type, assert_value_types,
 	Unshift, KeysOfType, PickOfType, Head, Tail, HasTail, Last, OnlyOne, SingleParameter, FoldingFunctions,
+	tuple,
 } from './index'
 
 describe('Just going to be various type assertions. They should all compile', () => {
@@ -64,5 +65,17 @@ describe('Just going to be various type assertions. They should all compile', ()
 		assert_is_never< FoldingFunctions<[() => number, () => string]> >(true)
 		assert_is_never< FoldingFunctions<[]> >(true)
 		assert_is_never< FoldingFunctions<[() => number, (a: string) => string]> >(true)
+	})
+
+	it('tuple', () => {
+		assert_type<[]>(tuple())
+		assert_type<[number]>(tuple(1))
+		assert_type<[number, string]>(tuple(1, 'a'))
+		assert_type<[number, string, boolean]>(tuple(1, 'a', true))
+		assert_type<[number, string, boolean, number[]]>(tuple(1, 'a', true, [1, 2, 3]))
+		assert_type<[number, string, boolean, [number, number, number]]>(tuple(1, 'a', true, tuple(1, 2, 3)))
+
+		assert_value_types(tuple(1, 2, 3), [1, 2, 3], false)
+		assert_value_types(tuple(1, 2, 3), [1, 2, 3] as [number, number, number], true)
 	})
 })

@@ -6,7 +6,10 @@ export function assert_boolean_type<T extends boolean>(expectTrue: T extends tru
 export function assert_is_type<T, U>(expectTrue: IsType<T, U> extends true ? true : false) {}
 export function assert_is_never<T>(expectTrue: IsNever<T> extends true ? true : false) {}
 
-// this uses a gross version of and
+export function assert_type<T>(value: T) {}
+export function assert_value_types<T, U>(a: T, b: U, expectTrue: IsType<T, U> extends true ? true : false) {}
+
+// this uses a gross version of "and"
 export type IsType<T, U> =
 	[T] extends [U] ? [U] extends [T]
 		? true
@@ -81,6 +84,10 @@ export type FoldingFunctions<L extends Func[]> = {
 		: 2
 ]
 
+
+export function tuple<L extends any[]>(...values: L): L {
+	return values as L
+}
 
 
 
