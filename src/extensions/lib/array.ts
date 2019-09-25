@@ -30,6 +30,17 @@ console.log(unfold_by<[string, { val: number }]>(
 
 
 
+// perhaps put this on an object extension?
+// export function get_in(obj: object | undefined | null, key: string): Maybe<any> {
+// 	const value = key.split(".").reduce((o, x) => (o === null || o === undefined ? o : (o as any)[x]), obj)
+// 	return Some(value)
+// }
+
+
+
+
+
+
 // type Box<T> = { v: T }
 
 // type Unbox<T> = {

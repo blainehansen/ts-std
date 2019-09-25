@@ -1,20 +1,25 @@
 import { Unshift } from '@ts-actually-safe/types'
 
-import { Panic, TryFunc }from './common'
+import { Panic, TransformerOrValue, ProducerOrValue }from './common'
 import { Maybe, Some, None } from './maybe'
 
+
+export const result_invariant_message = "Result library invariant broken!"
 
 const ResultType = {
 	Ok: Symbol('Result.Ok'),
 	Err: Symbol('Result.Err'),
 } as const
 
-export interface ResultMatch<T, E, U> {
-	ok: (value: T) => U,
-	err: (value: E) => U,
+export type ResultMatch<T, E, U> = {
+	ok: TransformerOrValue<T, U>,
+	err: TransformerOrValue<E, U>,
 }
 
-export const result_invariant_message = "Result library invariant broken!"
+// export interface ResultMatch<T, E, U> {
+// 	ok: (value: T) => U,
+// 	err: (value: E) => U,
+// }
 
 export interface ResultLike<T, E> {
 	is_ok(): boolean,
@@ -25,14 +30,23 @@ export interface ResultLike<T, E> {
 	err_maybe(): Maybe<E>,
 	err_undef(): E | undefined,
 	err_null(): E | null,
-	default(other: T): T,
-	default_err(other_err: E): E,
+
+	match<U>(fn: ResultMatch<T, E, U>): U,
+
 	expect(message: string): T | never,
 	expect_err(message: string): E | never,
-	match<U>(fn: ResultMatch<T, E, U>): U,
+
 	change<U>(fn: (value: T) => U): Result<U, E>,
+	try_change<U>(fn: (value: T) => Result<U, E>): Result<U, E>,
+
 	change_err<U>(fn: (err: E) => U): Result<T, U>,
-	and_then<U>(fn: (value: T) => Result<U, E>): Result<U, E>,
+
+	and<U>(other: ProducerOrValue<Result<U, E>>): Result<U, E>
+	or(other: ProducerOrValue<Result<T, E>>): Result<T, E>
+	xor(other: ProducerOrValue<Result<T, E>>, same_err: E): Result<T, E>
+
+	default(other: ProducerOrValue<T>): T,
+	default_err(other_err: ProducerOrValue<E>): E,
 	join<L extends any[]>(...args: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E>
 	join_collect_err<L extends any[]>(...args: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E[]>
 }
@@ -67,20 +81,22 @@ class ResultOk<T, E> implements ResultLike<T, E> {
 	err_null(): E | null {
 		return null
 	}
-	default(_other: T): T {
+	default(other: ProducerOrValue<T>): T {
 		return this.value
 	}
-	default_err(other_err: E): E {
-		return other_err
+	default_err(other_err: ProducerOrValue<E>): E {
+		return typeof other_err === 'function' ? (other_err as () => E)() : other_err
 	}
-	expect(_message: string): T | never {
+	expect(message: string): T | never {
 		return this.value
 	}
 	expect_err(message: string): E | never {
 		throw new Panic(message)
 	}
 	match<U>(fn: ResultMatch<T, E, U>): U {
-		return fn.ok(this.value)
+		return typeof fn.ok === 'function'
+			? (fn.ok as (value: T) => U)(this.value)
+			: fn.ok
 	}
 	change<U>(fn: (value: T) => U): Result<U, E> {
 		return Ok(fn(this.value))
@@ -89,7 +105,21 @@ class ResultOk<T, E> implements ResultLike<T, E> {
 		// DANGER: test to ensure type invariant holds
 		return this as any as Result<T, U>
 	}
-	and_then<U>(fn: (value: T) => Result<U, E>): Result<U, E> {
+
+	and<U>(other: ProducerOrValue<Result<U, E>>): Result<U, E> {
+		return typeof other === 'function' ? other() : other
+	}
+	or(other: ProducerOrValue<Result<T, E>>): Result<T, E> {
+		return this
+	}
+	xor(other: ProducerOrValue<Result<T, E>>, same_err: E): Result<T, E> {
+		const other_result = typeof other === 'function' ? other() : other
+		return other_result.is_ok()
+			? Err(same_err)
+			: this
+	}
+
+	try_change<U>(fn: (value: T) => Result<U, E>): Result<U, E> {
 		return fn(this.value)
 	}
 	join<L extends any[]>(...others: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E> {
@@ -139,10 +169,10 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 	err_null(): E | null {
 		return this.error
 	}
-	default(other: T): T {
-		return other
+	default(other: ProducerOrValue<T>): T {
+		return typeof other === 'function' ? (other as () => T)() : other
 	}
-	default_err(other_err: E): E {
+	default_err(other_err: ProducerOrValue<E>): E {
 		return this.error
 	}
 	expect(message: string): T | never {
@@ -152,7 +182,9 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 		return this.error
 	}
 	match<U>(fn: ResultMatch<T, E, U>): U {
-		return fn.err(this.error)
+		return typeof fn.err === 'function'
+			? (fn.err as (error: E) => U)(this.error)
+			: fn.err
 	}
 	change<U>(_fn: (_value: T) => U): Result<U, E> {
 		// DANGER: test to ensure type invariant holds
@@ -161,10 +193,29 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 	change_err<U>(fn: (err: E) => U): Result<T, U> {
 		return Err(fn(this.error))
 	}
-	and_then<U>(_fn: (value: T) => Result<U, E>): Result<U, E> {
+	try_change<U>(_fn: (value: T) => Result<U, E>): Result<U, E> {
 		// DANGER: test to ensure type invariant holds
 		return this as any as Result<U, E>
 	}
+
+	and<U>(_other: ProducerOrValue<Result<U, E>>): Result<U, E> {
+		// DANGER: test to ensure type invariant holds
+		return this as any as Result<U, E>
+	}
+	or(other: ProducerOrValue<Result<T, E>>): Result<T, E> {
+		const other_result = typeof other === 'function' ? other() : other
+		return other_result.is_ok()
+			? other_result
+			: this
+	}
+	xor(other: ProducerOrValue<Result<T, E>>, same_err: E): Result<T, E> {
+		const other_result = typeof other === 'function' ? other() : other
+		return other_result.is_ok()
+			? other_result
+			: Err(same_err)
+	}
+
+
 	join<L extends any[]>(..._others: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E> {
 		return new ResultJoinErr(this.error)
 	}
@@ -193,7 +244,7 @@ class ResultJoinOk<L extends any[], E> {
 		return Ok(fn(...this.values))
 	}
 
-	and_then_combine<T>(fn: (...args: L) => Result<T, E>): Result<T, E> {
+	try_combine<T>(fn: (...args: L) => Result<T, E>): Result<T, E> {
 		return fn(...this.values)
 	}
 
@@ -209,7 +260,7 @@ class ResultJoinErr<L extends any[], E> {
 		return Err(this.error)
 	}
 
-	and_then_combine<T>(fn: (...args: L) => Result<T, E>): Result<T, E> {
+	try_combine<T>(fn: (...args: L) => Result<T, E>): Result<T, E> {
 		return Err(this.error)
 	}
 
@@ -250,15 +301,23 @@ function _join_collect_err<L extends any[], E>(results: ResultTuple<L, E>): Resu
 }
 
 export namespace Result {
-	export function from_nillable<T, E>(value: NonNullable<T> | null | undefined, err: E): Result<NonNullable<T>, E> {
-		if (value === null || value === undefined) return Err(err)
-		else return Ok(value)
+	export function from_nillable<T, E>(
+		value: ProducerOrValue<T | null | undefined>,
+		err: ProducerOrValue<E>,
+	): Result<T, E> {
+		const nillable_value = typeof value === 'function'
+			? (value as () => T | null | undefined)()
+			: value
+
+		return nillable_value === null || nillable_value === undefined
+			? Err(typeof err === 'function' ? (err as () => E)() : err)
+			: Ok(nillable_value)
 	}
 
-	export function is_result(res: any): res is Result<unknown, unknown> {
-		return res !== null && res !== undefined
-			&& 'type' in res
-			&& (res.type === ResultType.Ok || res.type === ResultType.Err)
+	export function is_result(value: any): value is Result<unknown, unknown> {
+		return value !== null && value !== undefined
+			&& 'type' in value
+			&& (value.type === ResultType.Ok || value.type === ResultType.Err)
 	}
 
 	export function all<T, E>(results: Result<T, E>[]): Result<T[], E> {
@@ -294,9 +353,7 @@ export namespace Result {
 		return give
 	}
 
-	export function attempt<T, F extends TryFunc<T>>(
-		fn: F,
-	): Result<T, Error> {
+	export function attempt<T>(fn: () => T): Result<T, Error> {
 		try {
 			return Ok(fn())
 		}

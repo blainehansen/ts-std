@@ -1,6 +1,6 @@
 import { Unshift } from '@ts-actually-safe/types'
 
-import { Panic, TryFunc, TransformerOrValue, ProducerOrValue } from './common'
+import { Panic, TransformerOrValue, ProducerOrValue } from './common'
 
 export const maybe_invariant_message = "Maybe library invariant broken!"
 
@@ -9,20 +9,10 @@ const MaybeType = {
 	None: Symbol("Maybe.None"),
 } as const
 
-// export type MaybeMatch<T, U> = {
-// 	some: TransformerOrValue<T, U>,
-// 	none: ProducerOrValue<U>,
-// }
-
-export type MaybeMatch<T, U> =
-	| {
-		some: (value: T) => U,
-		none: () => U,
-	}
-	| {
-		some: (value: T) => U,
-		none: U,
-	}
+export type MaybeMatch<T, U> = {
+	some: TransformerOrValue<T, U>,
+	none: ProducerOrValue<U>,
+}
 
 export interface MaybeLike<T> {
 	is_some(): boolean
@@ -32,26 +22,20 @@ export interface MaybeLike<T> {
 	match<U>(fn: MaybeMatch<T, U>): U
 
 	change<U>(fn: (value: T) => U): Maybe<U>
-	// try_change<U>(fn: TransformerOrValue<T, Maybe<U>>): Maybe<U>
 	try_change<U>(fn: (value: T) => Maybe<U>): Maybe<U>
-	// and_then<U>(fn: (value: T) => Maybe<U>): Maybe<U>
 
 	// to_result<E>(err: E): Result<T, E>
 
-	// and<U>(other: Maybe<U>): Maybe<U>
 	and<U>(other: ProducerOrValue<Maybe<U>>): Maybe<U>
-	// or(other: Maybe<T>): Maybe<T>
 	or(other: ProducerOrValue<Maybe<T>>): Maybe<T>
-	// xor(other: Maybe<T>): Maybe<T>
 	xor(other: ProducerOrValue<Maybe<T>>): Maybe<T>
-	default(def: T): T
+
+	default(def: ProducerOrValue<T>): T
 	expect(message: string): T | never
 	join<L extends any[]>(...args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>>
 }
 
 export type Maybe<T> = MaybeSome<T> | MaybeNone<T>
-
-const MaybeJoinNoneSingleton = new MaybeJoinNone<any>()
 
 class MaybeSome<T> implements MaybeLike<T> {
 	private readonly type = MaybeType.Some
@@ -70,36 +54,39 @@ class MaybeSome<T> implements MaybeLike<T> {
 		return this.value
 	}
 	match<U>(fn: MaybeMatch<T, U>): U {
-		return fn.some(this.value)
+		return typeof fn.some === 'function'
+			? (fn.some as (value: T) => U)(this.value)
+			: fn.some
 	}
 	change<U>(fn: (value: T) => U): Maybe<U> {
 		return Some(fn(this.value))
 	}
-	and_then<U>(fn: (value: T) => Maybe<U>): Maybe<U> {
+	try_change<U>(fn: (value: T) => Maybe<U>): Maybe<U> {
 		return fn(this.value)
 	}
-	or(_other: Maybe<T>): Maybe<T> {
+	or(other: ProducerOrValue<Maybe<T>>): Maybe<T> {
 		return this
 	}
-	and<U>(other: Maybe<U>): Maybe<U> {
-		return other
+	and<U>(other: ProducerOrValue<Maybe<U>>): Maybe<U> {
+		return typeof other === 'function' ? other() : other
 	}
-	xor(other: Maybe<T>): Maybe<T> {
-		return other.is_none()
-			? self as Maybe<T>
-			: other
+	xor(other: ProducerOrValue<Maybe<T>>): Maybe<T> {
+		const other_maybe = typeof other === 'function' ? other() : other
+		return other_maybe.is_some()
+			? None
+			: this
 	}
-	default(_value: T): T {
+	default(value: ProducerOrValue<T>): T {
 		return this.value
 	}
-	expect(_message: string): T | never {
+	expect(message: string): T | never {
 		return this.value
 	}
 	join<L extends any[]>(...args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>> {
 		const others_maybe = _join(args)
 		return others_maybe.is_some()
 			? new MaybeJoinSome([this.value as T, ...others_maybe.expect(maybe_invariant_message) as L] as Unshift<T, L>)
-			: MaybeJoinNoneSingleton
+			: new MaybeJoinNone()
 	}
 }
 
@@ -107,10 +94,6 @@ export function Some<T>(value: T): Maybe<T> {
 	return new MaybeSome(value)
 }
 
-
-function is_function<T>(fn: any): fn is () => T {
-	return typeof fn === 'function'
-}
 
 class MaybeNone<T> implements MaybeLike<T> {
 	private readonly type = MaybeType.None
@@ -128,40 +111,40 @@ class MaybeNone<T> implements MaybeLike<T> {
 		return null
 	}
 	match<U>(fn: MaybeMatch<T, U>): U {
-		if (is_function(fn.none))
-			return fn.none()
-		else
-			return fn.none
+		return typeof fn.none === 'function'
+			? (fn.none as () => U)()
+			: fn.none
 	}
 	change<U>(_fn: (value: T) => U): Maybe<U> {
 		return this as any as Maybe<U>
 	}
-	and_then<U>(_fn: (value: T) => Maybe<U>): Maybe<U> {
+	try_change<U>(_fn: (value: T) => Maybe<U>): Maybe<U> {
 		return this as any as Maybe<U>
 	}
-	or(other: Maybe<T>): Maybe<T> {
-		return other
+	or(other: ProducerOrValue<Maybe<T>>): Maybe<T> {
+		return typeof other === 'function' ? other() : other
 	}
-	and<U>(_other: Maybe<U>): Maybe<U> {
+	and<U>(other: ProducerOrValue<Maybe<U>>): Maybe<U> {
 		return this as any as Maybe<U>
 	}
-	xor(other: Maybe<T>): Maybe<T> {
-		return other.is_some()
-			? other
-			: self as Maybe<T>
+	xor(other: ProducerOrValue<Maybe<T>>): Maybe<T> {
+		const other_maybe = typeof other === 'function' ? other() : other
+		return other_maybe.is_some()
+			? other_maybe
+			: this
 	}
-	default(other: T): T {
-		return other
+	default(other: ProducerOrValue<T>): T {
+		return typeof other === 'function' ? (other as () => T)() : other
 	}
 	expect(message: string): T | never {
 		throw new Panic(message)
 	}
 	join<L extends any[]>(..._args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>> {
-		return MaybeJoinNoneSingleton
+		return new MaybeJoinNone()
 	}
 }
 
-export const None = new MaybeNone<any>()
+export const None: Maybe<any> = new MaybeNone()
 
 export type MaybeTuple<L extends any[]> = { [K in keyof L]: Maybe<L[K]> }
 
@@ -174,7 +157,7 @@ class MaybeJoinSome<L extends any[]> {
 		return Some(fn(...this.values))
 	}
 
-	and_then_combine<T>(fn: (...args: L) => Maybe<T>): Maybe<T> {
+	try_combine<T>(fn: (...args: L) => Maybe<T>): Maybe<T> {
 		return fn(...this.values)
 	}
 
@@ -188,7 +171,7 @@ class MaybeJoinNone<L extends any[]> {
 		return None
 	}
 
-	and_then_combine<T>(_fn: (...args: L) => Maybe<T>): Maybe<T> {
+	try_combine<T>(_fn: (...args: L) => Maybe<T>): Maybe<T> {
 		return None
 	}
 
@@ -210,20 +193,23 @@ function _join<L extends any[]>(maybes: MaybeTuple<L>): Maybe<L> {
 }
 
 export namespace Maybe {
-	export function from_nillable<T>(value: NonNullable<T> | null | undefined): Maybe<NonNullable<T>> {
-		if (value === null || value === undefined) return None
-		else return Some(value)
+	export function from_nillable<T>(
+		value: ProducerOrValue<T | null | undefined>,
+	): Maybe<T> {
+		const nillable_value = typeof value === 'function'
+			? (value as () => T | null | undefined)()
+			: value
+
+		return value === null || value === undefined
+			? None
+			: Some(nillable_value)
 	}
 
-	export function is_maybe<T>(value: Maybe<T> | any): value is Maybe<T> {
-		return 'type' in value && (value.type === MaybeType.Some || value.type === MaybeType.None)
+	export function is_maybe(value: any): value is Maybe<unknown> {
+		return value !== null && value !== undefined
+			'type' in value
+			&& (value.type === MaybeType.Some || value.type === MaybeType.None)
 	}
-
-	// perhaps put this on an object extension?
-	// export function get_in(obj: object | undefined | null, key: string): Maybe<any> {
-	// 	const value = key.split(".").reduce((o, x) => (o === null || o === undefined ? o : (o as any)[x]), obj)
-	// 	return Some(value)
-	// }
 
 	export function all<T>(maybes: Maybe<T>[]): Maybe<T[]> {
 		return _join(maybes)
@@ -244,10 +230,10 @@ export namespace Maybe {
 		const others_maybe = _join(maybes)
 		return others_maybe.is_some()
 			? new MaybeJoinSome(others_maybe.expect(maybe_invariant_message) as L)
-			: MaybeJoinNoneSingleton
+			: new MaybeJoinNone()
 	}
 
-	export function attempt<T, F extends TryFunc<T>>(fn: F): Maybe<T> {
+	export function attempt<T>(fn: () => T): Maybe<T> {
 		try {
 			return Some(fn())
 		}

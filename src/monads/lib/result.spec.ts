@@ -15,12 +15,29 @@ describe('Result basic api', () => {
 		const message = is_ok ? 'Ok' : 'Err'
 		const changed: Result<string> = r.change(n => `n is: ${n}`)
 		const changed_err: Result<number, number> = r.change_err(e => e.length)
-		const and_then_ok: Result<boolean> = r.and_then(n => n === 1 ? Ok(true) : Err('different'))
-		const and_then_err: Result<string> = r.and_then(n => n === 2 ? Ok('two') : Err('also'))
+		const try_change_ok: Result<boolean> = r.try_change(n => n === 1 ? Ok(true) : Err('different'))
+		const try_change_err: Result<string> = r.try_change(n => n === 2 ? Ok('two') : Err('also'))
 		const ok_undef = r.ok_undef()
 		const ok_null = r.ok_null()
 		const err_undef = r.err_undef()
 		const err_null = r.err_null()
+
+		const or_ok = r.or(Ok(2))
+		const or_err = r.or(Err('or'))
+		const or_ok_fn = r.or(() => Ok(2))
+		const or_err_fn = r.or(() => Err('or'))
+
+		const and_ok = r.and(Ok(2))
+		const and_err = r.and(Err('and'))
+		const and_ok_fn = r.and(() => Ok(2))
+		const and_err_fn = r.and(() => Err('and'))
+
+		const xorm = 'xor both same'
+		const xor_ok = r.xor(Ok(2), xorm)
+		const xor_err = r.xor(Err('xor'), xorm)
+		const xor_ok_fn = r.xor(() => Ok(2), xorm)
+		const xor_err_fn = r.xor(() => Err('xor'), xorm)
+
 		const default_ok = r.default(2)
 		const default_err = r.default_err('less bad')
 
@@ -31,18 +48,40 @@ describe('Result basic api', () => {
 				expect(r.is_err()).false
 				expect(changed.expect(im)).equal(`n is: 1`)
 				expect(changed_err.expect(im)).equal(1)
-				expect(and_then_ok.expect(im)).equal(true)
-				expect(and_then_err.expect_err(im)).equal('also')
+				expect(try_change_ok.expect(im)).equal(true)
+				expect(try_change_err.expect_err(im)).equal('also')
 				expect(ok_undef).equal(1)
 				expect(ok_null).equal(1)
 				expect(err_undef).undefined
 				expect(err_null).null
+
+				expect(or_ok.expect(im)).equal(1)
+				expect(or_err.expect(im)).equal(1)
+				expect(or_ok_fn.expect(im)).equal(1)
+				expect(or_err_fn.expect(im)).equal(1)
+
+				expect(and_ok.expect(im)).equal(2)
+				expect(and_err.expect_err(im)).equal('and')
+				expect(and_ok_fn.expect(im)).equal(2)
+				expect(and_err_fn.expect_err(im)).equal('and')
+
+				expect(xor_ok.expect_err(im)).equal(xorm)
+				expect(xor_err.expect(im)).equal(1)
+				expect(xor_ok_fn.expect_err(im)).equal(xorm)
+				expect(xor_err_fn.expect(im)).equal(1)
+
 				expect(default_ok).equal(1)
 				expect(default_err).equal('less bad')
 				r.match({
-					ok: n => n,
-					err: _ => { expect.fail("matched err on an ok"); return 1 },
+					ok: n => {},
+					err: _ => { expect.fail("matched err on an ok") },
 				})
+
+				const correct = r.match({
+					ok: true,
+					err: false,
+				})
+				expect(correct).true
 			}
 			else {
 				expect(() => r.expect(pm)).throw(Panic, pm)
@@ -50,21 +89,60 @@ describe('Result basic api', () => {
 				expect(r.is_err()).true
 				expect(changed.expect_err(im)).equal('bad')
 				expect(changed_err.expect_err(im)).equal(3)
-				expect(and_then_ok.expect_err(im)).equal('bad')
-				expect(and_then_err.expect_err(im)).equal('bad')
+				expect(try_change_ok.expect_err(im)).equal('bad')
+				expect(try_change_err.expect_err(im)).equal('bad')
 				expect(ok_undef).undefined
 				expect(ok_null).null
 				expect(err_undef).equal('bad')
 				expect(err_null).equal('bad')
+
+				expect(or_ok.expect(im)).equal(2)
+				expect(or_err.expect_err(im)).equal('bad')
+				expect(or_ok_fn.expect(im)).equal(2)
+				expect(or_err_fn.expect_err(im)).equal('bad')
+
+				expect(and_ok.expect_err(im)).equal('bad')
+				expect(and_err.expect_err(im)).equal('bad')
+				expect(and_ok_fn.expect_err(im)).equal('bad')
+				expect(and_err_fn.expect_err(im)).equal('bad')
+
+				expect(xor_ok.expect(im)).equal(2)
+				expect(xor_err.expect_err(im)).equal(xorm)
+				expect(xor_ok_fn.expect(im)).equal(2)
+				expect(xor_err_fn.expect_err(im)).equal(xorm)
+
 				expect(default_ok).equal(2)
 				expect(default_err).equal('bad')
+
 				r.match({
-					ok: _ => { expect.fail("matched ok on an err"); return 1 },
-					err: _ => 1,
+					ok: _ => { expect.fail("matched ok on an err") },
+					err: _ => {},
 				})
+
+				const correct = r.match({
+					ok: false,
+					err: true,
+				})
+				expect(correct).true
 			}
 		})
 	}
+
+	it('from_nillable', () => {
+		const null_err = Result.from_nillable(null, 'is null').expect_err(im)
+		const undefined_err = Result.from_nillable(undefined, 'is undefined').expect_err(im)
+		expect(null_err).equal('is null')
+		expect(undefined_err).equal('is undefined')
+
+		const ok_null: number = Result.from_nillable(1 as number | null, 'never').expect(im)
+		expect(ok_null).equal(1)
+
+		const ok_undefined: number = Result.from_nillable(1 as number | undefined, 'never').expect(im)
+		expect(ok_undefined).equal(1)
+
+		const ok_both: number = Result.from_nillable(1 as number | null | undefined, 'never').expect(im)
+		expect(ok_both).equal(1)
+	})
 
 	it('attempt', () => {
 		const err = Result.attempt(() => { throw new Error('bad'); return 1 })
@@ -72,9 +150,11 @@ describe('Result basic api', () => {
 			.expect_err(im)
 		expect(err).equal('bad')
 
-		const ok = Result.attempt(() => 1)
-			.expect(im)
+		const ok = Result.attempt(() => 1).expect(im)
 		expect(ok).equal(1)
+
+		const extra = Result.attempt((arg = 1) => arg === 1).expect(im)
+		expect(extra).true
 	})
 })
 
@@ -154,10 +234,10 @@ describe('Result joining functions', () => {
 		const join_res = join.into_result()
 		const join_combined = join.combine(combiner)
 		// this always fails, so we're mostly checking *which* err is encountered
-		const join_and_then_ok = join
-			.and_then_combine((a: number, b: number, c: number) => true ? Ok(combiner(a, b, c)) : Err('nope'))
-		const join_and_then_err = join
-			.and_then_combine((a: number, b: number, c: number) => false ? Ok(combiner(a, b, c)) : Err('nope'))
+		const join_try_combine_ok = join
+			.try_combine((a: number, b: number, c: number) => true ? Ok(combiner(a, b, c)) : Err('nope'))
+		const join_try_combine_err = join
+			.try_combine((a: number, b: number, c: number) => false ? Ok(combiner(a, b, c)) : Err('nope'))
 
 		it(`${message} join`, () => {
 			expect(join_res.is_ok()).equal(is_ok)
@@ -165,24 +245,24 @@ describe('Result joining functions', () => {
 			if (is_ok) {
 				expect(join_res.expect(im)).eql(single)
 				expect(join_combined.expect(im)).eql(combined)
-				expect(join_and_then_ok.expect(im)).eql(combined)
-				expect(join_and_then_err.expect_err(im)).eql('nope')
+				expect(join_try_combine_ok.expect(im)).eql(combined)
+				expect(join_try_combine_err.expect_err(im)).eql('nope')
 			}
 			else {
 				expect(join_res.expect_err(im)).eql(single)
 				expect(join_combined.expect_err(im)).eql(single)
-				expect(join_and_then_ok.expect_err(im)).eql(single)
-				expect(join_and_then_err.expect_err(im)).eql(single)
+				expect(join_try_combine_ok.expect_err(im)).eql(single)
+				expect(join_try_combine_err.expect_err(im)).eql(single)
 			}
 		})
 
 		const join_collect = Result.join_collect_err(...triple)
 		const join_collect_res = join_collect.into_result()
 		const join_collect_combined = join_collect.combine(combiner)
-		const join_collect_and_then_ok = join_collect
-			.and_then_combine((a: number, b: number, c: number) => true ? Ok(combiner(a, b, c)) : Err(['nope']))
-		const join_collect_and_then_err = join_collect
-			.and_then_combine((a: number, b: number, c: number) => false ? Ok(combiner(a, b, c)) : Err(['nope']))
+		const join_collect_try_combine_ok = join_collect
+			.try_combine((a: number, b: number, c: number) => true ? Ok(combiner(a, b, c)) : Err(['nope']))
+		const join_collect_try_combine_err = join_collect
+			.try_combine((a: number, b: number, c: number) => false ? Ok(combiner(a, b, c)) : Err(['nope']))
 
 		it(`${message} join_collect_err`, () => {
 			expect(join_collect_res.is_ok()).equal(is_ok)
@@ -190,14 +270,14 @@ describe('Result joining functions', () => {
 			if (is_ok) {
 				expect(join_collect_res.expect(im)).eql(single)
 				expect(join_collect_combined.expect(im)).eql(combined)
-				expect(join_collect_and_then_ok.expect(im)).eql(combined)
-				expect(join_collect_and_then_err.expect_err(im)).eql(['nope'])
+				expect(join_collect_try_combine_ok.expect(im)).eql(combined)
+				expect(join_collect_try_combine_err.expect_err(im)).eql(['nope'])
 			}
 			else {
 				expect(join_collect_res.expect_err(im)).eql(combined)
 				expect(join_collect_combined.expect_err(im)).eql(combined)
-				expect(join_collect_and_then_ok.expect_err(im)).eql(combined)
-				expect(join_collect_and_then_err.expect_err(im)).eql(combined)
+				expect(join_collect_try_combine_ok.expect_err(im)).eql(combined)
+				expect(join_collect_try_combine_err.expect_err(im)).eql(combined)
 			}
 		})
 
@@ -205,10 +285,10 @@ describe('Result joining functions', () => {
 		const r_join = a.join(b, c)
 		const r_join_res = r_join.into_result()
 		const r_join_combined = r_join.combine(combiner)
-		const r_join_and_then_ok = r_join
-			.and_then_combine((a: number, b: number, c: number) => true ? Ok(combiner(a, b, c)) : Err('nope'))
-		const r_join_and_then_err = r_join
-			.and_then_combine((a: number, b: number, c: number) => false ? Ok(combiner(a, b, c)) : Err('nope'))
+		const r_join_try_combine_ok = r_join
+			.try_combine((a: number, b: number, c: number) => true ? Ok(combiner(a, b, c)) : Err('nope'))
+		const r_join_try_combine_err = r_join
+			.try_combine((a: number, b: number, c: number) => false ? Ok(combiner(a, b, c)) : Err('nope'))
 
 		it(`${message} Result.join`, () => {
 			expect(r_join_res.is_ok()).equal(is_ok)
@@ -216,24 +296,24 @@ describe('Result joining functions', () => {
 			if (is_ok) {
 				expect(r_join_res.expect(im)).eql(single)
 				expect(r_join_combined.expect(im)).eql(combined)
-				expect(r_join_and_then_ok.expect(im)).eql(combined)
-				expect(r_join_and_then_err.expect_err(im)).eql('nope')
+				expect(r_join_try_combine_ok.expect(im)).eql(combined)
+				expect(r_join_try_combine_err.expect_err(im)).eql('nope')
 			}
 			else {
 				expect(r_join_res.expect_err(im)).eql(single)
 				expect(r_join_combined.expect_err(im)).eql(single)
-				expect(r_join_and_then_ok.expect_err(im)).eql(single)
-				expect(r_join_and_then_err.expect_err(im)).eql(single)
+				expect(r_join_try_combine_ok.expect_err(im)).eql(single)
+				expect(r_join_try_combine_err.expect_err(im)).eql(single)
 			}
 		})
 
 		const r_join_collect = a.join_collect_err(b, c)
 		const r_join_collect_res = r_join_collect.into_result()
 		const r_join_collect_combined = r_join_collect.combine(combiner)
-		const r_join_collect_and_then_ok = r_join_collect
-			.and_then_combine((a: number, b: number, c: number) => true ? Ok(combiner(a, b, c)) : Err(['nope']))
-		const r_join_collect_and_then_err = r_join_collect
-			.and_then_combine((a: number, b: number, c: number) => false ? Ok(combiner(a, b, c)) : Err(['nope']))
+		const r_join_collect_try_combine_ok = r_join_collect
+			.try_combine((a: number, b: number, c: number) => true ? Ok(combiner(a, b, c)) : Err(['nope']))
+		const r_join_collect_try_combine_err = r_join_collect
+			.try_combine((a: number, b: number, c: number) => false ? Ok(combiner(a, b, c)) : Err(['nope']))
 
 		it(`${message} Result.join`, () => {
 			expect(r_join_collect_res.is_ok()).equal(is_ok)
@@ -241,14 +321,14 @@ describe('Result joining functions', () => {
 			if (is_ok) {
 				expect(r_join_collect_res.expect(im)).eql(single)
 				expect(r_join_collect_combined.expect(im)).eql(combined)
-				expect(r_join_collect_and_then_ok.expect(im)).eql(combined)
-				expect(r_join_collect_and_then_err.expect_err(im)).eql(['nope'])
+				expect(r_join_collect_try_combine_ok.expect(im)).eql(combined)
+				expect(r_join_collect_try_combine_err.expect_err(im)).eql(['nope'])
 			}
 			else {
 				expect(r_join_collect_res.expect_err(im)).eql(combined)
 				expect(r_join_collect_combined.expect_err(im)).eql(combined)
-				expect(r_join_collect_and_then_ok.expect_err(im)).eql(combined)
-				expect(r_join_collect_and_then_err.expect_err(im)).eql(combined)
+				expect(r_join_collect_try_combine_ok.expect_err(im)).eql(combined)
+				expect(r_join_collect_try_combine_err.expect_err(im)).eql(combined)
 			}
 		})
 
@@ -277,8 +357,8 @@ describe('Result dangerous any casts', () => {
 		expect(r.expect_err(im)).a('string')
 	})
 
-	it("Err.and_then", () => {
-		const r: Result<boolean> = (Err('bad') as Result<number>).and_then(n => n === 1 ? Ok(true) : Err('not one'))
+	it("Err.try_change", () => {
+		const r: Result<boolean> = (Err('bad') as Result<number>).try_change(n => n === 1 ? Ok(true) : Err('not one'))
 		expect(r.is_ok()).false
 		expect(r.is_err()).true
 		expect(() => r.expect(pm)).throw(Panic, pm)
