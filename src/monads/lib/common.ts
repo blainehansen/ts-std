@@ -4,11 +4,33 @@ export type ProducerOrValue<U> = FunctionOrValue<[], U>
 
 export class Panic extends Error {}
 
-// export interface MonadLike<T> {
-// 	default(other: Req<T>): T,
-// 	expect(message: string): T | never
-// 	change<U>(fn: (value: T) => Req<U>): MonadLike<U>,
-// 	and_then<U>(fn: (value: T) => MonadLike<U>): MonadLike<U>,
-// 	// join<L extends any[]>(...args: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E>
-// 	// join_collect_err<L extends any[]>(...args: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E[]>
+// export abstract class MonadLike<T, E> {
+// 	map_over<U>(fn: (value: T) => U): this<U, E>
+// 	try_map_over<U>(fn: (value: T) => this<U, E>): this<U, E>
+
+// 	is_successful(): boolean
+// 	is_error(): boolean {
+// 		return !this.is_successful()
+// 	}
+
+// 	match<U>(options: {
+// 		success: (value: T) => U,
+// 		error: (error: E) => U,
+// 	}): U {
+// 		return this.is_successful()
+// 			?
+// 			:
+// 	}
+// 	default(value: T): T {
+// 		return this.is_successful()
+// 			? this.expect("")
+// 			: value
+// 	}
+// 	expect(string?: message): T | never
+
+// 	create_successful(value: T): this<T, E>
+// 	create_error(error: E): this<T, E>
+
+// 	join<L extends any[]>(...args: ResultTuple<L, E>): MonadLike<Unshift<T, L>, E>
+// 	join_collect_err<L extends any[]>(...args: ResultTuple<L, E>): MonadLike<Unshift<T, L>, E[]>
 // }
