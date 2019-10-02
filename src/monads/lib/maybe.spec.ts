@@ -32,6 +32,7 @@ describe('Maybe basic api', () => {
 		const try_change_none: Maybe<string> = r.try_change(n => n === 2 ? Some('two') : None)
 		const to_undef = r.to_undef()
 		const to_null = r.to_null()
+		const to_result = r.to_result('to_result')
 
 		const defaulted = r.default(2)
 		const defaulted_fn = r.default(() => 2)
@@ -59,6 +60,8 @@ describe('Maybe basic api', () => {
 				expect(try_change_none.is_none()).true
 				expect(to_undef).equal(1)
 				expect(to_null).equal(1)
+				expect(to_result.is_ok()).true
+				expect(to_result.expect(im)).eql(1)
 				expect(defaulted).equal(1)
 				expect(defaulted_fn).equal(1)
 				r.match({
@@ -94,6 +97,7 @@ describe('Maybe basic api', () => {
 				expect(try_change_none.is_none()).true
 				expect(to_undef).undefined
 				expect(to_null).null
+				expect(to_result.is_err()).true
 				expect(defaulted).equal(2)
 				expect(defaulted_fn).equal(2)
 

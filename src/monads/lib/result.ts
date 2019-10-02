@@ -136,7 +136,7 @@ class ResultOk<T, E> implements ResultLike<T, E> {
 	}
 }
 
-export function Ok<T, E>(value: T): ResultOk<T, E> {
+export function Ok<T>(value: T): Result<T, any> {
 	return new ResultOk(value)
 }
 
@@ -228,7 +228,7 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 	}
 }
 
-export function Err<T, E>(error: E): ResultErr<T, E> {
+export function Err<E>(error: E): Result<any, E> {
 	return new ResultErr(error)
 }
 

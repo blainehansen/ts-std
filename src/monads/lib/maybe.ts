@@ -1,6 +1,7 @@
 import { Unshift } from '@ts-actually-safe/types'
 
 import { Panic, TransformerOrValue, ProducerOrValue } from './common'
+import { Result, Ok, Err } from './result'
 
 export const maybe_invariant_message = "Maybe library invariant broken!"
 
@@ -19,12 +20,12 @@ export interface MaybeLike<T> {
 	is_none(): boolean
 	to_undef(): T | undefined
 	to_null(): T | null
+	to_result<E>(err: E): Result<T, E>
+
 	match<U>(fn: MaybeMatch<T, U>): U
 
 	change<U>(fn: (value: T) => U): Maybe<U>
 	try_change<U>(fn: (value: T) => Maybe<U>): Maybe<U>
-
-	// to_result<E>(err: E): Result<T, E>
 
 	and<U>(other: ProducerOrValue<Maybe<U>>): Maybe<U>
 	or(other: ProducerOrValue<Maybe<T>>): Maybe<T>
@@ -52,6 +53,9 @@ class MaybeSome<T> implements MaybeLike<T> {
 	}
 	to_null(): T | null {
 		return this.value
+	}
+	to_result<E>(err: E): Result<T, E> {
+		return Ok(this.value)
 	}
 	match<U>(fn: MaybeMatch<T, U>): U {
 		return typeof fn.some === 'function'
@@ -109,6 +113,9 @@ class MaybeNone<T> implements MaybeLike<T> {
 	}
 	to_null(): T | null {
 		return null
+	}
+	to_result<E>(err: E): Result<T, E> {
+		return Err(err)
 	}
 	match<U>(fn: MaybeMatch<T, U>): U {
 		return typeof fn.none === 'function'

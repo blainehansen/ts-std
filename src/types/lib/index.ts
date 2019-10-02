@@ -21,11 +21,14 @@ export type Unshift<Item, List extends any[]> =
 	((first: Item, ...rest: List) => any) extends ((...list: infer R) => any) ? R : never
 
 
+export type CheckPick<T, K> = K extends keyof T
+	? { [P in K]: T[P] }
+	: never
 
 export type KeysOfType<T, U> = T extends any[]
 	? { [K in keyof T]: T[K] extends U ? K : never }[number]
 	: { [K in keyof T]: T[K] extends U ? K : never }[keyof T]
-export type PickOfType<T, U> = Pick<T, KeysOfType<T, U>>
+export type PickOfType<T, U> = CheckPick<T, KeysOfType<T, U>>
 
 
 export type Head<L extends any[]> =
