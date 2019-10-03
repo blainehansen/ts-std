@@ -6,24 +6,28 @@
   "homepage": "https://github.com/blainehansen/ts-actually-safe#readme",
   "license": "MIT",
   "main": "dist/index.js",
-  "directories": {
-    "lib": "lib",
-    "test": "__tests__"
-  },
-  "files": [
-    "lib"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/blainehansen/ts-actually-safe.git"
-  },
-  "scripts": {
-    "test": "echo \"Error: run tests from root\" && exit 1"
-  },
-  "bugs": {
-    "url": "https://github.com/blainehansen/ts-actually-safe/issues"
-  }
+  "typings": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/blainehansen/ts-actually-safe.git"
+	},
+	"scripts": {
+		"test": "mocha -r ts-node/register lib/**/*.spec.ts",
+		"build": "rm -rf dist/* && tsc",
+		"preversion": "npm run build && npm test",
+		"postversion": "npm publish"
+	},
+	"bugs": {
+		"url": "https://github.com/blainehansen/ts-actually-safe/issues"
+	},
+	"dependencies": {
+		"@ts-actually-safe/monads": "^0.1.0",
+		"@ts-actually-safe/types": "^0.1.0"
+	}
 }
