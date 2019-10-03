@@ -138,10 +138,15 @@ Array.prototype.unzip = function<L extends any[]>(this: L[]): Maybe<Unzip<L>> {
 }
 
 Array.zip_lenient = function<L extends any[]>(...arrays: Unzip<L>): L[] {
-	let give_length = 0
+	let give_length
 	for (let index = 0; index < arrays.length; index++) {
-		give_length = Math.min(arrays[index].length)
+		const cur_length = arrays[index].length
+		give_length = give_length === undefined
+			? cur_length
+			: Math.min(give_length, cur_length)
 	}
+
+	give_length = give_length || 0
 
 	const give = [] as L[]
 	for (let index = 0; index < give_length; index++) {
@@ -169,51 +174,3 @@ Array.zip_equal = function<L extends any[]>(...arrays: Unzip<L>): Result<L[], [n
 
 	return Ok(give)
 }
-
-
-
-
-// const a: number = [1, 1, 1].sum()
-// const b: number = [{ a: 1, b: true }, { a: 1, b: true }, { a: 1, b: true }].sum('a')
-// const b: number = [t(1, 'a'), t(1, 'a'), t(1, 'a')].sum('0')
-// console.log(a)
-// console.log(b)
-
-// const thing = {
-// 	a: 's', b: 4, c: '5', d: { complex: 4 }
-// }
-
-// console.log(index_by<[string, { val: number }]>(
-// 	'0',
-// 		['stuff', { val: 5 }], ['other', { val: 5 }],
-// 	// { name: 'stuff', value: 5 }, { name: 'other', value: 6 }
-// ))
-
-
-
-
-// type Box<T> = { v: T }
-
-// type Unbox<T> = {
-// 	0: T extends Box<infer U> ? Unbox<U> : never,
-// 	1: T,
-// }[
-// 	T extends Box<unknown>
-// 		? 0
-// 		: 1
-// ]
-
-// function is_box(box: any): box is Box<any> {
-// 	return 'v' in box
-// }
-
-// function flatten<B extends Box<any>>(box: B): Unbox<B> {
-// 	let current_box = box
-// 	while (is_box(current_box)) {
-// 		current_box = current_box.v
-// 	}
-
-// 	return current_box as Unbox<B>
-// }
-
-// const a = flatten({ v: { v: { v: { v: 5 } } } })

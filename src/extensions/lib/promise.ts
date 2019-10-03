@@ -10,7 +10,7 @@ export type PromiseObject<O extends { [key: string]: Promise<any> }> = Promise<{
 
 // export type PromiseEntries<O extends { [key: string]: Promise<any> }> = ({ [K in keyof O]: [K, UnboxPromise<O[K]>] }[keyof O])[]
 
-export type PromiseResultTuple<L extends any[]> = { [K in keyof L]: Promise<Result<L[K], any>> }
+// export type PromiseResultTuple<L extends any[]> = { [K in keyof L]: Promise<Result<L[K], any>> }
 
 declare global {
 	interface Promise<T> {
@@ -25,7 +25,7 @@ declare global {
 		join<L extends any[]>(...args: PromiseTuple<L>): Promise<L>,
 		// try_join<L extends any[]>(...args: PromiseResultTuple<L>): Promise<Maybe<L>>,
 
-		object<O extends { [key: string]: Promise<any> }>(obj: O): PromiseObject<O>,
+		join_object<O extends { [key: string]: Promise<any> }>(obj: O): PromiseObject<O>,
 
 		// result_join<T, L extends (Result<T, any> | Maybe<T>)[]>(): Promise<Result<T, >>,
 	}
@@ -40,7 +40,7 @@ Promise.join = function<L extends any[]>(...args: PromiseTuple<L>): Promise<L> {
 	return Promise.all(args) as Promise<L>
 }
 
-Promise.object = async function<O extends { [key: string]: Promise<any> }>(
+Promise.join_object = async function<O extends { [key: string]: Promise<any> }>(
 	obj: O,
 ): PromiseObject<O> {
 	// PromiseEntries<O>

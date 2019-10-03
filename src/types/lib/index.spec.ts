@@ -77,5 +77,8 @@ describe('Just going to be various type assertions. They should all compile', ()
 
 		assert_value_types(tuple(1, 2, 3), [1, 2, 3], false)
 		assert_value_types(tuple(1, 2, 3), [1, 2, 3] as [number, number, number], true)
+
+		expect(tuple()).eql([])
+		expect(tuple(1, 2, 3)).eql([1, 2, 3])
 	})
 })

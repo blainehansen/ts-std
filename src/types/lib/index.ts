@@ -9,6 +9,8 @@ export function assert_is_never<T>(expectTrue: IsNever<T> extends true ? true : 
 export function assert_type<T>(value: T) {}
 export function assert_value_types<T, U>(a: T, b: U, expectTrue: IsType<T, U> extends true ? true : false) {}
 
+export type Cast<T, U> = T extends U ? T : never
+
 // this uses a gross version of "and"
 export type IsType<T, U> =
 	[T] extends [U] ? [U] extends [T]
@@ -21,14 +23,10 @@ export type Unshift<Item, List extends any[]> =
 	((first: Item, ...rest: List) => any) extends ((...list: infer R) => any) ? R : never
 
 
-export type CheckPick<T, K> = K extends keyof T
-	? { [P in K]: T[P] }
-	: never
-
 export type KeysOfType<T, U> = T extends any[]
 	? { [K in keyof T]: T[K] extends U ? K : never }[number]
 	: { [K in keyof T]: T[K] extends U ? K : never }[keyof T]
-export type PickOfType<T, U> = CheckPick<T, KeysOfType<T, U>>
+export type PickOfType<T, U> = Pick<T, Cast<KeysOfType<T, U>, keyof T>>
 
 
 export type Head<L extends any[]> =

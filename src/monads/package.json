@@ -1,6 +1,6 @@
 {
 	"name": "@ts-actually-safe/monads",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Base Maybe and Result types. Used by many other libraries in the ts-actually-safe system.",
 	"author": "Blaine Hansen <faichenshing@gmail.com>",
 	"homepage": "https://github.com/blainehansen/ts-actually-safe#readme",
