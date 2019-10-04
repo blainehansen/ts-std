@@ -1,10 +1,12 @@
 import { Hashable } from './common'
 
-export class HashSet<T extends Hashable> implements Iterable<T> {
-	protected items: { [hash_key: number]: T }
+type Items<T> = { [hash_key: number]: T }
 
-	static from(items: T[]): HashSet<T> {
-		const s = new HashSet()
+export class HashSet<T extends Hashable> implements Iterable<T> {
+	protected items!: Items<T>
+
+	static from<T extends Hashable>(items: T[]): HashSet<T> {
+		const s = new HashSet<T>()
 		s.set_items(items)
 		return s
 	}
@@ -33,15 +35,6 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 		for (const value of Object.values(this.items)) {
 			yield value
 		}
-
-		// const values = Object.values(this.items)
-		// let index = 0
-		// return {
-		// 	next: function() {
-		// 		const done = index === values.length
-		// 		return { done, value: !done ? values[index++] : undefined }
-		// 	}.bind(this)
-		// }
 	}
 
 	values() {
@@ -85,7 +78,98 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 		return this
 	}
 
-	// union(other: HashSet<T>): this {
 
-	// }
+	protected static union_items<T extends Hashable>(items: Items<T>, others: HashSet<T>[]) {
+		for (let index = 0; index < others.length; index++) {
+			const other = others[index]
+			items = { ...items, ...other.items }
+		}
+		return items
+	}
+
+	// mutating version of union
+	update(other: HashSet<T>, ...rest: HashSet<T>[]): this {
+		this.items = HashSet.union_items(this.items, [other].concat(rest))
+		return this
+	}
+
+	// non-mutating
+	union(other: HashSet<T>, ...rest: HashSet<T>[]): HashSet<T> {
+		const items = HashSet.union_items({ ...this.items }, [other].concat(rest))
+		const s = new HashSet<T>()
+		s.items = items
+		return s
+	}
+
+
+	protected static intersection_items<T extends Hashable>(items: Items<T>, others: HashSet<T>[]) {
+		for (const hash_key in items) {
+			let keep_key = false
+			for (let index = 0; index < others.length; index++) {
+				const other = others[index]
+				if (hash_key in other.items) {
+					keep_key = true
+					break
+				}
+			}
+
+			if (!keep_key)
+				delete items[hash_key]
+		}
+
+		return items
+	}
+
+	// in place version of intersection
+	filter(other: HashSet<T>, ...rest: HashSet<T>[]): this {
+		this.items = HashSet.intersection_items(this.items, [other].concat(rest))
+		return this
+	}
+
+	// non-mutating
+	intersection(other: HashSet<T>, ...rest: HashSet<T>[]): HashSet<T> {
+		const items = HashSet.intersection_items({ ...this.items }, [other].concat(rest))
+		const s = new HashSet<T>()
+		s.items = items
+		return s
+	}
+
+
+	protected static difference_items<T extends Hashable>(items: Items<T>, others: HashSet<T>[]) {
+		for (let index = 0; index < others.length; index++) {
+			const other = others[index]
+			for (const hash_key in other.items) {
+				delete items[hash_key]
+			}
+		}
+
+		return items
+	}
+
+	// in place version of difference
+	subtract(other: HashSet<T>, ...rest: HashSet<T>[]): this {
+		this.items = HashSet.difference_items(this.items, [other].concat(rest))
+		return this
+	}
+
+	// non-mutating
+	difference(other: HashSet<T>, ...rest: HashSet<T>[]): HashSet<T> {
+		const items = HashSet.difference_items({ ...this.items }, [other].concat(rest))
+		const s = new HashSet<T>()
+		s.items = items
+		return s
+	}
 }
+
+
+
+// *[Symbol.iterator]() {
+// 	const values = Object.values(this.items)
+// 	let index = 0
+// 	return {
+// 		next: function() {
+// 			const done = index === values.length
+// 			return { done, value: !done ? values[index++] : undefined }
+// 		}.bind(this)
+// 	}
+// }

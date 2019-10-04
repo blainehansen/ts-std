@@ -36,16 +36,6 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 		for (let index = entries.length - 1; index >= 0; index--) {
 			yield entries[index]
 		}
-		// const values =
-		// let index = 0
-		// return {
-		// 	next: function() {
-		// 		return {
-		// 			done: values,
-		// 			value: ,
-		// 		}
-		// 	}.bind(this)
-		// }
 	}
 
 	entries() {
