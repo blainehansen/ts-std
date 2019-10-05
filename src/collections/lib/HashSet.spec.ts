@@ -107,16 +107,16 @@ describe('HashSet', () => {
 	})
 
 
-	it('update', () => {
+	it('mutate_union', () => {
 		const s = new HashSet<Key>()
-			.update(new HashSet(zero_key))
+			.mutate_union(new HashSet(zero_key))
 
 		expect(s.has(zero_key)).true
 		expect(s.has(one_key)).false
 		expect(s.has(two_key)).false
 
 		const o = new HashSet<Key>()
-			.update(new HashSet(zero_key), new HashSet(zero_key, one_key))
+			.mutate_union(new HashSet(zero_key), new HashSet(zero_key, one_key))
 
 		expect(o.has(zero_key)).true
 		expect(o.has(one_key)).true
@@ -147,16 +147,16 @@ describe('HashSet', () => {
 	})
 
 
-	it('filter', () => {
+	it('mutate_intersection', () => {
 		const s = new HashSet<Key>(zero_key)
-			.filter(new HashSet(zero_key, one_key))
+			.mutate_intersection(new HashSet(zero_key, one_key))
 
 		expect(s.has(zero_key)).true
 		expect(s.has(one_key)).false
 		expect(s.has(two_key)).false
 
 		const o = new HashSet<Key>(zero_key)
-			.filter(new HashSet(zero_key), new HashSet(zero_key, one_key))
+			.mutate_intersection(new HashSet(zero_key), new HashSet(zero_key, one_key))
 
 		expect(o.has(zero_key)).true
 		expect(o.has(one_key)).false
@@ -187,10 +187,10 @@ describe('HashSet', () => {
 	})
 
 
-	it('subtract', () => {
+	it('mutate_difference', () => {
 		const s = HashSet
 			.from(initial_items)
-			.subtract(new HashSet(zero_key))
+			.mutate_difference(new HashSet(zero_key))
 
 		expect(s.has(zero_key)).false
 		expect(s.has(one_key)).true
@@ -198,7 +198,7 @@ describe('HashSet', () => {
 
 		const o = HashSet
 			.from(initial_items)
-			.subtract(new HashSet(zero_key), new HashSet(zero_key, one_key))
+			.mutate_difference(new HashSet(zero_key), new HashSet(zero_key, one_key))
 
 		expect(o.has(zero_key)).false
 		expect(o.has(one_key)).false

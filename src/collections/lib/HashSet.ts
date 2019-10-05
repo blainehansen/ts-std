@@ -1,6 +1,4 @@
-import { Hashable } from './common'
-
-type Items<T> = { [hash_key: number]: T }
+import { Items, Hashable } from './common'
 
 export class HashSet<T extends Hashable> implements Iterable<T> {
 	protected items!: Items<T>
@@ -32,8 +30,9 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 	get size() { return Object.keys(this.items).length }
 
 	*[Symbol.iterator]() {
-		for (const value of Object.values(this.items)) {
-			yield value
+		const values = Object.values(this.items)
+		for (let index = 0; index < values.length; index++) {
+			yield values[index]
 		}
 	}
 
@@ -88,7 +87,7 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 	}
 
 	// mutating version of union
-	update(other: HashSet<T>, ...rest: HashSet<T>[]): this {
+	mutate_union(other: HashSet<T>, ...rest: HashSet<T>[]): this {
 		this.items = HashSet.union_items(this.items, [other].concat(rest))
 		return this
 	}
@@ -121,7 +120,7 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 	}
 
 	// in place version of intersection
-	filter(other: HashSet<T>, ...rest: HashSet<T>[]): this {
+	mutate_intersection(other: HashSet<T>, ...rest: HashSet<T>[]): this {
 		this.items = HashSet.intersection_items(this.items, [other].concat(rest))
 		return this
 	}
@@ -147,7 +146,7 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 	}
 
 	// in place version of difference
-	subtract(other: HashSet<T>, ...rest: HashSet<T>[]): this {
+	mutate_difference(other: HashSet<T>, ...rest: HashSet<T>[]): this {
 		this.items = HashSet.difference_items(this.items, [other].concat(rest))
 		return this
 	}
@@ -160,16 +159,3 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 		return s
 	}
 }
-
-
-
-// *[Symbol.iterator]() {
-// 	const values = Object.values(this.items)
-// 	let index = 0
-// 	return {
-// 		next: function() {
-// 			const done = index === values.length
-// 			return { done, value: !done ? values[index++] : undefined }
-// 		}.bind(this)
-// 	}
-// }

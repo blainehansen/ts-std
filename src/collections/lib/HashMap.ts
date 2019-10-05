@@ -1,9 +1,9 @@
 import { Maybe, Some, None } from '@ts-actually-safe/monads'
 
-import { Hashable } from './common'
+import { Items, Hashable } from './common'
 
 export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
-	protected items!: { [hash_key: number]: [K, T] }
+	protected items!: Items<[K, T]>
 
 	static from<K extends Hashable, T>(items: [K, T][]): HashMap<K, T> {
 		const s = new HashMap<K, T>()
@@ -42,6 +42,15 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 		return Object.values(this.items)
 	}
 
+	keys() {
+		return Object.values(this.items).map(([k, _]) => k)
+	}
+
+	values() {
+		return Object.values(this.items).map(([_, t]) => t)
+	}
+
+
 	has(key: K): boolean {
 		const hash_key = key.to_hash()
 		return hash_key in this.items
@@ -77,27 +86,111 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 		return this
 	}
 
-	update(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): this {
-		const others = [other].concat(rest)
 
+
+	protected static union_items<K extends Hashable, T>(items: Items<[K, T]>, others: HashMap<K, T>[]) {
 		for (let index = 0; index < others.length; index++) {
 			const other = others[index]
-			this.items = { ...this.items, ...other.items }
+			items = { ...items, ...other.items }
 		}
+		return items
+	}
 
+	// mutating version of union
+	mutate_merge(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): this {
+		this.items = HashMap.union_items(this.items, [other].concat(rest))
 		return this
 	}
 
-	subtract(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): this {
-		const others = [other].concat(rest)
+	// non-mutating
+	merge(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): HashMap<K, T> {
+		const items = HashMap.union_items({ ...this.items }, [other].concat(rest))
+		const s = new HashMap<K, T>()
+		s.items = items
+		return s
+	}
 
+
+	protected static intersection_items<K extends Hashable, T>(items: Items<[K, T]>, others: HashMap<K, T>[]) {
+		for (const hash_key in items) {
+			let keep_key = false
+			for (let index = 0; index < others.length; index++) {
+				const other = others[index]
+				if (hash_key in other.items) {
+					keep_key = true
+					break
+				}
+			}
+
+			if (!keep_key)
+				delete items[hash_key]
+		}
+
+		return items
+	}
+
+	// in place version of intersection
+	mutate_filter(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): this {
+		this.items = HashMap.intersection_items(this.items, [other].concat(rest))
+		return this
+	}
+
+	// non-mutating
+	filter(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): HashMap<K, T> {
+		const items = HashMap.intersection_items({ ...this.items }, [other].concat(rest))
+		const s = new HashMap<K, T>()
+		s.items = items
+		return s
+	}
+
+
+	protected static difference_items<K extends Hashable, T>(items: Items<[K, T]>, others: HashMap<K, T>[]) {
 		for (let index = 0; index < others.length; index++) {
 			const other = others[index]
 			for (const hash_key in other.items) {
-				delete this.items[hash_key]
+				delete items[hash_key]
 			}
 		}
 
+		return items
+	}
+
+	// in place version of difference
+	mutate_remove(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): this {
+		this.items = HashMap.difference_items(this.items, [other].concat(rest))
 		return this
+	}
+
+	// non-mutating
+	remove(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): HashMap<K, T> {
+		const items = HashMap.difference_items({ ...this.items }, [other].concat(rest))
+		const s = new HashMap<K, T>()
+		s.items = items
+		return s
+	}
+
+
+	protected static defaults_items<K extends Hashable, T>(items: Items<[K, T]>, others: HashMap<K, T>[]) {
+		for (let index = 0; index < others.length; index++) {
+			const other = others[index]
+			for (const hash_key in other.items) {
+				if (!(hash_key in items))
+					items[hash_key] = other.items[hash_key]
+			}
+		}
+
+		return items
+	}
+
+	mutate_defaults(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): this {
+		this.items = HashMap.defaults_items(this.items, [other].concat(rest))
+		return this
+	}
+
+	defaults(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): HashMap<K, T> {
+		const items = HashMap.defaults_items({ ...this.items }, [other].concat(rest))
+		const s = new HashMap<K, T>()
+		s.items = items
+		return s
 	}
 }

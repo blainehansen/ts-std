@@ -123,10 +123,11 @@ describe('HashMap', () => {
 		expect(s.has(two_key)).false
 	})
 
-	it('update', () => {
+
+	it('mutate_merge', () => {
 		const s = HashMap
 			.from(initial_items)
-			.update(new HashMap([zero_key, 9]))
+			.mutate_merge(new HashMap([zero_key, 9]))
 
 		expect(s.get(zero_key)).eql(Some(9))
 		expect(s.get(one_key)).eql(Some(1))
@@ -134,17 +135,82 @@ describe('HashMap', () => {
 
 		const o = HashMap
 			.from(initial_items)
-			.update(new HashMap([zero_key, 9]), new HashMap([zero_key, 999], [one_key, 99]))
+			.mutate_merge(new HashMap([zero_key, 9]), new HashMap([zero_key, 999], [one_key, 99]))
 
 		expect(o.get(zero_key)).eql(Some(999))
 		expect(o.get(one_key)).eql(Some(99))
 		expect(o.get(two_key)).eql(Some(2))
 	})
 
-	it('subtract', () => {
+	it('merge', () => {
+		const a = new HashMap([zero_key, 9])
+		const b = new HashMap([zero_key, 99], [one_key, 1])
+		const c = new HashMap([zero_key, 999], [two_key, 2])
+		const u = a.merge(b, c)
+
+		expect(a.get(zero_key)).eql(Some(9))
+		expect(a.get(one_key)).eql(None)
+		expect(a.get(two_key)).eql(None)
+
+		expect(b.get(zero_key)).eql(Some(99))
+		expect(b.get(one_key)).eql(Some(1))
+		expect(b.get(two_key)).eql(None)
+
+		expect(c.get(zero_key)).eql(Some(999))
+		expect(c.get(one_key)).eql(None)
+		expect(c.get(two_key)).eql(Some(2))
+
+		expect(u.get(zero_key)).eql(Some(999))
+		expect(u.get(one_key)).eql(Some(1))
+		expect(u.get(two_key)).eql(Some(2))
+	})
+
+
+
+	it('mutate_filter', () => {
+		const s = new HashMap([zero_key, 9])
+			.mutate_filter(new HashMap([zero_key, 99], [one_key, 1]))
+
+		expect(s.get(zero_key)).eql(Some(9))
+		expect(s.get(one_key)).eql(None)
+		expect(s.get(two_key)).eql(None)
+
+		const o = new HashMap([zero_key, 9], [two_key, 2])
+			.mutate_filter(new HashMap([zero_key, 99]), new HashMap([zero_key, 999], [one_key, 1]))
+
+		expect(o.get(zero_key)).eql(Some(9))
+		expect(o.get(one_key)).eql(None)
+		expect(o.get(two_key)).eql(None)
+	})
+
+	it('filter', () => {
+		const a = new HashMap([zero_key, 9])
+		const b = new HashMap([zero_key, 99], [one_key, 1])
+		const c = new HashMap([zero_key, 999], [two_key, 2])
+		const u = a.filter(b, c)
+
+		expect(a.get(zero_key)).eql(Some(9))
+		expect(a.get(one_key)).eql(None)
+		expect(a.get(two_key)).eql(None)
+
+		expect(b.get(zero_key)).eql(Some(99))
+		expect(b.get(one_key)).eql(Some(1))
+		expect(b.get(two_key)).eql(None)
+
+		expect(c.get(zero_key)).eql(Some(999))
+		expect(c.get(one_key)).eql(None)
+		expect(c.get(two_key)).eql(Some(2))
+
+		expect(u.get(zero_key)).eql(Some(9))
+		expect(u.get(one_key)).eql(None)
+		expect(u.get(two_key)).eql(None)
+	})
+
+
+	it('mutate_remove', () => {
 		const s = HashMap
 			.from(initial_items)
-			.subtract(new HashMap([zero_key, 9]))
+			.mutate_remove(new HashMap([zero_key, 9]))
 
 		expect(s.get(zero_key)).eql(None)
 		expect(s.get(one_key)).eql(Some(1))
@@ -152,10 +218,73 @@ describe('HashMap', () => {
 
 		const o = HashMap
 			.from(initial_items)
-			.subtract(new HashMap([zero_key, 9]), new HashMap([zero_key, 999], [one_key, 99]))
+			.mutate_remove(new HashMap([zero_key, 9]), new HashMap([zero_key, 999], [one_key, 99]))
 
 		expect(o.get(zero_key)).eql(None)
 		expect(o.get(one_key)).eql(None)
 		expect(o.get(two_key)).eql(Some(2))
+	})
+
+	it('remove', () => {
+		const a = HashMap.from(initial_items)
+		const b = new HashMap([one_key, 9])
+		const c = new HashMap([two_key, 9])
+		const u = a.remove(b, c)
+
+		expect(a.get(zero_key)).eql(Some(0))
+		expect(a.get(one_key)).eql(Some(1))
+		expect(a.get(two_key)).eql(Some(2))
+
+		expect(b.get(zero_key)).eql(None)
+		expect(b.get(one_key)).eql(Some(9))
+		expect(b.get(two_key)).eql(None)
+
+		expect(c.get(zero_key)).eql(None)
+		expect(c.get(one_key)).eql(None)
+		expect(c.get(two_key)).eql(Some(9))
+
+		expect(u.get(zero_key)).eql(Some(0))
+		expect(u.get(one_key)).eql(None)
+		expect(u.get(two_key)).eql(None)
+	})
+
+
+	it('mutate_defaults', () => {
+		const s = new HashMap([zero_key, 0])
+			.mutate_defaults(new HashMap([zero_key, 9], [one_key, 1]))
+
+		expect(s.get(zero_key)).eql(Some(0))
+		expect(s.get(one_key)).eql(Some(1))
+		expect(s.get(two_key)).eql(None)
+
+		const o = new HashMap([zero_key, 0])
+			.mutate_defaults(new HashMap([one_key, 1]), new HashMap([zero_key, 999], [one_key, 99]))
+
+		expect(o.get(zero_key)).eql(Some(0))
+		expect(o.get(one_key)).eql(Some(1))
+		expect(o.get(two_key)).eql(None)
+	})
+
+	it('defaults', () => {
+		const a = new HashMap([zero_key, 9])
+		const b = new HashMap([zero_key, 99], [one_key, 1])
+		const c = new HashMap([zero_key, 999], [two_key, 2])
+		const u = a.defaults(b, c)
+
+		expect(a.get(zero_key)).eql(Some(9))
+		expect(a.get(one_key)).eql(None)
+		expect(a.get(two_key)).eql(None)
+
+		expect(b.get(zero_key)).eql(Some(99))
+		expect(b.get(one_key)).eql(Some(1))
+		expect(b.get(two_key)).eql(None)
+
+		expect(c.get(zero_key)).eql(Some(999))
+		expect(c.get(one_key)).eql(None)
+		expect(c.get(two_key)).eql(Some(2))
+
+		expect(u.get(zero_key)).eql(Some(9))
+		expect(u.get(one_key)).eql(Some(1))
+		expect(u.get(two_key)).eql(Some(2))
 	})
 })
