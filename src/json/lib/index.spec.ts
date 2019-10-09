@@ -87,6 +87,9 @@ describe('union', () => {
 			['a', '', null, undefined],
 			[[], ['a'], {}, { a: 'a' }, true, false, 0, 1, 2, -2, -1, 5.5, -5.5, Infinity, NaN, -Infinity, -NaN],
 		)
+
+		const separated = json.union(json.string, json.null_value).decode
+		expect(separated('a')).eql(Ok('a'))
 	})
 })
 
@@ -121,6 +124,9 @@ describe('value', () => {
 		)
 
 		const a: Result<5> = json.value(5).decode(null)
+
+		const separated = json.value(4).decode
+		expect(separated(4)).eql(Ok(4))
 	})
 })
 
@@ -133,6 +139,10 @@ describe('values', () => {
 		)
 
 		const a: Result<'a' | 5> = json.values('a', 5).decode(null)
+
+		const separated = json.values(4, 5).decode
+		expect(separated(4)).eql(Ok(4))
+		expect(separated(5)).eql(Ok(5))
 	})
 })
 
@@ -160,6 +170,9 @@ describe('array', () => {
 			[[null, 'a', '', 5, -1, null], []],
 			[null, undefined, [true], {}, { a: 'a' }, true, false, 'a', -2, -1, 5.5, -5.5, Infinity, NaN, -Infinity, -NaN],
 		)
+
+		const separated = json.array(json.number).decode
+		expect(separated([4])).eql(Ok([4]))
 	})
 })
 
@@ -176,6 +189,9 @@ describe('dictionary', () => {
 			[{ a: 1, b: null, c: 5 }, {}],
 			[null, undefined, [], ['a'], { a: 'a' }, true, false, 'a', 0, 1, 2, -2, -1, 5.5, -5.5, Infinity, NaN, -Infinity, -NaN],
 		)
+
+		const separated = json.dictionary(json.number).decode
+		expect(separated({ a: 4 })).eql(Ok({ a: 4 }))
 	})
 })
 
@@ -198,6 +214,9 @@ describe('tuple', () => {
 			[[1, true], ['a', false]],
 			[null, undefined, [], [false, 'a', 0], ['a'], { a: 'a' }, true, 'a', 0, 1, -1, 5.5, -5.5, Infinity, NaN, -Infinity, -NaN],
 		)
+
+		const separated = json.tuple(json.number, json.boolean).decode
+		expect(separated([1, true])).eql(Ok([1, true]))
 	})
 })
 
@@ -212,6 +231,9 @@ describe('object', () => {
 			[{ a: 'a', b: true, c: 5 }, { a: 'a', b: true, c: null }],
 			[null, undefined, [], ['a'], { a: 'a', b: 0, c: 4 }, { a: 'a', b: true, c: 4, d: 'a' }, true, 'a', 2, -2, 5.5, -5.5, Infinity, NaN],
 		)
+
+		const separated = json.object('separated', { a: json.number }).decode
+		expect(separated({ a: 1 })).eql(Ok({ a: 1 }))
 	})
 })
 
@@ -230,5 +252,8 @@ describe('loose_object', () => {
 			],
 			[null, undefined, [], ['a'], { a: 'a', b: 0, c: 4 }, { a: 'a', b: true, d: 'a' }, true, 'a', 2, -2, 5.5, -5.5, Infinity, NaN],
 		)
+
+		const separated = json.object('separated', { a: json.number }).decode
+		expect(separated({ a: 1 })).eql(Ok({ a: 1 }))
 	})
 })
