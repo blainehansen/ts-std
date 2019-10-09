@@ -8,16 +8,8 @@ export interface Decoder<T> {
 	decode(json: any): Result<T>,
 }
 
-// export interface ValueDecoder<> {
-
-// }
-
 export type DecoderTuple<L extends any[]> = {
 	[K in keyof L]: Decoder<L[K]>
-
-	// [K in keyof L]: L[K] extends null | undefined
-	// 	? ValueDecoder<L[K]>
-	// 	:
 }
 
 
@@ -33,13 +25,7 @@ export const string = {
 		else return Err(`expected string, got ${json}`)
 	}
 } as const
-export const number = {
-	name: 'number',
-	decode(json: any): Result<number> {
-		if (typeof json === 'number') return Ok(json)
-		else return Err(`expected number, got ${json}`)
-	},
-} as const
+
 export const boolean = {
 	name: 'boolean',
 	decode(json: any): Result<boolean> {
@@ -48,14 +34,72 @@ export const boolean = {
 	},
 } as const
 
+export const number = {
+	name: 'number',
+	decode(json: any): Result<number> {
+		if (
+			typeof json === 'number'
+			&& json !== Infinity
+			&& json !== -Infinity
+			&& !isNaN(json)
+		) return Ok(json)
+		else return Err(`expected number, got ${json}`)
+	},
+} as const
+export const loose_number = {
+	name: 'loose_number',
+	decode(json: any): Result<number> {
+		if (typeof json === 'number') return Ok(json)
+		else return Err(`expected number, got ${json}`)
+	},
+} as const
+export const int = {
+	name: 'int',
+	decode(json: any): Result<number> {
+		if (
+			typeof json === 'number'
+			&& json !== Infinity
+			&& json !== -Infinity
+			&& !isNaN(json)
+			&& json % 1 === 0
+		) return Ok(json)
+		else return Err(`expected int, got ${json}`)
+	}
+} as const
+export const uint = {
+	name: 'uint',
+	decode(json: any): Result<number> {
+		if (
+			typeof json === 'number'
+			&& json !== Infinity
+			&& json !== -Infinity
+			&& !isNaN(json)
+			&& json % 1 === 0
+			&& json >= 0
+		) return Ok(json)
+		else return Err(`expected uint, got ${json}`)
+	}
+} as const
 
-class UnionDecoder<L extends any[]> implements Decoder<L[number]> {
+
+abstract class ClassDecoder<T> implements Decoder<T> {
+	abstract readonly name: string
+	protected _bound_decoder: (json: any) => Result<T>
+	constructor() {
+		this._bound_decoder = json => this._decode(json)
+	}
+	abstract _decode(json: any): Result<T>
+	get decode() { return this._bound_decoder }
+}
+
+class UnionDecoder<L extends any[]> extends ClassDecoder<L[number]> {
 	readonly name: string
-	constructor(private readonly decoders: DecoderTuple<L>) {
+	constructor(protected readonly decoders: DecoderTuple<L>) {
+		super()
 		this.name = decoders.map(d => d.name).join(' | ')
 	}
 
-	decode(json: any): Result<L[number]> {
+	_decode(json: any): Result<L[number]> {
 		for (const decoder of this.decoders) {
 			const result = decoder.decode(json)
 			if (result.is_ok()) return result
@@ -68,9 +112,9 @@ export function union<L extends any[]>(...decoders: DecoderTuple<L>): Decoder<L[
 	return new UnionDecoder(decoders) as Decoder<L[number]>
 }
 
-// export class all<L extends any[]> implements Decoder<FoldingFunctions<L>> {
+// export class all<L extends any[]> extends ClassDecoder<FoldingFunctions<L>> {
 // 	name: string
-// 	private readonly decoders: DecoderTuple<L>
+// 	protected readonly decoders: DecoderTuple<L>
 // 	constructor(...decoders: DecoderTuple<L>) {
 // 		this.name = 'all: ' + decoders.map(d => d.name).join(', ')
 // 		this.decoders = decoders
@@ -87,33 +131,37 @@ export function union<L extends any[]>(...decoders: DecoderTuple<L>): Decoder<L[
 // }
 
 
-// type BasicallyEverything = string | boolean | number | any[] | { [key: string]: any } | null | undefined
+type Primitives = string | boolean | number | null | undefined
 
-// class ValuesDecoder<V extends BasicallyEverything, L extends V[]> implements Decoder<L[number]> {
-// 	readonly name: string
-// 	constructor(private readonly values: L) {
-// 		this.name = values.join(' | ')
-// 	}
+class ValuesDecoder<V extends Primitives, L extends V[]> extends ClassDecoder<L[number]> {
+	readonly name: string
+	constructor(protected readonly values: L) {
+		super()
+		this.name = values.join(' | ')
+	}
 
-// 	decode(json: any) {
-// 		for (const value of this.values) {
-// 			if (value === json) return Ok(value)
-// 			if (Array.isArray(value))
-// 		}
+	_decode(json: any): Result<L[number]> {
+		for (const value of this.values) {
+			if (value === json) return Ok(value)
+		}
 
-// 		return Err(`expected ${this.name}; got ${json}`)
-// 	}
-// }
-// export function value<V extends BasicallyEverything>(value: V): Decoder<V> {
-// 	return new ValuesDecoder([value])
-// }
-// export function values<V extends BasicallyEverything, L extends V[]>(...values: L): Decoder<L[number]> {
-// 	return new ValuesDecoder(values)
-// }
+		return Err(`expected ${this.name}; got ${json}`)
+	}
+}
+export function value<V extends Primitives>(value: V): Decoder<V> {
+	return new ValuesDecoder([value]) as Decoder<V>
+}
+export function values<V extends Primitives, L extends V[]>(...values: L): Decoder<L[number]> {
+	return new ValuesDecoder(values) as Decoder<L[number]>
+}
 
 
-// export const undefined_value = value(undefined)
-// export const null_value = value(null)
+export const undefined_value = value(undefined as undefined)
+export const null_value = value(null as null)
+
+export function optional<T>(decoder: Decoder<T>): Decoder<T | undefined> {
+	return union(decoder, undefined_value)
+}
 
 
 abstract class collection_decoder<T> {
@@ -125,7 +173,15 @@ abstract class collection_decoder<T> {
 
 
 class ArrayDecoder<T> extends collection_decoder<T> implements Decoder<T[]> {
-	decode(json: any): Result<T[]> {
+	protected _bound_decoder: (json: any) => Result<T[]>
+	get decode() { return this._bound_decoder }
+
+	constructor(protected readonly decoder: Decoder<T>) {
+		super(decoder)
+		this._bound_decoder = json => this._decode(json)
+	}
+
+	_decode(json: any): Result<T[]> {
 		const { name, decoder } = this
 
 		if (!Array.isArray(json)) return Err(`expected array of ${name}, got ${json}`)
@@ -149,7 +205,15 @@ export function array<T>(decoder: Decoder<T>): Decoder<T[]> {
 
 
 class DictionaryDecoder<T> extends collection_decoder<T> implements Decoder<{ [key: string]: T }> {
-	decode(json: any): Result<{ [key: string]: T }> {
+	protected _bound_decoder: (json: any) => Result<{ [key: string]: T }>
+	get decode() { return this._bound_decoder }
+
+	constructor(protected readonly decoder: Decoder<T>) {
+		super(decoder)
+		this._bound_decoder = json => this._decode(json)
+	}
+
+	_decode(json: any): Result<{ [key: string]: T }> {
 		const { name, decoder } = this
 
 		if (!is_object(json)) return Err(`expecting dictionary of ${name}, got ${json}`)
@@ -176,13 +240,14 @@ export function dictionary<T>(decoder: Decoder<T>): Decoder<{ [key: string]: T }
 }
 
 
-class TupleDecoder<L extends any[]> implements Decoder<L> {
+class TupleDecoder<L extends any[]> extends ClassDecoder<L> {
 	readonly name: string
-	constructor(private readonly decoders: DecoderTuple<L>) {
+	constructor(protected readonly decoders: DecoderTuple<L>) {
+		super()
 		this.name = `[${decoders.map(d => d.name).join(', ')}]`
 	}
 
-	decode(json: any): Result<L> {
+	_decode(json: any): Result<L> {
 		const { name, decoders } = this
 
 		if (
@@ -190,7 +255,7 @@ class TupleDecoder<L extends any[]> implements Decoder<L> {
 			|| json.length !== decoders.length
 		) return Err(`expected ${name}, got ${json}`)
 
-		const t = [] as any as NonNullable<L>
+		const t = [] as any as L
 		for (let index = 0; index < decoders.length; index++) {
 			const decoder = decoders[index]
 			const value = json[index]
@@ -209,33 +274,76 @@ export function tuple<L extends any[]>(...decoders: DecoderTuple<L>): Decoder<L>
 }
 
 
-class ObjectDecoder<O> implements Decoder<O> {
+class StrictObjectDecoder<O> extends ClassDecoder<O> {
 	constructor(
 		readonly name: string,
-		private readonly decoders: { [K in keyof O]: Decoder<O[K]> },
-	) {}
+		protected readonly decoders: { [K in keyof O]: Decoder<O[K]> },
+	) {
+		super()
+	}
 
-	decode(json: any): Result<O> {
+	_decode(json: any): Result<O> {
 		const { name, decoders } = this
 
 		if (!is_object(json)) return Err(`Failed to decode a valid ${name}, input is not an object: ${json}`)
 
-		const t = {} as O
-		for (const key in decoders) {
-			if (!(key in json)) return Err(`Failed to decode a valid ${name}, input doesn't have value for key: ${key}`)
+		const give = {} as O
+		for (const key in json) {
+			if (!(key in decoders)) return Err(`Failed to decode a valid ${name}, input had invalid extra key ${key}`)
 			const decoder = decoders[key]
 			const value = json[key]
 			const result = decoder.decode(value)
 			if (result.is_err()) return Err(`Failed to decode a valid ${name}, key ${key} has invalid value: ${value}`)
-			t[key as keyof O] = result.expect(rinv)
+			give[key as keyof O] = result.expect(rinv)
 		}
 
-		return Ok(t as NonNullable<O>)
+		return Ok(give as O)
 	}
 }
 export function object<O>(
 	name: string,
 	decoders: { [K in keyof O]: Decoder<O[K]> },
 ): Decoder<O> {
-	return new ObjectDecoder(name, decoders) as Decoder<O>
+	return new StrictObjectDecoder(name, decoders) as Decoder<O>
 }
+
+
+class LooseObjectDecoder<O> extends ClassDecoder<O> {
+	constructor(
+		readonly name: string,
+		protected readonly decoders: { [K in keyof O]: Decoder<O[K]> },
+	) {
+		super()
+	}
+
+	_decode(json: any): Result<O> {
+		const { name, decoders } = this
+
+		if (!is_object(json)) return Err(`Failed to decode a valid ${name}, input is not an object: ${json}`)
+
+		const give = { ...json } as O
+		for (const key in decoders) {
+			if (!(key in give)) return Err(`Failed to decode a valid ${name}, input doesn't have value for key: ${key}`)
+			const decoder = decoders[key]
+			const value = give[key]
+			const result = decoder.decode(value)
+			if (result.is_err()) return Err(`Failed to decode a valid ${name}, key ${key} has invalid value: ${value}`)
+			give[key as keyof O] = result.expect(rinv)
+		}
+
+		return Ok(give as O)
+	}
+
+	// get decode() { return this._decode.bind(this) }
+	// get decode() { return (json: any) => this._decode(json) }
+}
+export function loose_object<O>(
+	name: string,
+	decoders: { [K in keyof O]: Decoder<O[K]> },
+): Decoder<O> {
+	return new LooseObjectDecoder(name, decoders) as Decoder<O>
+}
+
+
+
+// class InstanceDecoder<T> implements {}
