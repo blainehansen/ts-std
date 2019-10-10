@@ -57,20 +57,19 @@ Converts the `Maybe` into a [`Result`](./result.md), taking in an error value.
 
 ```ts
 Some(1).to_result("no number") === Ok(5)
-None.to_result() === Err("no number")
+None.to_result("no number") === Err("no number")
 ```
 
 ### `match<U>(fn: MaybeMatch<T, U>): U`
 
 ```ts
-type TransformerOrValue<T, U> = ((input: T) => U) | U
-
-type ProducerOrValue<U> = () => (() => U) | U
-
-type MaybeMatch<T, U> {
+type MaybeMatch<T, U> = {
   some: TransformerOrValue<T, U>,
   none: ProducerOrValue<U>,
 }
+
+type TransformerOrValue<T, U> = ((input: T) => U) | U
+type ProducerOrValue<U> = () => (() => U) | U
 ```
 
 Matches on the value, taking a function to call or value to return for both the `Some` and `None` cases.
@@ -110,7 +109,7 @@ Some(-1).try_change(func) === None
 
 ### `and<U>(other: ProducerOrValue<Maybe<U>>): Maybe<U>`
 
-Changes the internal value to `other` if both are `Some`, else returns `None`.
+Returns `other` if both are `Some`, else returns `None`.
 
 `other` can be a function that returns a value, for lazy execution.
 
@@ -158,7 +157,7 @@ Some(1).xor(() => Some(2)) === None
 
 Returns the internal value if it is `Some`, else `def`.
 
-`defs` can be a function that returns a value, for lazy execution.
+`def` can be a function that returns a value, for lazy execution.
 
 ```ts
 Some(1).default(0) === 1
@@ -241,16 +240,14 @@ combine_none === None
 
 ## `Maybe` static functions
 
-### `Maybe.from_nillable<T>(value: ProducerOrValue<T | null | undefined>): Maybe<T>`
+### `Maybe.from_nillable<T>(value: T | null | undefined): Maybe<T>`
 
 Converts an ordinary javascript value that could be `null | undefined` into a `Maybe`.
-
-`value` can be a function that returns a value, for lazy execution.
 
 ```ts
 Maybe.from_nillable(1) === Some(1)
 Maybe.from_nillable(null) === None
-Maybe.from_nillable(undefined) === None
+Maybe.from_nillable(() => undefined) === None
 ```
 
 ### `Maybe.is_maybe(value: any): value is Maybe<unknown>`
@@ -305,4 +302,4 @@ Maybe.attempt(() => 1) === Some(1)
 Maybe.attempt(() => { throw new Error("Uh oh") }) === None
 ```
 
-**Note:** only use this function with external functions where you can't control if they throw an exception or not, rather than writing your own functions to throw exceptions. In general, you should rewrite your functions not to use exceptions but to instead use `Maybe` and `Result` values.
+**Note:** only use this function with external functions that you can't control. For your own functions, it's better to simply use `Maybe` and `Result` values rather than throwing exceptions.

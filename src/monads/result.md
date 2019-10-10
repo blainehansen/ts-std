@@ -177,11 +177,11 @@ Err("one error").or(Err("two error")) === Err("one error")
 Ok(1).or(() => Ok(2)) === Ok(1)
 ```
 
-### `xor(other: ProducerOrValue<Result<T, E>>, same_err: E): Result<T, E>`
+### `xor(other: ProducerOrValue<Result<T, E>>, same_err: ProducerOrValue<E>): Result<T, E>`
 
 Returns `this` or `other` if exactly one of them is `Ok`, else `Err`.
 
-`other` can be a function that returns a value, for lazy execution.
+Both `other` and `same_err` can be a function that returns a value, for lazy execution.
 
 ```ts
 Ok(1).xor(Ok(2), "both Ok") === Err("both Ok")
@@ -189,10 +189,10 @@ Err("error").xor(Ok(2), "both Ok") === Ok(2)
 Ok(1).xor(Err("error"), "both Ok") === Ok(1)
 Err("one error").xor(Err("two error"), "both Ok") === Err("one error")
 
-Ok(1).xor(() => Ok(2), "both Ok") === Err("both Ok")
+Ok(1).xor(() => Ok(2), () => "both Ok") === Err("both Ok")
 ```
 
-### `default(other: ProducerOrValue<T>): T`
+### `default(def: ProducerOrValue<T>): T`
 
 Returns the ok value if it is `Ok`, else `def`.
 
@@ -205,11 +205,11 @@ Err("error").default(0) === 0
 Err("error").default(() => 0) === 0
 ```
 
-### `default_err(other_err: ProducerOrValue<E>): E`
+### `default_err(def_err: ProducerOrValue<E>): E`
 
 Returns the err value if it is `Err`, else `def`.
 
-`def` can be a function that returns a value, for lazy execution.
+`def_err` can be a function that returns a value, for lazy execution.
 
 ```ts
 Ok(1).default_err("Uh oh") === "Uh oh"
@@ -312,11 +312,11 @@ combine_err === Err("error")
 
 ## `Result` static functions
 
-### `Result.from_nillable<T, E>(value: ProducerOrValue<T | null | undefined>, err: ProducerOrValue<E>): Result<T, E>`
+### `Result.from_nillable<T, E>(value: T | null | undefined, err: ProducerOrValue<E>): Result<T, E>`
 
 Converts an ordinary javascript value that could be `null | undefined` into a `Result`.
 
-`value` can be a function that returns a value, for lazy execution.
+`err` can be a function that returns a value, for lazy execution.
 
 ```ts
 Result.from_nillable(1, "was nillable") === Ok(1)
@@ -399,4 +399,4 @@ Result.attempt(() => 1) === Ok(1)
 Result.attempt(() => { throw new Error("Uh oh") }) === Err(Error("Uh oh"))
 ```
 
-**Note:** only use this function with external functions where you can't control if they throw an exception or not, rather than writing your own functions to throw exceptions. In general, you should rewrite your functions not to use exceptions but to instead use `Maybe` and `Result` values.
+**Note:** only use this function with external functions that you can't control. For your own functions, it's better to simply use `Maybe` and `Result` values rather than throwing exceptions.

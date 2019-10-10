@@ -200,16 +200,10 @@ function _join<L extends any[]>(maybes: MaybeTuple<L>): Maybe<L> {
 }
 
 export namespace Maybe {
-	export function from_nillable<T>(
-		value: ProducerOrValue<T | null | undefined>,
-	): Maybe<T> {
-		const nillable_value = typeof value === 'function'
-			? (value as () => T | null | undefined)()
-			: value
-
+	export function from_nillable<T>(value: T | null | undefined): Maybe<T> {
 		return value === null || value === undefined
 			? None
-			: Some(nillable_value)
+			: Some(value)
 	}
 
 	export function is_maybe(value: any): value is Maybe<unknown> {

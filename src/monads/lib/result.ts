@@ -16,11 +16,6 @@ export type ResultMatch<T, E, U> = {
 	err: TransformerOrValue<E, U>,
 }
 
-// export interface ResultMatch<T, E, U> {
-// 	ok: (value: T) => U,
-// 	err: (value: E) => U,
-// }
-
 export interface ResultLike<T, E> {
 	is_ok(): boolean,
 	is_err(): boolean,
@@ -43,10 +38,10 @@ export interface ResultLike<T, E> {
 
 	and<U>(other: ProducerOrValue<Result<U, E>>): Result<U, E>
 	or(other: ProducerOrValue<Result<T, E>>): Result<T, E>
-	xor(other: ProducerOrValue<Result<T, E>>, same_err: E): Result<T, E>
+	xor(other: ProducerOrValue<Result<T, E>>, same_err: ProducerOrValue<E>): Result<T, E>
 
-	default(other: ProducerOrValue<T>): T,
-	default_err(other_err: ProducerOrValue<E>): E,
+	default(def: ProducerOrValue<T>): T,
+	default_err(def_err: ProducerOrValue<E>): E,
 	join<L extends any[]>(...args: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E>
 	join_collect_err<L extends any[]>(...args: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E[]>
 }
@@ -81,11 +76,11 @@ class ResultOk<T, E> implements ResultLike<T, E> {
 	err_null(): E | null {
 		return null
 	}
-	default(other: ProducerOrValue<T>): T {
+	default(def: ProducerOrValue<T>): T {
 		return this.value
 	}
-	default_err(other_err: ProducerOrValue<E>): E {
-		return typeof other_err === 'function' ? (other_err as () => E)() : other_err
+	default_err(def_err: ProducerOrValue<E>): E {
+		return typeof def_err === 'function' ? (def_err as () => E)() : def_err
 	}
 	expect(message: string): T | never {
 		return this.value
@@ -112,10 +107,10 @@ class ResultOk<T, E> implements ResultLike<T, E> {
 	or(other: ProducerOrValue<Result<T, E>>): Result<T, E> {
 		return this
 	}
-	xor(other: ProducerOrValue<Result<T, E>>, same_err: E): Result<T, E> {
+	xor(other: ProducerOrValue<Result<T, E>>, same_err: ProducerOrValue<E>): Result<T, E> {
 		const other_result = typeof other === 'function' ? other() : other
 		return other_result.is_ok()
-			? Err(same_err)
+			? Err(typeof same_err === 'function' ? (same_err as () => E)() : same_err)
 			: this
 	}
 
@@ -169,10 +164,10 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 	err_null(): E | null {
 		return this.error
 	}
-	default(other: ProducerOrValue<T>): T {
-		return typeof other === 'function' ? (other as () => T)() : other
+	default(def: ProducerOrValue<T>): T {
+		return typeof def === 'function' ? (def as () => T)() : def
 	}
-	default_err(other_err: ProducerOrValue<E>): E {
+	default_err(def_err: ProducerOrValue<E>): E {
 		return this.error
 	}
 	expect(message: string): T | never {
@@ -208,11 +203,11 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 			? other_result
 			: this
 	}
-	xor(other: ProducerOrValue<Result<T, E>>, same_err: E): Result<T, E> {
+	xor(other: ProducerOrValue<Result<T, E>>, same_err: ProducerOrValue<E>): Result<T, E> {
 		const other_result = typeof other === 'function' ? other() : other
 		return other_result.is_ok()
 			? other_result
-			: Err(same_err)
+			: Err(typeof same_err === 'function' ? (same_err as () => E)() : same_err)
 	}
 
 
@@ -301,17 +296,10 @@ function _join_collect_err<L extends any[], E>(results: ResultTuple<L, E>): Resu
 }
 
 export namespace Result {
-	export function from_nillable<T, E>(
-		value: ProducerOrValue<T | null | undefined>,
-		err: ProducerOrValue<E>,
-	): Result<T, E> {
-		const nillable_value = typeof value === 'function'
-			? (value as () => T | null | undefined)()
-			: value
-
-		return nillable_value === null || nillable_value === undefined
+	export function from_nillable<T, E>(value: T | null | undefined, err: ProducerOrValue<E>): Result<T, E> {
+		return value === null || value === undefined
 			? Err(typeof err === 'function' ? (err as () => E)() : err)
-			: Ok(nillable_value)
+			: Ok(value)
 	}
 
 	export function is_result(value: any): value is Result<unknown, unknown> {

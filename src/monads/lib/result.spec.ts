@@ -38,6 +38,9 @@ describe('Result basic api', () => {
 		const xor_ok_fn = r.xor(() => Ok(2), xorm)
 		const xor_err_fn = r.xor(() => Err('xor'), xorm)
 
+		const xor_ok_err_fn = r.xor(() => Ok(2), () => xorm)
+		const xor_err_err_fn = r.xor(() => Err('xor'), () => xorm)
+
 		const default_ok = r.default(2)
 		const default_err = r.default_err('less bad')
 
@@ -69,6 +72,8 @@ describe('Result basic api', () => {
 				expect(xor_err.expect(im)).equal(1)
 				expect(xor_ok_fn.expect_err(im)).equal(xorm)
 				expect(xor_err_fn.expect(im)).equal(1)
+				expect(xor_ok_err_fn.expect_err(im)).equal(xorm)
+				expect(xor_err_err_fn.expect(im)).equal(1)
 
 				expect(default_ok).equal(1)
 				expect(default_err).equal('less bad')
@@ -110,6 +115,8 @@ describe('Result basic api', () => {
 				expect(xor_err.expect_err(im)).equal(xorm)
 				expect(xor_ok_fn.expect(im)).equal(2)
 				expect(xor_err_fn.expect_err(im)).equal(xorm)
+				expect(xor_ok_err_fn.expect(im)).equal(2)
+				expect(xor_err_err_fn.expect_err(im)).equal(xorm)
 
 				expect(default_ok).equal(2)
 				expect(default_err).equal('bad')
@@ -130,7 +137,7 @@ describe('Result basic api', () => {
 
 	it('from_nillable', () => {
 		const null_err = Result.from_nillable(null, 'is null').expect_err(im)
-		const undefined_err = Result.from_nillable(undefined, 'is undefined').expect_err(im)
+		const undefined_err = Result.from_nillable(undefined, () => 'is undefined').expect_err(im)
 		expect(null_err).equal('is null')
 		expect(undefined_err).equal('is undefined')
 
