@@ -3,27 +3,15 @@
   "version": "0.1.0",
   "description": "A library for doing typesafe work with options that could return nothing or could error. Also includes many extensions of native prototypes to allow incredibly productive use.",
   "scripts": {
-    "experiment": "ts-node experiment.ts",
-    "main": "ts-node src/types/lib/maybe.ts",
     "test": "lerna run test",
     "build": "lerna run build",
     "publish": "lerna publish"
   },
-  "keywords": [
-    "typescript",
-    "monads",
-    "monad",
-    "rust",
-    "option",
-    "result",
-    "safe",
-    "fallible",
-    "maybe",
-    "nothing",
-    "null",
-    "error"
-  ],
-  "author": "",
+  "author": {
+		"name": "Blaine Hansen",
+		"email": "faichenshing@gmail.com",
+		"url": "http://blainehansen.co/"
+	},
   "license": "MIT",
   "devDependencies": {
     "@types/chai": "^4.2.0",

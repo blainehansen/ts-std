@@ -353,6 +353,19 @@ export namespace Result {
 		return give
 	}
 
+	export function split<T, E>(results: Result<T, E>[]): [T[], E[]] {
+		const oks = [] as T[]
+		const errs = [] as E[]
+		for (const result of results) {
+			if (result.is_ok())
+				oks.push(result.expect(result_invariant_message))
+			else
+				errs.push(result.expect_err(result_invariant_message))
+		}
+
+		return [oks, errs]
+	}
+
 	export function attempt<T>(fn: () => T): Result<T, Error> {
 		try {
 			return Ok(fn())

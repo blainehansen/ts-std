@@ -336,6 +336,16 @@ describe('Result joining functions', () => {
 		it(`${message} Result.filter`, () => {
 			expect(triple_filtered).eql(filtered)
 		})
+
+		const [triple_split_oks, triple_split_errs] = Result.split(triple)
+		it(`${message} Result.split`, () => {
+			expect(triple_split_oks).eql(filtered)
+
+			if (is_ok)
+				expect(triple_split_errs).eql([])
+			else
+				expect(triple_split_errs).eql(combined)
+		})
 	}
 })
 
