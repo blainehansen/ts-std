@@ -92,7 +92,7 @@ Err("error").err_null() === "error"
 ### `match<U>(fn: ResultMatch<T, E, U>): U`
 
 ```ts
-type ResultMatch<T, E, U> {
+type ResultMatch<T, E, U> = {
   ok: TransformerOrValue<T, U>,
   err: TransformerOrValue<E, U>,
 }
