@@ -206,8 +206,10 @@ Combines the internal `Maybe`s if they were all `Some` with a fallible computati
 
 ```ts
 const func = (one, two, three) => {
-  if (one < 0) return None
-  else return one + two + three
+  if (one < 0)
+    return None
+  else
+    return one + two + three
 }
 
 const combine_some = Some(1).join(Some(2), Some(3))

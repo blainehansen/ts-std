@@ -92,12 +92,12 @@ Err("error").err_null() === "error"
 ### `match<U>(fn: ResultMatch<T, E, U>): U`
 
 ```ts
-type TransformerOrValue<T, U> = ((input: T) => U) | U
-
 type ResultMatch<T, E, U> {
   ok: TransformerOrValue<T, U>,
   err: TransformerOrValue<E, U>,
 }
+
+type TransformerOrValue<T, U> = ((input: T) => U) | U
 ```
 
 Matches on the value, taking a function to call or value to return for both the `Ok` and `Err` cases.
