@@ -207,7 +207,7 @@ Err("error").default(() => 0) === 0
 
 ### `default_err(def_err: ProducerOrValue<E>): E`
 
-Returns the err value if it is `Err`, else `def`.
+Returns the err value if it is `Err`, else `def_err`.
 
 `def_err` can be a function that returns a value, for lazy execution.
 
@@ -232,8 +232,8 @@ Err("error").expect("Uh oh") // throws Error("Uh oh")
 Returns the err value if it is `Err`, otherwise throws an error with `message`. Use this cautiously!
 
 ```ts
-Err("error").expect("Uh oh") === "error"
-Ok(1).expect("Uh oh") // throws Error("Uh oh")
+Err("error").expect_err("Uh oh") === "error"
+Ok(1).expect_err("Uh oh") // throws Error("Uh oh")
 ```
 
 ### `join<L extends any[]>(...args: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E>`
@@ -254,7 +254,7 @@ combine_err === Err(["one error", "two error"])
 
 ## `type ResultJoin<L extends any[], E = string>`
 
-The type that results from joining `Results`s. Has methods to either combine the internal values or convert the join into a `Result`.
+The type created from joining `Results`s. Has methods to either combine the internal values or convert the join into a `Result`.
 
 ### `combine<T>(fn: (...args: L) => T): Result<T, E>`
 
@@ -278,8 +278,10 @@ Combines the internal `Result`s if they were all `Ok` with a fallible computatio
 
 ```ts
 const func = (one, two, three) => {
-  if (one < 0) return Err("error")
-  else return one + two + three
+  if (one < 0)
+    return Err("error")
+  else
+    return one + two + three
 }
 
 const combine_ok = Ok(1).join(Ok(2), Ok(3))

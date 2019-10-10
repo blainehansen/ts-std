@@ -177,12 +177,12 @@ None.expect("Uh oh") // throws Error("Uh oh")
 
 ### `join<L extends any[]>(...maybes: MaybeTuple<L>): MaybeJoin<Unshift<T, L>>`
 
-Joins `this` and many more `Maybe`s into a `MaybeJoin`, which is detailed more below. Joining allows you to perform computations on many `Maybe`s that rely on them all being successful.
+Joins `this` and many more `Maybe`s into a `MaybeJoin`, which is detailed more below. Joining allows you to perform computations on many `Maybe`s that rely on them all being successful. All the `Maybe`s may be of different types.
 
 
 ## `type MaybeJoin<L extends any[]>`
 
-The type that results from joining `Maybe`s. Has methods to either combine the internal values or convert the join into a `Maybe`.
+The type created when joining `Maybe`s. Has methods to either combine the internal values or convert the join into a `Maybe`.
 
 ### `combine<T>(fn: (...args: L) => T): Maybe<T>`
 
