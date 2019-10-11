@@ -1,12 +1,82 @@
 import { Result, Ok, Err } from '@ts-actually-safe/monads'
 import { result_invariant_message as rinv } from '@ts-actually-safe/monads/lib/result'
 
-// export namespace json {}
-
-export interface Decoder<T> {
-	readonly name: string,
-	decode(json: any): Result<T>,
+interface Transformer<T> {
+	readonly name: string
+	decode(json: any): T
 }
+
+class MaybeTransformer<T> implements Transformer<Maybe<T>> {
+	readonly name: string
+	constructor(protected readonly decoder: Decoder<T>) {
+		this.name = `Maybe<>`
+	}
+
+	decode(json: any): Maybe<T> {
+		this.decoder.decode(json).ok_maybe()
+	}
+}
+
+abstract class PanDecoder<T> implements Transformer<Result<T>> {
+	constructor(readonly name: string) {}
+	abstract _decode(): Result<T>
+	get decode() { return this._bound_decoder }
+}
+
+const TransformerType = {
+	Decoder: Symbol('Transformer.Decoder'),
+	Maybe: Symbol('Transformer.Maybe'),
+	Optional: Symbol('Transformer.Optional'),
+} as const
+
+export interface TopDecoder<T> extends Transformer<Result<T>> {
+	//
+}
+
+export interface Decoder<T> extends Transformer<Result<T>> {
+	readonly type = TransformerType.Decoder
+	readonly name: string
+	// has to exactly match
+	decode(json: any): Result<T>
+	// returns a Maybe instead of a Result, *doesn't fail decoding when nested*
+	maybe: Transformer<Maybe<T>>
+	// returns undefinable instead of a Result, *doesn't fail decoding when nested*
+	optional: Transformer<T | undefined>
+	// returns a default instead of a Result, *doesn't fail decoding when nested*
+	defaulting(default_value: T): Transformer<T>
+}
+
+export interface DefaultingDecoder<T> extends Transformer<T> {
+	protected readonly decoder: Decoder<T>
+	protected readonly default_value: T
+	decode(json: any): T
+}
+
+
+class DefaultDecoder<T> {
+	protected _bound_decoder: (json: any) => T
+	constructor(
+		protected readonly decoder: Decoder<T>,
+		protected readonly default_value: T,
+	) {
+		this._bound_decoder = json => this._decode(json)
+	}
+
+	function _decode(json: any): T {
+		return this.decoder.decode(json).default(this.default_value)
+	}
+	get decode() { return this._bound_decoder }
+}
+// function default<T>(decoder: Decoder<T>, default_value: T): DefaultingDecoder<T> {
+// 	return new DefaultDecoder(decoder, default_value) as DefaultingDecoder<T>
+// }
+
+function defaulting<T>(decoder: Decoder<T>) {
+	return function(default_value: T): DefaultingDecoder<T> {
+		return new DefaultDecoder(decoder, default_value) as DefaultingDecoder<T>
+	}
+}
+
 
 export type DecoderTuple<L extends any[]> = {
 	[K in keyof L]: Decoder<L[K]>
@@ -18,12 +88,14 @@ function is_object(json: any): json is NonNullable<Object> {
 }
 
 
+
 export const string = {
 	name: 'string',
 	decode(json: any): Result<string> {
 		if (typeof json === 'string') return Ok(json)
 		else return Err(`expected string, got ${json}`)
-	}
+	},
+	defaulting: defaulting(string),
 } as const
 
 export const boolean = {
@@ -85,11 +157,14 @@ export const uint = {
 abstract class ClassDecoder<T> implements Decoder<T> {
 	abstract readonly name: string
 	protected _bound_decoder: (json: any) => Result<T>
+	protected _bound_defaulting_decoder: (default_value: T) => DefaultingDecoder<T>
 	constructor() {
 		this._bound_decoder = json => this._decode(json)
+		this._bound_defaulting_decoder = defaulting(this)
 	}
 	abstract _decode(json: any): Result<T>
 	get decode() { return this._bound_decoder }
+	get defaulting() { return this._bound_defaulting_decoder }
 }
 
 class UnionDecoder<L extends any[]> extends ClassDecoder<L[number]> {
@@ -160,7 +235,7 @@ export const undefined_value = value(undefined as undefined)
 export const null_value = value(null as null)
 
 export function optional<T>(decoder: Decoder<T>): Decoder<T | undefined> {
-	return union(decoder, undefined_value)
+	return new UnionDecoder(decoder, undefined_value) as Decoder<T | undefined>
 }
 
 
@@ -343,7 +418,3 @@ export function loose_object<O>(
 ): Decoder<O> {
 	return new LooseObjectDecoder(name, decoders) as Decoder<O>
 }
-
-
-
-// class InstanceDecoder<T> implements {}
