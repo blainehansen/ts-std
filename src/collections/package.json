@@ -1,6 +1,6 @@
 {
 	"name": "@ts-actually-safe/collections",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "HashSet and HashMap collections for typescript.",
 	"author": "Blaine Hansen <faichenshing@gmail.com>",
 	"homepage": "https://github.com/blainehansen/ts-actually-safe#readme",
