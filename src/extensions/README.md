@@ -7,15 +7,15 @@
 ### Common types
 
 ```ts
-// type Indexable = string | number | boolean
+type Indexable = string | number | boolean
 ```
 
 ```ts
-// type MapFunc<T, U> = (element: T, index: number, array: T[]) => U
+type MapFunc<T, U> = (element: T, index: number, array: T[]) => U
 ```
 
 ```ts
-// type Unzip<L extends any[]> = { [K in keyof L]: L[K][] }
+type Unzip<L extends any[]> = { [K in keyof L]: L[K][] }
 ```
 
 ### `sum(this: number[]): number`
@@ -28,7 +28,7 @@ If you have a list of numbers, you can just call `sum`.
 
 ### `sum(this: T[], key: KeysOfType<T, number> | MapFunc<T, number>): number`
 
-An array of any type can be summed if you provide a key or function that produces a number from any type.
+An array of any type can be summed if you provide a key or function that produces a number from that type.
 
 ```ts
 [{ a: 1 }, { a: 1 }, { a: 1 }].sum('a') == 3
