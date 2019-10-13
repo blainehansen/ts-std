@@ -2,7 +2,7 @@
 
 > A variety of extensions to native types. Heavily use `Result` and `Maybe` types.
 
-## `Array`
+## `Array<T>`
 
 ### Common types
 
@@ -127,7 +127,7 @@ Array.zip_equal([1, 2, 3], ['a', 'b', 'c']) === Ok([[1, 'a'], [2, 'b'], [3, 'c']
 Array.zip_equal([true, false], ['a', 'b', 'c']) === Err([2, 3])
 ```
 
-## `Promise`
+## `Promise<T>`
 
 ### `join<L extends any[]>(...args: PromiseTuple<L>): Promise<Unshift<T, L>>`
 
