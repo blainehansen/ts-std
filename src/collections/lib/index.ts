@@ -1,3 +1,3 @@
-export { Hashable, HashWrapper } from './common'
+export { Hashable, Hasher } from './common'
 export { HashSet } from './HashSet'
 export { HashMap } from './HashMap'
