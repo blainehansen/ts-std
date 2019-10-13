@@ -91,12 +91,13 @@ a.values() === ['a', 'b', 'c']
 
 ### `values()`
 
+Returns a list of the internal values.
+
 ```ts
 const a = HashSet.from(['a', 'b', 'c', 'a'])
 a.values() === ['a', 'b', 'c']
 ```
 
-Returns a list of the internal values.
 
 ### `has(item: T): boolean`
 
@@ -277,6 +278,11 @@ a.entries() === [['a', true], ['b', false], ['c', true]]
 ### `entries()`
 
 Gives an array of tuples of the maps key/value pairs.
+
+```ts
+const a = HashMap.from([['a', true], ['b', false], ['c', true], ['a', false]])
+a.entries() === [['a', true], ['b', false], ['c', true]]
+```
 
 ### `values()`
 
