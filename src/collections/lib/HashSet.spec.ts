@@ -3,6 +3,8 @@ import { expect } from 'chai'
 
 import { tuple as t } from '@ts-actually-safe/types'
 
+import './impl.Hashable.number'
+import './impl.Hashable.string'
 import { Hashable } from './common'
 import { HashSet } from './HashSet'
 
@@ -226,5 +228,19 @@ describe('HashSet', () => {
 		expect(u.has(zero_key)).true
 		expect(u.has(one_key)).false
 		expect(u.has(two_key)).false
+	})
+})
+
+describe('string implementation', () => {
+	it('works', () => {
+		const a = new HashSet('a', 'b', 'c', 'd', 'a')
+		expect(a.values()).members(['a', 'b', 'c', 'd'])
+	})
+})
+
+describe('number implementation', () => {
+	it('works', () => {
+		const a = new HashSet(1, 2, 3, 4, 1)
+		expect(a.values()).members([1, 2, 3, 4])
 	})
 })

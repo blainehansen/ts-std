@@ -12,7 +12,7 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 	set_items(items: T[]): this {
 		// this._size = items.length
 		this.items = {}
-		for (let index = items.length - 1; index >= 0; index--) {
+		for (let index = 0; index < items.length; index++) {
 			const item = items[index]
 			const hash_key = item.to_hash()
 			this.items[hash_key] = item
@@ -48,7 +48,7 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 	add(item: T, ...rest: T[]): this {
 		const items = [item].concat(rest)
 
-		for (let index = items.length - 1; index >= 0; index--) {
+		for (let index = 0; index < items.length; index++) {
 			const item = items[index]
 			const hash_key = item.to_hash()
 			this.items[hash_key] = item
@@ -61,7 +61,7 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 	delete(item: T, ...rest: T[]): this {
 		const items = [item].concat(rest)
 
-		for (let index = items.length - 1; index >= 0; index--) {
+		for (let index = 0; index < items.length; index++) {
 			const item = items[index]
 			const hash_key = item.to_hash()
 			delete this.items[hash_key]

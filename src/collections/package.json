@@ -1,12 +1,12 @@
 {
-  "name": "@ts-actually-safe/collections",
-  "version": "0.1.0",
-  "description": "> TODO: description",
-  "author": "Blaine Hansen <faichenshing@gmail.com>",
-  "homepage": "https://github.com/blainehansen/ts-actually-safe#readme",
-  "license": "MIT",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+	"name": "@ts-actually-safe/collections",
+	"version": "0.1.0",
+	"description": "HashSet and HashMap collections for typescript.",
+	"author": "Blaine Hansen <faichenshing@gmail.com>",
+	"homepage": "https://github.com/blainehansen/ts-actually-safe#readme",
+	"license": "MIT",
+	"main": "dist/index.js",
+	"typings": "dist/index.d.ts",
 	"files": [
 		"dist"
 	],
@@ -28,6 +28,7 @@
 	},
 	"dependencies": {
 		"@ts-actually-safe/monads": "^0.1.0",
-		"@ts-actually-safe/types": "^0.1.0"
+		"@ts-actually-safe/types": "^0.1.0",
+		"xxhashjs": "^0.2.2"
 	}
 }

@@ -64,12 +64,12 @@ Promise.join_object = async function<O extends { [key: string]: Promise<any> }>(
 
 Promise.prototype.use_maybe = function<T>(): Promise<Maybe<T>> {
 	return this
-		.then(v => Some(v))
+		.then(Some)
 		.catch(() => None)
 }
 
 Promise.prototype.use_result = function<T>(): Promise<Result<T, Error>> {
 	return this
-		.then(v => Ok(v))
-		.catch(e => Err(e))
+		.then(Ok)
+		.catch(Err)
 }

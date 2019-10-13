@@ -14,7 +14,7 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 	set_items(items: [K, T][]): this {
 		// this._size = items.length
 		this.items = {}
-		for (let index = items.length - 1; index >= 0; index--) {
+		for (let index = 0; index < items.length; index++) {
 			const [key, item] = items[index]
 			const hash_key = key.to_hash()
 			this.items[hash_key] = [key, item]
@@ -33,7 +33,7 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 
 	*[Symbol.iterator]() {
 		const entries = Object.values(this.items)
-		for (let index = entries.length - 1; index >= 0; index--) {
+		for (let index = 0; index < entries.length; index++) {
 			yield entries[index]
 		}
 	}
@@ -72,7 +72,7 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 	delete(key: K, ...rest: K[]): this {
 		const keys = [key].concat(rest)
 
-		for (let index = keys.length - 1; index >= 0; index--) {
+		for (let index = 0; index < keys.length; index++) {
 			const key = keys[index]
 			const hash_key = key.to_hash()
 			delete this.items[hash_key]

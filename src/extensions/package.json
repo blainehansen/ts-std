@@ -1,7 +1,7 @@
 {
 	"name": "@ts-actually-safe/extensions",
 	"version": "0.1.0",
-	"description": "> TODO: description",
+	"description": "A variety of extensions to native types. Heavily use Result and Maybe types.",
 	"author": "Blaine Hansen <faichenshing@gmail.com>",
 	"homepage": "https://github.com/blainehansen/ts-actually-safe#readme",
 	"license": "MIT",
