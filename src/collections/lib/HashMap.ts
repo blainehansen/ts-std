@@ -1,6 +1,6 @@
 import { Maybe, Some, None } from '@ts-actually-safe/monads'
 
-import { Items, Hashable } from './common'
+import { Items, Hashable, ItemsHolder, union_items, intersection_items, difference_items } from './common'
 
 export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 	protected items!: Items<[K, T]>
@@ -89,11 +89,7 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 
 
 	protected static union_items<K extends Hashable, T>(items: Items<[K, T]>, others: HashMap<K, T>[]) {
-		for (let index = 0; index < others.length; index++) {
-			const other = others[index]
-			items = { ...items, ...other.items }
-		}
-		return items
+		return union_items(items, others as any as ItemsHolder<[K, T]>[])
 	}
 
 	// mutating version of union
@@ -112,21 +108,7 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 
 
 	protected static intersection_items<K extends Hashable, T>(items: Items<[K, T]>, others: HashMap<K, T>[]) {
-		for (const hash_key in items) {
-			let keep_key = false
-			for (let index = 0; index < others.length; index++) {
-				const other = others[index]
-				if (hash_key in other.items) {
-					keep_key = true
-					break
-				}
-			}
-
-			if (!keep_key)
-				delete items[hash_key]
-		}
-
-		return items
+		return intersection_items(items, others as any as ItemsHolder<[K, T]>[])
 	}
 
 	// in place version of intersection
@@ -145,14 +127,7 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 
 
 	protected static difference_items<K extends Hashable, T>(items: Items<[K, T]>, others: HashMap<K, T>[]) {
-		for (let index = 0; index < others.length; index++) {
-			const other = others[index]
-			for (const hash_key in other.items) {
-				delete items[hash_key]
-			}
-		}
-
-		return items
+		return difference_items(items, others as any as ItemsHolder<[K, T]>[])
 	}
 
 	// in place version of difference

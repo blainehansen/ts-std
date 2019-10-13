@@ -1,4 +1,4 @@
-import { Items, Hashable } from './common'
+import { Items, Hashable, ItemsHolder, union_items, intersection_items, difference_items } from './common'
 
 export class HashSet<T extends Hashable> implements Iterable<T> {
 	protected items!: Items<T>
@@ -79,11 +79,7 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 
 
 	protected static union_items<T extends Hashable>(items: Items<T>, others: HashSet<T>[]) {
-		for (let index = 0; index < others.length; index++) {
-			const other = others[index]
-			items = { ...items, ...other.items }
-		}
-		return items
+		return union_items(items, others as any as ItemsHolder<T>[])
 	}
 
 	// mutating version of union
@@ -102,21 +98,7 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 
 
 	protected static intersection_items<T extends Hashable>(items: Items<T>, others: HashSet<T>[]) {
-		for (const hash_key in items) {
-			let keep_key = false
-			for (let index = 0; index < others.length; index++) {
-				const other = others[index]
-				if (hash_key in other.items) {
-					keep_key = true
-					break
-				}
-			}
-
-			if (!keep_key)
-				delete items[hash_key]
-		}
-
-		return items
+		return intersection_items(items, others as any as ItemsHolder<T>[])
 	}
 
 	// in place version of intersection
@@ -135,14 +117,7 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 
 
 	protected static difference_items<T extends Hashable>(items: Items<T>, others: HashSet<T>[]) {
-		for (let index = 0; index < others.length; index++) {
-			const other = others[index]
-			for (const hash_key in other.items) {
-				delete items[hash_key]
-			}
-		}
-
-		return items
+		return difference_items(items, others as any as ItemsHolder<T>[])
 	}
 
 	// in place version of difference
