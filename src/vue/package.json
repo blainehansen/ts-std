@@ -18,7 +18,7 @@
 		"url": "git+https://github.com/blainehansen/ts-actually-safe.git"
 	},
 	"scripts": {
-		"test": "mocha -r ts-node/register lib/**/*.spec.ts",
+		"test": "mocha -r ts-node/register -r test-setup lib/**/*.spec.ts",
 		"build": "rm -rf dist/* && tsc",
 		"preversion": "npm run build && npm test",
 		"postversion": "npm publish"
@@ -33,6 +33,9 @@
 		"vue": "2.6.x"
 	},
 	"devDependencies": {
-		"vue": "^2.6.10"
+		"jsdom": "^15.2.0",
+		"jsdom-global": "^3.0.2",
+		"vue": "^2.6.10",
+		"vue-template-compiler": "^2.6.10"
 	}
 }
