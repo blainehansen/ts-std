@@ -1,15 +1,23 @@
 import Vue, { PropOptions, VNode } from 'vue'
 
-import { Result } from '@ts-actually-safe/types'
-
-import { renderScopedIfPossible } from './utils'
 
 export default Vue.extend({
 	name: 'raw-promise',
 
-	functional: true,
+	data: () => ({
+		resolved: false,
+		ok: null as unknown | null,
+		err: null as Error | null,
+	}),
 
 	props: {
+		promise: {
+			type: Object,
+			validator: p =>
+				!p || (typeof p.then === 'function' && typeof p.catch === 'function'),
+			default: null,
+		} as PropOptions<Promise<unknown> | null>,
+
 		tag: {
 			type: String,
 			validator(tag: string) {
@@ -17,27 +25,50 @@ export default Vue.extend({
 			},
 			default: 'div',
 		} as PropOptions<string>,
-
-		promise: {
-			type: Object,
-			validator: promise =>
-				promise && typeof promise.then === 'function' && typeof promise.catch === 'function',
-			required: true,
-		} as PropOptions<Promise<any>>,
 	},
 
-	render(el, context): VNode {
-		const { tag, result } = context.props
+	render(el): VNode {
+		const { tag, $slots: slots, $scopedSlots: scopedSlots } = this
 
-		return el(
-			tag,
-			context.data,
-			result.match({
-				ok: value => context.scopedSlots.default(value),
-				// renderScopedIfPossible('default', context.scopedSlots, context.slots, value),
-				err: e => context.scopedSlots.err(e),
-				// renderScopedIfPossible('err', context.scopedSlots, context.slots, e)
-			}),
-		)
+		if (scopedSlots.combined)
+			return el(tag, scopedSlots.combined({
+				loading: !this.resolved,
+				ok: this.ok,
+				err: this.err,
+			}))
+
+		if (this.err)
+			return el(tag, scopedSlots.err ? scopedSlots.err(this.err) : slots.err)
+
+		if (this.resolved)
+			return el(tag, scopedSlots.default ? scopedSlots.default(this.ok) : slots.default)
+
+		return el(tag, slots.loading)
+	},
+
+	watch: {
+		promise: {
+			handler(promise, oldPromise) {
+				if (promise === oldPromise)
+					return
+
+				this.resolved = false
+				this.err = null
+				if (!promise) {
+					this.ok = null
+					return
+				}
+				promise
+					.then(ok => {
+						this.ok = ok
+						this.resolved = true
+					})
+					.catch(err => {
+						this.err = err
+						this.resolved = true
+					})
+			},
+			immediate: true,
+		},
 	},
 })

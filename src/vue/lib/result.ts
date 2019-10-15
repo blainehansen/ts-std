@@ -1,6 +1,5 @@
 import Vue, { PropOptions, VNode } from 'vue'
-
-import { Result } from '@ts-actually-safe/types'
+import { Result } from '@ts-actually-safe/monads'
 
 export default Vue.extend({
 	name: 'result',
@@ -12,7 +11,7 @@ export default Vue.extend({
 			type: Object,
 			validator: Result.is_result,
 			required: true,
-		} as PropOptions<Result<any, any>>,
+		} as PropOptions<Result<unknown, unknown>>,
 
 		tag: {
 			type: String,
@@ -24,18 +23,14 @@ export default Vue.extend({
 	},
 
 	render(el, context): VNode {
-		const { tag, result } = context.props
-
-		// check for existence of other slots, perhaps they aren't scoped?
+		const { slots, scopedSlots, props: { tag, result } } = context
 
 		return el(
 			tag,
 			context.data,
 			result.match({
-				ok: value => context.scopedSlots.default(value),
-				// renderScopedIfPossible('default', context.scopedSlots, context.slots, value),
-				err: e => context.scopedSlots.err(e),
-				// renderScopedIfPossible('err', context.scopedSlots, context.slots, e)
+				ok: value => scopedSlots.default ? scopedSlots.default(value) : slots().default,
+				err: e => scopedSlots.err ? scopedSlots.err(e) : slots().err,
 			}),
 		)
 	},

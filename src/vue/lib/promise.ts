@@ -1,23 +1,22 @@
 import Vue, { PropOptions, VNode } from 'vue'
-
-import { Result } from '@ts-actually-safe/types'
+import { Result } from '@ts-actually-safe/monads'
 
 export default Vue.extend({
-	name: 'result',
+	name: 'promise',
 
-	data() {
-		return {
-			loading: false,
-		}
-	},
+	data: () => ({
+		resolved: false,
+		ok: null as unknown | null,
+		err: null as Error | null,
+	}),
 
 	props: {
-		result: {
+		promise: {
 			type: Object,
 			validator: p =>
-        p && typeof p.then === 'function' && typeof p.catch === 'function',
-			required: true,
-		} as PropOptions<Promise<Result<any, any>>>,
+				!p || (typeof p.then === 'function' && typeof p.catch === 'function'),
+			default: null,
+		} as PropOptions<Promise<Result<unknown, Error>> | null>,
 
 		tag: {
 			type: String,
@@ -28,20 +27,47 @@ export default Vue.extend({
 		} as PropOptions<string>,
 	},
 
-	watch: {
+	render(el): VNode {
+		const { tag, $slots: slots, $scopedSlots: scopedSlots } = this
 
+		if (scopedSlots.combined)
+			return el(tag, scopedSlots.combined({
+				loading: !this.resolved,
+				ok: this.ok,
+				err: this.err,
+			}))
+
+		if (this.err)
+			return el(tag, scopedSlots.err ? scopedSlots.err(this.err) : slots.err)
+
+		if (this.resolved)
+			return el(tag, scopedSlots.default ? scopedSlots.default(this.ok) : slots.default)
+
+		return el(tag, slots.loading)
 	},
 
-	render(el): VNode {
-		return el(
-			tag,
-			context.data,
-			result.match({
-				ok: value => context.scopedSlots.default(value),
-				// renderScopedIfPossible('default', context.scopedSlots, context.slots, value),
-				err: e => context.scopedSlots.err(e),
-				// renderScopedIfPossible('err', context.scopedSlots, context.slots, e)
-			}),
-		)
+	watch: {
+		promise: {
+			handler(promise, oldPromise) {
+				if (promise === oldPromise)
+					return
+
+				this.resolved = false
+				this.err = null
+				if (!promise) {
+					this.ok = null
+					return
+				}
+				promise
+					.then(result => {
+						result.match({
+							ok: ok => { this.ok = ok },
+							err: err => { this.err = err },
+						})
+						this.resolved = true
+					})
+			},
+			immediate: true,
+		},
 	},
 })

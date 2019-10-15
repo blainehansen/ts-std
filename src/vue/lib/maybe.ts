@@ -1,6 +1,5 @@
 import Vue, { PropOptions, VNode } from 'vue'
-
-import { Maybe } from '@ts-actually-safe/types'
+import { Maybe } from '@ts-actually-safe/monads'
 
 export default Vue.extend({
 	name: 'maybe',
@@ -12,7 +11,7 @@ export default Vue.extend({
 			type: Object,
 			validator: Maybe.is_maybe,
 			required: true,
-		} as PropOptions<Maybe<any, any>>,
+		} as PropOptions<Maybe<unknown>>,
 
 		tag: {
 			type: String,
@@ -24,18 +23,14 @@ export default Vue.extend({
 	},
 
 	render(el, context): VNode {
-		const { tag, maybe } = context.props
-
-		// check for existence of other slots, perhaps they aren't scoped?
+		const { slots, scopedSlots, props: { tag, maybe } } = context
 
 		return el(
 			tag,
 			context.data,
 			maybe.match({
-				some: value => context.scopedSlots.default(value),
-				// renderScopedIfPossible('default', context.scopedSlots, context.slots, value),
-				none: () => context.scopedSlots.none(),
-				// renderScopedIfPossible('none', context.scopedSlots, context.slots)
+				some: value => scopedSlots.default ? scopedSlots.default(value) : slots().default,
+				none: () => slots().none,
 			}),
 		)
 	},
