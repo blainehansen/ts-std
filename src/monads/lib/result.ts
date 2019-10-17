@@ -302,10 +302,9 @@ export namespace Result {
 			: Ok(value)
 	}
 
-	export function is_result(value: any): value is Result<unknown, unknown> {
+	export function is_result(value: unknown): value is Result<unknown, unknown> {
 		return value !== null && value !== undefined
-			&& 'type' in value
-			&& (value.type === ResultType.Ok || value.type === ResultType.Err)
+			&& ((value as any).type === ResultType.Ok || (value as any).type === ResultType.Err)
 	}
 
 	export function all<T, E>(results: Result<T, E>[]): Result<T[], E> {

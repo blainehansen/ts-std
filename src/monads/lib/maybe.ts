@@ -206,10 +206,9 @@ export namespace Maybe {
 			: Some(value)
 	}
 
-	export function is_maybe(value: any): value is Maybe<unknown> {
+	export function is_maybe(value: unknown): value is Maybe<unknown> {
 		return value !== null && value !== undefined
-			'type' in value
-			&& (value.type === MaybeType.Some || value.type === MaybeType.None)
+			&& ((value as any).type === MaybeType.Some || (value as any).type === MaybeType.None)
 	}
 
 	export function all<T>(maybes: Maybe<T>[]): Maybe<T[]> {

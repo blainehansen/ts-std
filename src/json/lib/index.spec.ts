@@ -2,18 +2,33 @@ import 'mocha'
 import { expect } from 'chai'
 
 import * as json from './index'
-import { Result, Ok, Err } from '@ts-actually-safe/monads'
+import { tuple as t } from '@ts-actually-safe/types'
+import { Result, Ok, Err, Maybe, Some, None } from '@ts-actually-safe/monads'
 
 function validate<T>(decoder: json.Decoder<T>, ok_values: T[], err_values: any[]) {
-	for (const value of ok_values) {
+	for (const value of ok_values)
 		expect(decoder.decode(value)).eql(Ok(value))
-	}
 
-	for (const value of err_values) {
+	for (const value of err_values)
 		expect(decoder.decode(value).is_err()).true
-	}
 }
 
+
+describe('wrap', () => {
+	it('works', () => {
+		validate<'b' | 7>(
+			json.wrap("'b' | 7", json => {
+				const b = 'b' as const
+				const seven = 7 as const
+				return json === b || json === seven
+					? Ok(json)
+					: Err('blah')
+			}),
+			['b', 7],
+			[null, undefined, [], ['a'], {}, { a: 'a' }, true, false, 'a', Infinity, NaN, -Infinity, -NaN],
+		)
+	})
+})
 
 describe('string', () => {
 	it('works', () => {
@@ -88,8 +103,8 @@ describe('union', () => {
 			[[], ['a'], {}, { a: 'a' }, true, false, 0, 1, 2, -2, -1, 5.5, -5.5, Infinity, NaN, -Infinity, -NaN],
 		)
 
-		const separated = json.union(json.string, json.null_value).decode
-		expect(separated('a')).eql(Ok('a'))
+		// const separated = json.union(json.string, json.null_value).decode
+		// expect(separated('a')).eql(Ok('a'))
 	})
 })
 
@@ -125,8 +140,8 @@ describe('value', () => {
 
 		const a: Result<5> = json.value(5).decode(null)
 
-		const separated = json.value(4).decode
-		expect(separated(4)).eql(Ok(4))
+		// const separated = json.value(4).decode
+		// expect(separated(4)).eql(Ok(4))
 	})
 })
 
@@ -140,9 +155,9 @@ describe('values', () => {
 
 		const a: Result<'a' | 5> = json.values('a', 5).decode(null)
 
-		const separated = json.values(4, 5).decode
-		expect(separated(4)).eql(Ok(4))
-		expect(separated(5)).eql(Ok(5))
+		// const separated = json.values(4, 5).decode
+		// expect(separated(4)).eql(Ok(4))
+		// expect(separated(5)).eql(Ok(5))
 	})
 })
 
@@ -153,6 +168,46 @@ describe('optional', () => {
 			['a', '', undefined],
 			[null, [], ['a'], {}, { a: 'a' }, true, 3],
 		)
+	})
+})
+
+describe('nullable', () => {
+	it('works', () => {
+		validate<string | null>(
+			json.nullable(json.string),
+			['a', '', null],
+			[undefined, [], ['a'], {}, { a: 'a' }, true, 3],
+		)
+	})
+})
+
+describe('nillable', () => {
+	it('works', () => {
+		validate<string | null | undefined>(
+			json.nillable(json.string),
+			['a', '', undefined, null],
+			[[], ['a'], {}, { a: 'a' }, true, 3],
+		)
+	})
+})
+
+describe('maybe', () => {
+	it('works', () => {
+		const v = json.maybe(json.string)
+
+		const pairs = [
+			t('a', Some('a')),
+			t('', Some('')),
+			t(undefined, None),
+			t(null, None),
+		]
+
+		for (const [ok_value, expected] of pairs)
+			expect(v.decode(ok_value)).eql(Ok(expected))
+
+		const err_values = [[], ['a'], {}, { a: 'a' }, true, 3, Some(true), Some([]), Some('a'), None, Some('')]
+		for (const err_value of err_values)
+			expect(v.decode(err_value).is_err()).true
 	})
 })
 
@@ -171,8 +226,8 @@ describe('array', () => {
 			[null, undefined, [true], {}, { a: 'a' }, true, false, 'a', -2, -1, 5.5, -5.5, Infinity, NaN, -Infinity, -NaN],
 		)
 
-		const separated = json.array(json.number).decode
-		expect(separated([4])).eql(Ok([4]))
+		// const separated = json.array(json.number).decode
+		// expect(separated([4])).eql(Ok([4]))
 	})
 })
 
@@ -190,8 +245,8 @@ describe('dictionary', () => {
 			[null, undefined, [], ['a'], { a: 'a' }, true, false, 'a', 0, 1, 2, -2, -1, 5.5, -5.5, Infinity, NaN, -Infinity, -NaN],
 		)
 
-		const separated = json.dictionary(json.number).decode
-		expect(separated({ a: 4 })).eql(Ok({ a: 4 }))
+		// const separated = json.dictionary(json.number).decode
+		// expect(separated({ a: 4 })).eql(Ok({ a: 4 }))
 	})
 })
 
@@ -215,8 +270,8 @@ describe('tuple', () => {
 			[null, undefined, [], [false, 'a', 0], ['a'], { a: 'a' }, true, 'a', 0, 1, -1, 5.5, -5.5, Infinity, NaN, -Infinity, -NaN],
 		)
 
-		const separated = json.tuple(json.number, json.boolean).decode
-		expect(separated([1, true])).eql(Ok([1, true]))
+		// const separated = json.tuple(json.number, json.boolean).decode
+		// expect(separated([1, true])).eql(Ok([1, true]))
 	})
 })
 
@@ -232,8 +287,8 @@ describe('object', () => {
 			[null, undefined, [], ['a'], { a: 'a', b: 0, c: 4 }, { a: 'a', b: true, c: 4, d: 'a' }, true, 'a', 2, -2, 5.5, -5.5, Infinity, NaN],
 		)
 
-		const separated = json.object('separated', { a: json.number }).decode
-		expect(separated({ a: 1 })).eql(Ok({ a: 1 }))
+		// const separated = json.object('separated', { a: json.number }).decode
+		// expect(separated({ a: 1 })).eql(Ok({ a: 1 }))
 	})
 })
 
@@ -253,7 +308,7 @@ describe('loose_object', () => {
 			[null, undefined, [], ['a'], { a: 'a', b: 0, c: 4 }, { a: 'a', b: true, d: 'a' }, true, 'a', 2, -2, 5.5, -5.5, Infinity, NaN],
 		)
 
-		const separated = json.object('separated', { a: json.number }).decode
-		expect(separated({ a: 1 })).eql(Ok({ a: 1 }))
+		// const separated = json.object('separated', { a: json.number }).decode
+		// expect(separated({ a: 1 })).eql(Ok({ a: 1 }))
 	})
 })

@@ -9,7 +9,9 @@ export default Vue.extend({
 	props: {
 		maybe: {
 			type: Object,
-			validator: Maybe.is_maybe,
+			validator(v) {
+				return Maybe.is_maybe(v)
+			},
 			required: true,
 		} as PropOptions<Maybe<unknown>>,
 

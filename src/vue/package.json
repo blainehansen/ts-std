@@ -33,8 +33,10 @@
 		"vue": "2.6.x"
 	},
 	"devDependencies": {
+		"@types/sinon": "^7.5.0",
 		"jsdom": "^15.2.0",
 		"jsdom-global": "^3.0.2",
+		"sinon": "^7.5.0",
 		"vue": "^2.6.10",
 		"vue-template-compiler": "^2.6.10"
 	}

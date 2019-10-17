@@ -2,6 +2,8 @@
 // https://www.freecodecamp.org/news/typescript-curry-ramda-types-f747e99744ab/
 // https://github.com/Microsoft/TypeScript/issues/23182
 
+export type Dict<T> = { [key: string]: T }
+
 export function assert_boolean_type<T extends boolean>(expectTrue: T extends true ? true : false) {}
 export function assert_is_type<T, U>(expectTrue: IsType<T, U> extends true ? true : false) {}
 export function assert_is_never<T>(expectTrue: IsNever<T> extends true ? true : false) {}
