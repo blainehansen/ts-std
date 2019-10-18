@@ -7,8 +7,10 @@ import { Result, Ok, Err, Maybe, Some, None } from '@ts-actually-safe/monads'
 
 type A = { a: number, b: string }
 type B = [number, string]
+type E = [string, number]
 const a_array = [{ a: 1, b: 'b' }, { a: 1, b: 'b' }]
 const b_array = [t(1, 'a'), t(1, 'a')]
+const e_array = [t('a', 1), t('b', 2)]
 
 describe('sum', () => {
 	it('array of numbers', () => {
@@ -130,6 +132,33 @@ describe('unique_index_by', () => {
 		expect(b_array.unique_index_by(v => v[1])).eql(Ok({ '1': t(1, '1'), '2': t(2, '2') }))
 	})
 })
+
+
+describe('entries_to_dict', () => {
+	it('empty', () => {
+		expect(([] as E[]).entries_to_dict()).eql({})
+	})
+
+	it('not', () => {
+		expect(e_array.entries_to_dict()).eql({ a: 1, b: 2 })
+	})
+})
+
+describe('entries_to_dict_unique', () => {
+	it('empty', () => {
+		expect(([] as E[]).entries_to_dict_unique()).eql(Ok({}))
+	})
+
+	it('not unique', () => {
+		const e_array = [t('a', 1), t('a', 2)]
+		expect(e_array.entries_to_dict_unique()).eql(Err(t('a', 2, 1)))
+	})
+
+	it('unique', () => {
+		expect(e_array.entries_to_dict_unique()).eql(Ok({ a: 1, b: 2 }))
+	})
+})
+
 
 describe('unzip', () => {
 	it('empty', () => {

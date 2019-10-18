@@ -1,4 +1,4 @@
-import { KeysOfType } from '@ts-actually-safe/types'
+import { KeysOfType, Dict, tuple as t } from '@ts-actually-safe/types'
 import { Result, Ok, Err, Maybe, Some, None } from '@ts-actually-safe/monads'
 
 import { Indexable } from './common'
@@ -18,10 +18,13 @@ declare global {
 
 		index_by(
 			arg: KeysOfType<T, Indexable> | MapFunc<T, Indexable>
-		): { [key: string]: T }
+		): Dict<T>
 		unique_index_by(
 			arg: KeysOfType<T, Indexable> | MapFunc<T, Indexable>
-		): Result<{ [key: string]: T }, [string, T, T]>
+		): Result<Dict<T>, [string, T, T]>
+
+		entries_to_dict<T>(this: [string, T][]): Dict<T>
+		entries_to_dict_unique<T>(this: [string, T][]): Result<Dict<T>, [string, T, T]>
 
 		unzip<L extends any[]>(this: L[]): Maybe<Unzip<L>>
 	}
@@ -86,10 +89,10 @@ Array.prototype.maybe_find = function<T>(this: T[], fn: MapFunc<T, boolean>) {
 Array.prototype.index_by = function<T>(
 	this: T[],
 	arg: KeysOfType<T, Indexable> | MapFunc<T, Indexable>,
-): { [key: string]: T } {
+): Dict<T> {
 	const to_key = make_key_accessor<T, Indexable>(arg)
 
-	const indexed = {} as { [key: string]: T }
+	const indexed = {} as Dict<T>
 	for (let index = 0; index < this.length; index++) {
 		const element = this[index]
 		const key = to_key(element, index, this)
@@ -103,10 +106,10 @@ Array.prototype.index_by = function<T>(
 Array.prototype.unique_index_by = function<T>(
 	this: T[],
 	arg: KeysOfType<T, Indexable> | MapFunc<T, Indexable>,
-): Result<{ [key: string]: T }, [string, T, T]> {
+): Result<Dict<T>, [string, T, T]> {
 	const to_key = make_key_accessor<T, Indexable>(arg)
 
-	const indexed = {} as { [key: string]: T }
+	const indexed = {} as Dict<T>
 	for (let index = 0; index < this.length; index++) {
 		const element = this[index]
 		const key = to_key(element, index, this)
@@ -116,6 +119,32 @@ Array.prototype.unique_index_by = function<T>(
 			return Err([final_key, element, indexed[final_key]])
 
 		indexed[final_key] = element
+	}
+
+	return Ok(indexed)
+}
+
+
+Array.prototype.entries_to_dict = function<T>(
+	this: [string, T][],
+): Dict<T> {
+	const indexed = {} as Dict<T>
+	for (let index = 0; index < this.length; index++) {
+		const [key, element] = this[index]
+		indexed[key] = element
+	}
+
+	return indexed
+}
+Array.prototype.entries_to_dict_unique = function<T>(
+	this: [string, T][],
+): Result<Dict<T>, [string, T, T]> {
+	const indexed = {} as Dict<T>
+	for (let index = 0; index < this.length; index++) {
+		const [key, element] = this[index]
+		if (key in indexed)
+			return Err(t(key, element, indexed[key]))
+		indexed[key] = element
 	}
 
 	return Ok(indexed)
