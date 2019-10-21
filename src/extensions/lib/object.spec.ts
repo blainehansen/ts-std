@@ -2,7 +2,7 @@ import 'mocha'
 import './object'
 import { expect } from 'chai'
 
-import { Maybe, Some, None } from '@ts-actually-safe/monads'
+import { Maybe, Some, None } from '@ts-lib/monads'
 
 describe('maybe_get', () => {
 	it('empty', () => {

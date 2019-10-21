@@ -1,4 +1,4 @@
-# `@ts-actually-safe/extensions`
+# `@ts-lib/extensions`
 
 > A variety of extensions to native types. Heavily use `Result` and `Maybe` types.
 

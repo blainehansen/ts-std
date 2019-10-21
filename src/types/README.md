@@ -1,4 +1,4 @@
-# `@ts-actually-safe/types`
+# `@ts-lib/types`
 
 > A library of generally useful types and type assertion functions.
 
@@ -16,7 +16,7 @@ const yuck = [1, 'a', true] as [number, string, boolean]
 
 // the better way
 // especially nice if you need to create many tuples in a file
-import { tuple as t } from '@ts-actually-safe/types'
+import { tuple as t } from '@ts-lib/types'
 const yay = t(1, 'a', true)
 ```
 

@@ -3,7 +3,7 @@
 This type is an alternative to `null | undefined`, but it allows for chaining and joining in a functional style.
 
 ```ts
-import { Maybe, Some, None } from '@ts-actually-safe/monads'
+import { Maybe, Some, None } from '@ts-lib/monads'
 
 function require_even(n: number): Maybe<number> {
   if (n % 2 === 0)

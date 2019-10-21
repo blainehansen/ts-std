@@ -1,7 +1,7 @@
 import 'mocha'
 import { expect } from 'chai'
 
-import { tuple as t } from '@ts-actually-safe/types'
+import { tuple as t } from '@ts-lib/types'
 
 import './impl.Hashable.number'
 import './impl.Hashable.string'

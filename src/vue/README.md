@@ -1,11 +1,11 @@
-# `@ts-actually-safe/vue`
+# `@ts-lib/vue`
 
 > TODO: description
 
 ## Usage
 
 ```
-const vue = require('@ts-actually-safe/vue');
+const vue = require('@ts-lib/vue');
 
 // TODO: DEMONSTRATE API
 ```

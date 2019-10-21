@@ -1,5 +1,5 @@
 import Vue, { PropOptions, VNode } from 'vue'
-import { Result } from '@ts-actually-safe/monads'
+import { Result } from '@ts-lib/monads'
 
 export default Vue.extend({
 	name: 'promise',

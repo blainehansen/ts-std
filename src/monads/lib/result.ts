@@ -1,4 +1,4 @@
-import { Unshift } from '@ts-actually-safe/types'
+import { Unshift } from '@ts-lib/types'
 
 import { Panic, TransformerOrValue, ProducerOrValue }from './common'
 import { Maybe, Some, None } from './maybe'

@@ -1,7 +1,7 @@
 import 'mocha'
 import { expect } from 'chai'
 import { shallowMount } from '@vue/test-utils'
-import { Result, Ok, Err } from '@ts-actually-safe/monads'
+import { Result, Ok, Err } from '@ts-lib/monads'
 import { expect_console } from './utils.spec'
 
 import promise_component from './promise'

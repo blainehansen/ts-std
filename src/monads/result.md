@@ -5,7 +5,7 @@ This type is a much safer and more predictable alternative to exceptions. Since 
 Since a function that could fail can choose to return a `Result` rather than throwing an exception, this creates a clear contract between the caller and the callee, and requires the caller to make some intelligent decision about how to deal with that error, rather than being surprised with an exception.
 
 ```ts
-import { Result, Ok, Err } from '@ts-actually-safe/monads'
+import { Result, Ok, Err } from '@ts-lib/monads'
 
 function require_even(n: number): Result<number> {
   if (n % 2 === 0)

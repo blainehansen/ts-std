@@ -1,8 +1,8 @@
 import 'mocha'
 import { expect } from 'chai'
 
-import { tuple as t } from '@ts-actually-safe/types'
-import { Result, Ok, Err, Maybe, Some, None } from '@ts-actually-safe/monads'
+import { tuple as t } from '@ts-lib/types'
+import { Result, Ok, Err, Maybe, Some, None } from '@ts-lib/monads'
 
 import { Hashable } from './common'
 import { HashMap } from './HashMap'

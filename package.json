@@ -1,5 +1,5 @@
 {
-  "name": "ts-actually-safe",
+  "name": "ts-lib",
   "version": "0.1.0",
   "description": "A library for doing typesafe work with options that could return nothing or could error. Also includes many extensions of native prototypes to allow incredibly productive use.",
   "scripts": {

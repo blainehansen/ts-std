@@ -1,4 +1,4 @@
-# `@ts-actually-safe/collections`
+# `@ts-lib/collections`
 
 > `HashSet` and `HashMap` collections for typescript.
 
@@ -17,7 +17,7 @@ interface Hashable {
 This package has implementations for `Hashable` for both `string` and `number` so that they can be easily used in these collections, but you have to opt into them by importing those extensions.
 
 ```ts
-// @ts-actually-safe/collections/dist/impl.Hashable.string
+// @ts-lib/collections/dist/impl.Hashable.string
 import xxhashjs from 'xxhashjs'
 
 import { Hashable } from './common'
@@ -28,7 +28,7 @@ String.prototype.to_hash = function to_hash(): number {
   return xxhashjs.h32(this, 0).toNumber()
 }
 
-// @ts-actually-safe/collections/dist/impl.Hashable.number
+// @ts-lib/collections/dist/impl.Hashable.number
 import { Hashable } from './common'
 declare global {
   interface Number extends Hashable {}
@@ -38,8 +38,8 @@ Number.prototype.to_hash = function to_hash(): number {
 }
 
 // your_main_file.ts
-import '@ts-actually-safe/collections/dist/impl.Hashable.string'
-import '@ts-actually-safe/collections/dist/impl.Hashable.number'
+import '@ts-lib/collections/dist/impl.Hashable.string'
+import '@ts-lib/collections/dist/impl.Hashable.number'
 
 console.log('a'.to_hash())
 console.log((1).to_hash())

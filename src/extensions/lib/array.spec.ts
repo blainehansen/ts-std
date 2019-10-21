@@ -2,8 +2,8 @@ import 'mocha'
 import './array'
 import { expect } from 'chai'
 
-import { tuple as t } from '@ts-actually-safe/types'
-import { Result, Ok, Err, Maybe, Some, None } from '@ts-actually-safe/monads'
+import { tuple as t } from '@ts-lib/types'
+import { Result, Ok, Err, Maybe, Some, None } from '@ts-lib/monads'
 
 type A = { a: number, b: string }
 type B = [number, string]

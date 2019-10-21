@@ -1,6 +1,6 @@
-import { Unshift } from '@ts-actually-safe/types'
-import { Result, Ok, Err, Maybe, Some, None } from '@ts-actually-safe/monads'
-import { ResultTuple } from '@ts-actually-safe/monads/dist/result'
+import { Unshift } from '@ts-lib/types'
+import { Result, Ok, Err, Maybe, Some, None } from '@ts-lib/monads'
+import { ResultTuple } from '@ts-lib/monads/dist/result'
 
 export type PromiseTuple<L extends any[]> = { [K in keyof L]: Promise<L[K]> }
 

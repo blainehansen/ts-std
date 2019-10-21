@@ -1,5 +1,5 @@
-import { KeysOfType, Dict, tuple as t } from '@ts-actually-safe/types'
-import { Result, Ok, Err, Maybe, Some, None } from '@ts-actually-safe/monads'
+import { KeysOfType, Dict, tuple as t } from '@ts-lib/types'
+import { Result, Ok, Err, Maybe, Some, None } from '@ts-lib/monads'
 
 import { Indexable } from './common'
 

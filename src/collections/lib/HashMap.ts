@@ -1,4 +1,4 @@
-import { Maybe, Some, None } from '@ts-actually-safe/monads'
+import { Maybe, Some, None } from '@ts-lib/monads'
 
 import { Items, Hashable, ItemsHolder, union_items, intersection_items, difference_items } from './common'
 
