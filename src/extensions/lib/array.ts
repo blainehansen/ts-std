@@ -24,7 +24,7 @@ declare global {
 		): Result<Dict<T>, [string, T, T]>
 
 		entries_to_dict<T>(this: [string, T][]): Dict<T>
-		entries_to_dict_unique<T>(this: [string, T][]): Result<Dict<T>, [string, T, T]>
+		unique_entries_to_dict<T>(this: [string, T][]): Result<Dict<T>, [string, T, T]>
 
 		unzip<L extends any[]>(this: L[]): Maybe<Unzip<L>>
 	}
@@ -136,7 +136,7 @@ Array.prototype.entries_to_dict = function<T>(
 
 	return indexed
 }
-Array.prototype.entries_to_dict_unique = function<T>(
+Array.prototype.unique_entries_to_dict = function<T>(
 	this: [string, T][],
 ): Result<Dict<T>, [string, T, T]> {
 	const indexed = {} as Dict<T>

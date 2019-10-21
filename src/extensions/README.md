@@ -108,18 +108,18 @@ const a = [['a', 1], ['b', 2], ['c', 3], ['a', 4]]
 a === { a: 4, b: 2, c: 3 }
 ```
 
-### `entries_to_dict_unique<T>(this: [string, T][]): Result<Dict<T>, [string, T, T]>`
+### `unique_entries_to_dict<T>(this: [string, T][]): Result<Dict<T>, [string, T, T]>`
 
 Attempts to create a dictionary from an array of "entries" shaped tuples. If two elements map to the same key, this will return an `Err` showing the key that overlapped and the items that both created it.
 
 ```ts
 const ok = [['a', true], ['b', false], ['c', true]]
-  .unique_index_by('name')
+  .unique_entries_to_dict('name')
 
 ok === Ok({ a: true, b: false, c: true })
 
 const err = [['a', 1], ['b', 2], ['c', 3], ['a', 4]]
-  .entries_to_dict_unique()
+  .unique_entries_to_dict()
 
 err === Err(['a', 1, 4])
 ```

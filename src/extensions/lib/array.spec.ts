@@ -144,18 +144,18 @@ describe('entries_to_dict', () => {
 	})
 })
 
-describe('entries_to_dict_unique', () => {
+describe('unique_entries_to_dict', () => {
 	it('empty', () => {
-		expect(([] as E[]).entries_to_dict_unique()).eql(Ok({}))
+		expect(([] as E[]).unique_entries_to_dict()).eql(Ok({}))
 	})
 
 	it('not unique', () => {
 		const e_array = [t('a', 1), t('a', 2)]
-		expect(e_array.entries_to_dict_unique()).eql(Err(t('a', 2, 1)))
+		expect(e_array.unique_entries_to_dict()).eql(Err(t('a', 2, 1)))
 	})
 
 	it('unique', () => {
-		expect(e_array.entries_to_dict_unique()).eql(Ok({ a: 1, b: 2 }))
+		expect(e_array.unique_entries_to_dict()).eql(Ok({ a: 1, b: 2 }))
 	})
 })
 
