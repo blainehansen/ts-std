@@ -12,7 +12,7 @@ import { result_invariant_message as rinv } from '@ts-actually-safe/monads/dist/
 // interface TransformerLike<T> {
 // 	type: symbol
 // 	readonly name: string
-// 	decode(json: unknown): T
+// 	decode(input: unknown): T
 // }
 
 // type TransformerType<T extends TransformerLike<unknown>> =
@@ -41,12 +41,12 @@ import { result_invariant_message as rinv } from '@ts-actually-safe/monads/dist/
 
 // export interface Decoder<T> {
 // 	readonly name: string
-// 	decode(json: unknown): Result<T>
+// 	decode(input: unknown): Result<T>
 // }
 
 // export interface Transformer<T> {
 // 	readonly name: string
-// 	decode(json: unknown): T
+// 	decode(input: unknown): T
 // }
 
 // export abstract class Decoder<T> implements TransformerLike<Result<T>> {
@@ -54,7 +54,7 @@ export abstract class Decoder<T> {
 	// type = TransformerTypes.decoder
 
 	abstract readonly name: string
-	abstract decode(json: unknown): Result<T>
+	abstract decode(input: unknown): Result<T>
 
 	// lenient(): ResultTransformer<T> {
 	// 	return new
@@ -86,7 +86,7 @@ export type DecoderTuple<L extends unknown[]> = {
 // 	constructor(readonly decoder: Decoder<Result<T>>) {
 // 		this.name = `lenient Result<${decoder.name}>`
 // 	}
-// 	decode(json: unknown) { return Ok(this.decoder.decode(json)) }
+// 	decode(input: unknown) { return Ok(this.decoder.decode(input)) }
 // }
 // class MaybeTransformer<T> implements TransformerLike<Maybe<T>> {
 // 	type = TransformerTypes.maybe
@@ -94,7 +94,7 @@ export type DecoderTuple<L extends unknown[]> = {
 // 	constructor(readonly decoder: Decoder<T>) {
 // 		this.name = `lenient Maybe<${decoder.name}>`
 // 	}
-// 	decode(json: unknown) { return Ok(this.decoder.decode(json).ok_maybe()) }
+// 	decode(input: unknown) { return Ok(this.decoder.decode(input).ok_maybe()) }
 // }
 // class NullTransformer<T> implements TransformerLike<T | null> {
 // 	type = TransformerTypes.null
@@ -102,7 +102,7 @@ export type DecoderTuple<L extends unknown[]> = {
 // 	constructor(readonly decoder: Decoder<T>) {
 // 		this.name = `lenient ${decoder.name} | null`
 // 	}
-// 	decode(json: unknown) { return Ok(this.decoder.decode(json).ok_null()) }
+// 	decode(input: unknown) { return Ok(this.decoder.decode(input).ok_null()) }
 // }
 // class UndefTransformer<T> implements TransformerLike<T | undefined> {
 // 	type = TransformerTypes.undef
@@ -110,7 +110,7 @@ export type DecoderTuple<L extends unknown[]> = {
 // 	constructor(readonly decoder: Decoder<T>) {
 // 		this.name = `lenient ${decoder.name} | undefined`
 // 	}
-// 	decode(json: unknown) { return Ok(this.decoder.decode(json).ok_undef()) }
+// 	decode(input: unknown) { return Ok(this.decoder.decode(input).ok_undef()) }
 // }
 // class DefaultTransformer<T> implements TransformerLike<T> {
 // 	type = TransformerTypes.default
@@ -118,108 +118,157 @@ export type DecoderTuple<L extends unknown[]> = {
 // 	constructor(readonly decoder: Decoder<T>, readonly def: T) {
 // 		this.name = `lenient default ${decoder.name}`
 // 	}
-// 	decode(json: unknown) { return Ok(this.decoder.decode(json).default(this.def)) }
+// 	decode(input: unknown) { return Ok(this.decoder.decode(input).default(this.def)) }
 // }
 
 
-function is_object(json: unknown): json is NonNullable<Object> {
-	return typeof json === 'object' && json !== null && !Array.isArray(json)
+function is_object(input: unknown): input is NonNullable<Object> {
+	return typeof input === 'object' && input !== null && !Array.isArray(input)
+}
+
+
+export interface DecodableConstructor<L extends unknown[], T extends Decodable<L>> {
+	new (...args: L): T
+	decoder: Decoder<L>
+}
+
+export interface Decodable<L extends unknown[] = unknown[]> {
+	serialize(): L
+}
+
+
+export abstract class Serializer {
+	abstract serialize<D extends Decodable>(output: D): string
+	abstract deserialize(input: string): Result<unknown, Error>
+	decode<T>(input: string, decoder: Decoder<T>): Result<T> {
+		return this.deserialize(input)
+			.change_err(e => e.message)
+			.try_change(input => decoder.decode(input))
+	}
+}
+
+export class JsonSerializer extends Serializer {
+	serialize<D extends Decodable>(output: D): string {
+		return JSON.stringify(output.serialize())
+	}
+	deserialize(input: string): Result<unknown, Error> {
+		return Result.attempt(JSON.parse(input))
+	}
+}
+
+
+class ClassDecoder<L extends unknown[], T extends Decodable<L>> extends Decoder<T> {
+	readonly name: string
+	constructor(readonly cn: DecodableConstructor<L, T>) {
+		super()
+		this.name = cn.name
+	}
+
+	decode(input: unknown) {
+		if (input instanceof this.cn) return Ok(input)
+		return this.cn.decoder.decode(input)
+			.change_err(e => `while decoding class ${this.name}: ${e}`)
+			.change(args => new this.cn(...args))
+	}
+}
+export function cls<L extends unknown[], T extends Decodable<L>>(cn: DecodableConstructor<L, T>): Decoder<T> {
+	return new ClassDecoder(cn) as Decoder<T>
 }
 
 
 class WrapDecoder<T> extends Decoder<T> {
 	constructor(
 		readonly name: string,
-		readonly decoder_func: (json: unknown) => Result<T>,
+		readonly decoder_func: (input: unknown) => Result<T>,
 	) {
 		super()
 	}
 
-	decode(json: unknown) {
-		return this.decoder_func(json)
+	decode(input: unknown) {
+		return this.decoder_func(input)
 	}
 }
-export function wrap<T>(name: string, decoder_func: (json: unknown) => Result<T>): Decoder<T> {
+export function wrap<T>(name: string, decoder_func: (input: unknown) => Result<T>): Decoder<T> {
 	return new WrapDecoder(name, decoder_func) as Decoder<T>
 }
 
 
 // export const always = new WrapDecoder(
 // 	'always',
-// 	function(json: unknown): Result<unknown> {
-// 		return Ok(json)
+// 	function(input: unknown): Result<unknown> {
+// 		return Ok(input)
 // 	},
 // )
 
 // export const never = new WrapDecoder(
 // 	'never',
-// 	function(json: unknown): Result<never> {
+// 	function(input: unknown): Result<never> {
 // 		return Err('never')
 // 	}
 // )
 
 export const string = new WrapDecoder(
 	'string',
-	function(json: unknown): Result<string> {
-		if (typeof json === 'string') return Ok(json)
-		else return Err(`expected string, got ${json}`)
+	function(input: unknown): Result<string> {
+		if (typeof input === 'string') return Ok(input)
+		else return Err(`expected string, got ${input}`)
 	},
-)
+) as Decoder<string>
 
 export const boolean = new WrapDecoder(
 	'boolean',
-	function (json: unknown): Result<boolean> {
-		if (typeof json === 'boolean') return Ok(json)
-		else return Err(`expected boolean, got ${json}`)
+	function (input: unknown): Result<boolean> {
+		if (typeof input === 'boolean') return Ok(input)
+		else return Err(`expected boolean, got ${input}`)
 	},
-)
+) as Decoder<boolean>
 
 export const number = new WrapDecoder(
 	'number',
-	function decode(json: unknown): Result<number> {
+	function decode(input: unknown): Result<number> {
 		if (
-			typeof json === 'number'
-			&& json !== Infinity
-			&& json !== -Infinity
-			&& !isNaN(json)
-		) return Ok(json)
-		else return Err(`expected number, got ${json}`)
+			typeof input === 'number'
+			&& input !== Infinity
+			&& input !== -Infinity
+			&& !isNaN(input)
+		) return Ok(input)
+		else return Err(`expected number, got ${input}`)
 	},
-)
+) as Decoder<number>
 export const loose_number = new WrapDecoder(
 	'loose_number',
-	function decode(json: unknown): Result<number> {
-		if (typeof json === 'number') return Ok(json)
-		else return Err(`expected number, got ${json}`)
+	function decode(input: unknown): Result<number> {
+		if (typeof input === 'number') return Ok(input)
+		else return Err(`expected number, got ${input}`)
 	},
-)
+) as Decoder<number>
 export const int = new WrapDecoder(
 	'int',
-	function decode(json: unknown): Result<number> {
+	function decode(input: unknown): Result<number> {
 		if (
-			typeof json === 'number'
-			&& json !== Infinity
-			&& json !== -Infinity
-			&& !isNaN(json)
-			&& json % 1 === 0
-		) return Ok(json)
-		else return Err(`expected int, got ${json}`)
+			typeof input === 'number'
+			&& input !== Infinity
+			&& input !== -Infinity
+			&& !isNaN(input)
+			&& input % 1 === 0
+		) return Ok(input)
+		else return Err(`expected int, got ${input}`)
 	},
-)
+) as Decoder<number>
 export const uint = new WrapDecoder(
 	'uint',
-	function decode(json: unknown): Result<number> {
+	function decode(input: unknown): Result<number> {
 		if (
-			typeof json === 'number'
-			&& json !== Infinity
-			&& json !== -Infinity
-			&& !isNaN(json)
-			&& json % 1 === 0
-			&& json >= 0
-		) return Ok(json)
-		else return Err(`expected uint, got ${json}`)
+			typeof input === 'number'
+			&& input !== Infinity
+			&& input !== -Infinity
+			&& !isNaN(input)
+			&& input % 1 === 0
+			&& input >= 0
+		) return Ok(input)
+		else return Err(`expected uint, got ${input}`)
 	},
-)
+) as Decoder<number>
 
 
 class UnionDecoder<L extends unknown[]> extends Decoder<L[number]> {
@@ -229,13 +278,13 @@ class UnionDecoder<L extends unknown[]> extends Decoder<L[number]> {
 		this.name = decoders.map(d => d.name).join(' | ')
 	}
 
-	decode(json: unknown) {
+	decode(input: unknown) {
 		for (const decoder of this.decoders) {
-			const result = decoder.decode(json)
+			const result = decoder.decode(input)
 			if (result.is_ok()) return result
 		}
 
-		return Err(`expected ${this.name}; got ${json}`)
+		return Err(`expected ${this.name}; got ${input}`)
 	}
 }
 export function union<L extends unknown[]>(...decoders: DecoderTuple<L>): Decoder<L[number]> {
@@ -250,8 +299,8 @@ export function union<L extends unknown[]>(...decoders: DecoderTuple<L>): Decode
 // 		this.decoders = decoders
 // 	}
 
-// 	decode(json: unknown) {
-// 		let last_result = json
+// 	decode(input: unknown) {
+// 		let last_result = input
 // 		for (const decoder of decoders) {
 // 			//
 // 		}
@@ -270,12 +319,12 @@ class ValuesDecoder<V extends Primitives, L extends V[]> extends Decoder<L[numbe
 		this.name = values.join(' | ')
 	}
 
-	decode(json: unknown): Result<L[number]> {
+	decode(input: unknown): Result<L[number]> {
 		for (const value of this.values) {
-			if (value === json) return Ok(value)
+			if (value === input) return Ok(value)
 		}
 
-		return Err(`expected ${this.name}; got ${json}`)
+		return Err(`expected ${this.name}; got ${input}`)
 	}
 }
 export function value<V extends Primitives>(value: V): Decoder<V> {
@@ -305,18 +354,18 @@ class MaybeDecoder<T> extends Decoder<Maybe<T>> {
 		super()
 		this.name = `Maybe<${decoder.name}>`
 	}
-	decode(json: unknown): Result<Maybe<T>> {
-		if (json === null || json === undefined)
+	decode(input: unknown): Result<Maybe<T>> {
+		if (input === null || input === undefined)
 			return Ok(None)
-		// if (Maybe.is_maybe(json))
-		// 	return json.match({
+		// if (Maybe.is_maybe(input))
+		// 	return input.match({
 		// 		some: value => this.decoder
 		// 			.decode(value)
 		// 			.change(value => Some(value)),
 		// 		none: () => Ok(None),
 		// 	})
 		return this.decoder
-			.decode(json)
+			.decode(input)
 			.change(value => Some(value))
 			.change_err(err => `expected ${this.name}, encountered this error: ${err}`)
 	}
@@ -326,8 +375,8 @@ export function maybe<T>(decoder: Decoder<T>): Decoder<Maybe<T>> {
 }
 
 
-function decoder_err<T>(decoder: Decoder<T>, json: unknown) {
-	return Err(`expected ${decoder.name}, got ${json}`)
+function decoder_err<T>(decoder: Decoder<T>, input: unknown) {
+	return Err(`expected ${decoder.name}, got ${input}`)
 }
 
 class ArrayDecoder<T> extends Decoder<T[]> {
@@ -337,14 +386,14 @@ class ArrayDecoder<T> extends Decoder<T[]> {
 		this.name = `${decoder.name}[]`
 	}
 
-	decode(json: unknown): Result<T[]> {
+	decode(input: unknown): Result<T[]> {
 		const { name, decoder } = this
 
-		if (!Array.isArray(json)) return decoder_err(this, json)
+		if (!Array.isArray(input)) return decoder_err(this, input)
 
 		const give: T[] = []
-		for (let index = 0; index < json.length; index++) {
-			const item = json[index]
+		for (let index = 0; index < input.length; index++) {
+			const item = input[index]
 			const result = decoder.decode(item)
 			if (result.is_err())
 				return Err(`while decoding ${name}: at index ${index}, failed to decode ${decoder.name}: ${result.expect_err(rinv)}`)
@@ -368,18 +417,18 @@ class DictionaryDecoder<T> extends Decoder<Dict<T>> {
 		this.name = `Dict<${decoder.name}>`
 	}
 
-	decode(json: unknown): Result<Dict<T>> {
+	decode(input: unknown): Result<Dict<T>> {
 		const { name, decoder } = this
 
-		if (!is_object(json)) return Err(`expecting ${name}, got ${json}`)
+		if (!is_object(input)) return Err(`expecting ${name}, got ${input}`)
 
 		// const give = in_place
-		// 	? json
+		// 	? input
 		// 	: {} as Dict<T>
 		const give = {} as Dict<T>
 
-		for (const key in json) {
-			const value = json[key]
+		for (const key in input) {
+			const value = input[key]
 			const result = decoder.decode(value)
 			if (result.is_err())
 				return Err(`while decoding ${name}, at key ${key}, failed to decode ${decoder.name}: ${result.expect_err(rinv)}`)
@@ -389,20 +438,6 @@ class DictionaryDecoder<T> extends Decoder<Dict<T>> {
 
 		return Ok(give)
 	}
-
-	// decode_items(json: unknown): Result<Dict<Result<T>>> {
-	// 	const { name, decoder } = this
-
-	// 	if (!is_object(json)) return Err(`expecting ${name}, got ${json}`)
-
-	// 	const give = {} as Dict<T>
-
-	// 	for (const key in json) {
-	// 		give[key] = decoder.decode(json[key])
-	// 	}
-
-	// 	return Ok(give)
-	// }
 }
 export function dictionary<T>(decoder: Decoder<T>): Decoder<Dict<T>> {
 	return new DictionaryDecoder(decoder) as Decoder<Dict<T>>
@@ -433,18 +468,18 @@ class TupleDecoder<L extends unknown[]> extends Decoder<L> {
 		this.name = `[${decoders.map(d => d.name).join(', ')}]`
 	}
 
-	decode(json: unknown): Result<L> {
+	decode(input: unknown): Result<L> {
 		const { name, decoders } = this
 
 		if (
-			!Array.isArray(json)
-			|| json.length !== decoders.length
-		) return Err(`expected ${name}, got ${json}`)
+			!Array.isArray(input)
+			|| input.length !== decoders.length
+		) return Err(`expected ${name}, got ${input}`)
 
 		const t = [] as unknown as L
 		for (let index = 0; index < decoders.length; index++) {
 			const decoder = decoders[index]
-			const value = json[index]
+			const value = input[index]
 			const result = decoder.decode(value)
 			if (result.is_err())
 				return Err(`while decoding ${name}, at index ${index}, failed to decode ${decoder.name}: ${result.expect_err(rinv)}`)
@@ -470,17 +505,17 @@ class StrictObjectDecoder<O> extends Decoder<O> {
 		super()
 	}
 
-	decode(json: unknown): Result<O> {
-	// decode(json: unknown): TransformedCollection<D> {
+	decode(input: unknown): Result<O> {
+	// decode(input: unknown): TransformedCollection<D> {
 		const { name, decoders } = this
 
-		if (!is_object(json)) return Err(`Failed to decode a valid ${name}, input is not an object: ${json}`)
+		if (!is_object(input)) return Err(`Failed to decode a valid ${name}, input is not an object: ${input}`)
 
 		const give = {} as O
-		for (const key in json) {
+		for (const key in input) {
 			if (!(key in decoders)) return Err(`Failed to decode a valid ${name}, input had invalid extra key ${key}`)
 			const decoder = decoders[key]
-			const value = json[key]
+			const value = input[key]
 			const result = decoder.decode(value)
 			if (result.is_err()) return Err(`Failed to decode a valid ${name}, key ${key} has invalid value: ${value}`)
 			give[key as keyof O] = result.expect(rinv)
@@ -505,12 +540,12 @@ class LooseObjectDecoder<O> extends Decoder<O> {
 		super()
 	}
 
-	decode(json: unknown): Result<O> {
+	decode(input: unknown): Result<O> {
 		const { name, decoders } = this
 
-		if (!is_object(json)) return Err(`Failed to decode a valid ${name}, input is not an object: ${json}`)
+		if (!is_object(input)) return Err(`Failed to decode a valid ${name}, input is not an object: ${input}`)
 
-		const give = { ...json } as O
+		const give = { ...input } as O
 		for (const key in decoders) {
 			if (!(key in give)) return Err(`Failed to decode a valid ${name}, input doesn't have value for key: ${key}`)
 			const decoder = decoders[key]

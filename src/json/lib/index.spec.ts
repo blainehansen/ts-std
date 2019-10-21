@@ -14,6 +14,35 @@ function validate<T>(decoder: json.Decoder<T>, ok_values: T[], err_values: any[]
 }
 
 
+describe('cls', () => {
+	it('works', () => {
+		class A implements json.Decodable {
+			constructor(readonly x: number, readonly y: string) {}
+			static decoder = json.tuple(json.number, json.string)
+			serialize() {
+				return t(this.x, this.y)
+			}
+		}
+
+		const pairs = [
+			t(t(1, 'a'), new A(1, 'a')),
+			t(t(0, ''), new A(0, '')),
+			t(new A(1, 'a'), new A(1, 'a')),
+			t(new A(0, ''), new A(0, '')),
+		]
+
+		const v: json.Decoder<A> = json.cls(A)
+
+		for (const [ok_value, expected] of pairs)
+			expect(v.decode(ok_value)).eql(Ok(expected))
+
+		const err_values = [[], ['a'], {}, { a: 'a' }, true, 3, Some(true), Some([]), Some('a'), None, Some('')]
+		for (const err_value of err_values)
+			expect(v.decode(err_value).is_err()).true
+	})
+})
+
+
 describe('wrap', () => {
 	it('works', () => {
 		validate<'b' | 7>(
