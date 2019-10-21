@@ -1,157 +1,78 @@
 import { Result, Ok, Err, Maybe, Some, None } from '@ts-std/monads'
 import { result_invariant_message as rinv } from '@ts-std/monads/dist/result'
 
-// const TransformerTypes = {
-// 	decoder: Symbol('Transformer.decoder'),
-// 	maybe: Symbol('Transformer.maybe'),
-// 	null: Symbol('Transformer.null'),
-// 	undef: Symbol('Transformer.undef'),
-// 	default: Symbol('Transformer.default'),
-// } as const
-
-// interface TransformerLike<T> {
-// 	type: symbol
-// 	readonly name: string
-// 	decode(input: unknown): T
-// }
-
-// type TransformerType<T extends TransformerLike<unknown>> =
-// 	T extends Decoder<infer U> ? U
-// 	: T extends TransformerLike<infer U> ? U
-// 	: never
-
-// type TransformedCollection<O, D extends { [K in keyof O]: Transformer<O[K]> }> =
-// 	{ [K in keyof D]: D[K] extends Decoder<unknown> ? false : true } extends true
-// 		? Result<{ [K in keyof D]: TransformerType<D[K]> }>
-// 		: { [K in keyof D]: TransformerType<D[K]> }
-
-// type Transformer<T> =
-// 	| Decoder<T>
-// 	| MaybeTransformer<T>
-// 	| NullTransformer<T>
-// 	| UndefTransformer<T>
-// 	| DefaultTransformer<T>
-
-
-// // DANGER: test to ensure type invariant holds
-// const global_maybe_cache = {} as { [decoder_name: string]: MaybeTransformer<any> }
-// const global_null_cache = {} as { [decoder_name: string]: NullTransformer<any> }
-// const global_undef_cache = {} as { [decoder_name: string]: UndefTransformer<any> }
-// const global_default_cache = {} as { [decoder_name: string]: DefaultTransformer<any> }
-
-// export interface Decoder<T> {
-// 	readonly name: string
-// 	decode(input: unknown): Result<T>
-// }
-
-// export interface Transformer<T> {
-// 	readonly name: string
-// 	decode(input: unknown): T
-// }
-
-class Adaptor<U, T> extends Decoder<T> {
-	constructor(
-		readonly base: Decoder<T>,
-		readonly alternate: Decoder<U>,
-		readonly adapt_func: (input: U) => T,
-	) {
-		super()
-	}
-
-	decode(input: unknown): Result<T> {
-		return this.base.decode(input)
-			.or(
-				() => this.alternate.decode(input)
-					.change(this.adapt_func)
-			)
-	}
-
-	adapt(other: U): T {
-		return this.adapt_func(other)
-	}
-}
-
-class TryAdaptor<U, T> extends Decoder<T> {
-	constructor(
-		readonly base: Decoder<T>,
-		readonly alternate: Decoder<U>,
-		readonly adapt_func: (input: U) => Result<T>,
-	) {
-		super()
-	}
-
-	decode(input: unknown): Result<T> {
-		return this.base.decode(input)
-			.or(
-				() => this.alternate.decode(input)
-					.try_change(this.adapt_func)
-			)
-	}
-
-	try_adapt(other: U): Result<T> {
-		return this.adapt_func(other)
-	}
-}
-
-// export abstract class Decoder<T> implements TransformerLike<Result<T>> {
 export abstract class Decoder<T> {
-	// type = TransformerTypes.decoder
-
 	abstract readonly name: string
 	abstract decode(input: unknown): Result<T>
 
-	adaptable<U>(alternate: Decoder<U>, adapt_func: (input: U) => T) {
-		return new Adaptor(this, alternate, adapt_func)
+	guard(input: unknown): input is T {
+		return this.decode(input).is_ok()
+	}
+}
+
+export type TypeOf<D extends Decoder<unknown>> = D extends Decoder<infer T> ? T : never
+
+type SafeAdaptor<U, T> = { is_fallible: false, decoder: Decoder<U>, func: (input: U) => T }
+type FallibleAdaptor<U, T> = { is_fallible: true, decoder: Decoder<U>, func: (input: U) => Result<T> }
+
+type Adaptor<U, T> =
+	| SafeAdaptor<U, T>
+	| FallibleAdaptor<U, T>
+
+type AdaptorTuple<L extends any[], T> = {
+	[K in keyof L]: Adaptor<L[K], T>
+}
+
+class AdaptorDecoder<U, T> extends Decoder<T> {
+	readonly name: string
+	constructor(
+		readonly decoder: Decoder<T>,
+		readonly adaptors: Adaptor<U, T>[],
+	) {
+		super()
+		this.name = `adaptable ${decoder.name}`
 	}
 
-	try_adaptable<U>(alternate: Decoder<U>, adapt_func: (input: U) => Result<T>) {
-		return new TryAdaptor(this, alternate, adapt_func)
+	decode(input: unknown): Result<T> {
+		const base_attempt = this.decoder.decode(input)
+		if (base_attempt.is_ok())
+			return base_attempt
+
+		const names = [] as string[]
+		for (const adaptor of this.adaptors) {
+			const adaptor_result = adaptor.decoder.decode(input)
+			const adaptor_attempt = adaptor.is_fallible
+				? adaptor_result.try_change(adaptor.func)
+				: adaptor_result.change(adaptor.func)
+
+			if (adaptor_attempt.is_ok())
+				return adaptor_attempt
+
+			names.push(adaptor.decoder.name)
+		}
+
+		return Err(`in ${this.name}, couldn't decode from any of [${names.join(', ')}]; got ${input}`)
 	}
+}
+
+export function adaptable<L extends any[], T>(
+	decoder: Decoder<T>,
+	...adaptors: AdaptorTuple<L, T>
+): Decoder<T> {
+	return new AdaptorDecoder(decoder, adaptors) as Decoder<T>
+}
+
+export function adaptor<U, T>(decoder: Decoder<U>, func: (input: U) => T): SafeAdaptor<U, T> {
+	return { is_fallible: false, decoder, func }
+}
+
+export function try_adaptor<U, T>(decoder: Decoder<U>, func: (input: U) => Result<T>): FallibleAdaptor<U, T> {
+	return { is_fallible: true, decoder, func }
 }
 
 export type DecoderTuple<L extends unknown[]> = {
 	[K in keyof L]: Decoder<L[K]>
 }
-
-// class ResultTransformer<T> implements TransformerLike<Result<Result<T>>> {
-// 	readonly name: string
-// 	constructor(readonly decoder: Decoder<Result<T>>) {
-// 		this.name = `lenient Result<${decoder.name}>`
-// 	}
-// 	decode(input: unknown) { return Ok(this.decoder.decode(input)) }
-// }
-// class MaybeTransformer<T> implements TransformerLike<Maybe<T>> {
-// 	type = TransformerTypes.maybe
-// 	readonly name: string
-// 	constructor(readonly decoder: Decoder<T>) {
-// 		this.name = `lenient Maybe<${decoder.name}>`
-// 	}
-// 	decode(input: unknown) { return Ok(this.decoder.decode(input).ok_maybe()) }
-// }
-// class NullTransformer<T> implements TransformerLike<T | null> {
-// 	type = TransformerTypes.null
-// 	readonly name: string
-// 	constructor(readonly decoder: Decoder<T>) {
-// 		this.name = `lenient ${decoder.name} | null`
-// 	}
-// 	decode(input: unknown) { return Ok(this.decoder.decode(input).ok_null()) }
-// }
-// class UndefTransformer<T> implements TransformerLike<T | undefined> {
-// 	type = TransformerTypes.undef
-// 	readonly name: string
-// 	constructor(readonly decoder: Decoder<T>) {
-// 		this.name = `lenient ${decoder.name} | undefined`
-// 	}
-// 	decode(input: unknown) { return Ok(this.decoder.decode(input).ok_undef()) }
-// }
-// class DefaultTransformer<T> implements TransformerLike<T> {
-// 	type = TransformerTypes.default
-// 	readonly name: string
-// 	constructor(readonly decoder: Decoder<T>, readonly def: T) {
-// 		this.name = `lenient default ${decoder.name}`
-// 	}
-// 	decode(input: unknown) { return Ok(this.decoder.decode(input).default(this.def)) }
-// }
 
 
 function is_object(input: unknown): input is NonNullable<Object> {
@@ -528,17 +449,14 @@ export function tuple<L extends unknown[]>(...decoders: DecoderTuple<L>): Decode
 
 
 class StrictObjectDecoder<O> extends Decoder<O> {
-// class StrictObjectDecoder<O, D extends { [K in keyof O]: Transformer<O[K]> }> extends Decoder<O> {
 	constructor(
 		readonly name: string,
 		readonly decoders: { [K in keyof O]: Decoder<O[K]> },
-		// readonly decoders: D,
 	) {
 		super()
 	}
 
 	decode(input: unknown): Result<O> {
-	// decode(input: unknown): TransformedCollection<D> {
 		const { name, decoders } = this
 
 		if (!is_object(input)) return Err(`Failed to decode a valid ${name}, input is not an object: ${input}`)

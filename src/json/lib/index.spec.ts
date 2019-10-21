@@ -2,7 +2,7 @@ import 'mocha'
 import { expect } from 'chai'
 
 import * as json from './index'
-import { tuple as t } from '@ts-std/types'
+import { tuple as t, assert_type as assert } from '@ts-std/types'
 import { Result, Ok, Err, Maybe, Some, None } from '@ts-std/monads'
 
 function validate<T>(decoder: json.Decoder<T>, ok_values: T[], err_values: any[]) {
@@ -42,17 +42,52 @@ describe('cls', () => {
 	})
 })
 
+describe('adaptable', () => {
+	it('works', () => {
+		const a = json.adaptable(
+			json.boolean,
+			json.adaptor(json.number, n => !!n),
+			json.try_adaptor(json.string, s => {
+				if (s === 'true') return Ok(true)
+				if (s === 'false') return Ok(false)
+				return Err("")
+			}),
+		)
+
+		assert.same<json.TypeOf<typeof a>, boolean>(true)
+
+		const pairs = [
+			t(true, true),
+			t(false, false),
+			t(1, true),
+			t(0, false),
+			t('true', true),
+			t('false', false),
+		]
+
+		for (const [ok_value, expected] of pairs)
+			expect(a.decode(ok_value)).eql(Ok(expected))
+
+		const err_values = [[], 'a', 'tru', ['a'], {}, { a: 'a' }, Some(true), Some([]), Some('a'), None, Some('')]
+		for (const err_value of err_values)
+			expect(a.decode(err_value).is_err()).true
+	})
+})
 
 describe('wrap', () => {
 	it('works', () => {
+		const d = json.wrap("'b' | 7", json => {
+			const b = 'b' as const
+			const seven = 7 as const
+			return json === b || json === seven
+				? Ok(json)
+				: Err('blah')
+		})
+
+		assert.same<json.TypeOf<typeof d>, 'b' | 7>(true)
+
 		validate<'b' | 7>(
-			json.wrap("'b' | 7", json => {
-				const b = 'b' as const
-				const seven = 7 as const
-				return json === b || json === seven
-					? Ok(json)
-					: Err('blah')
-			}),
+			d,
 			['b', 7],
 			[null, undefined, [], ['a'], {}, { a: 'a' }, true, false, 'a', Infinity, NaN, -Infinity, -NaN],
 		)
@@ -61,8 +96,11 @@ describe('wrap', () => {
 
 describe('string', () => {
 	it('works', () => {
+		const d = json.string
+		assert.same<json.TypeOf<typeof d>, string>(true)
+
 		validate<string>(
-			json.string,
+			d,
 			['', 'a', "long thing", `stuff: ${5}`],
 			[null, undefined, [], ['a'], {}, { a: 'a' }, 5, true, false],
 		)
@@ -71,8 +109,11 @@ describe('string', () => {
 
 describe('boolean', () => {
 	it('works', () => {
+		const d = json.boolean
+		assert.same<json.TypeOf<typeof d>, boolean>(true)
+
 		validate<boolean>(
-			json.boolean,
+			d,
 			[true, false],
 			[null, undefined, [], ['a'], {}, { a: 'a' }, 5, 'a'],
 		)
@@ -82,8 +123,11 @@ describe('boolean', () => {
 
 describe('number', () => {
 	it('works', () => {
+		const d = json.number
+		assert.same<json.TypeOf<typeof d>, number>(true)
+
 		validate<number>(
-			json.number,
+			d,
 			[5, -5, 5.5, -5.5],
 			[null, undefined, [], ['a'], {}, { a: 'a' }, true, false, 'a', Infinity, NaN, -Infinity, -NaN],
 		)
@@ -120,8 +164,11 @@ describe('uint', () => {
 
 describe('union', () => {
 	it('works', () => {
+		const d = json.union(json.string, json.boolean, json.number)
+		assert.same<json.TypeOf<typeof d>, string | boolean | number>(true)
+
 		validate<string | boolean | number>(
-			json.union(json.string, json.boolean, json.number),
+			d,
 			['a', '', false, true, -1, 0, 1],
 			[null, undefined, [], ['a'], {}, { a: 'a' }],
 		)
