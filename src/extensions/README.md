@@ -1,6 +1,6 @@
 # `@ts-std/extensions`
 
-> A variety of extensions to native types. Heavily use `Result` and `Maybe` types.
+> A variety of extensions to native types. Heavily use `Result` and `Maybe` types from ts-std/monads.
 
 ## `Array<T>`
 
