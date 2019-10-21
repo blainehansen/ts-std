@@ -51,6 +51,9 @@ export type Dict<T> = { [key: string]: T }
 
 export type Cast<T, U> = T extends U ? T : never
 
+export type UnionToIntersection<U> =
+	(U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
+
 // this uses a gross version of "and"
 export type IsType<T, U> =
 	[T] extends [U] ? [U] extends [T]
