@@ -49,6 +49,50 @@ import { result_invariant_message as rinv } from '@ts-lib/monads/dist/result'
 // 	decode(input: unknown): T
 // }
 
+class Adaptor<U, T> extends Decoder<T> {
+	constructor(
+		readonly base: Decoder<T>,
+		readonly alternate: Decoder<U>,
+		readonly adapt_func: (input: U) => T,
+	) {
+		super()
+	}
+
+	decode(input: unknown): Result<T> {
+		return this.base.decode(input)
+			.or(
+				() => this.alternate.decode(input)
+					.change(this.adapt_func)
+			)
+	}
+
+	adapt(other: U): T {
+		return this.adapt_func(other)
+	}
+}
+
+class TryAdaptor<U, T> extends Decoder<T> {
+	constructor(
+		readonly base: Decoder<T>,
+		readonly alternate: Decoder<U>,
+		readonly adapt_func: (input: U) => Result<T>,
+	) {
+		super()
+	}
+
+	decode(input: unknown): Result<T> {
+		return this.base.decode(input)
+			.or(
+				() => this.alternate.decode(input)
+					.try_change(this.adapt_func)
+			)
+	}
+
+	try_adapt(other: U): Result<T> {
+		return this.adapt_func(other)
+	}
+}
+
 // export abstract class Decoder<T> implements TransformerLike<Result<T>> {
 export abstract class Decoder<T> {
 	// type = TransformerTypes.decoder
@@ -56,25 +100,13 @@ export abstract class Decoder<T> {
 	abstract readonly name: string
 	abstract decode(input: unknown): Result<T>
 
-	// lenient(): ResultTransformer<T> {
-	// 	return new
-	// }
-	// lenient_maybe(): MaybeTransformer<T> {
-	// 	if (global_maybe_cache[this.name]) return global_maybe_cache[this.name]
-	// 	return global_maybe_cache[this.name] = new MaybeTransformer(this)
-	// }
-	// lenient_null(): NullTransformer<T> {
-	// 	if (global_null_cache[this.name]) return global_null_cache[this.name]
-	// 	return global_null_cache[this.name] = new NullTransformer<T>(this)
-	// }
-	// lenient_undef(): UndefTransformer<T> {
-	// 	if (global_undef_cache[this.name]) return global_undef_cache[this.name]
-	// 	return global_undef_cache[this.name] = new UndefTransformer<T>(this)
-	// }
-	// lenient_default(def: T): DefaultTransformer<T> {
-	// 	if (global_default_cache[this.name]) return global_default_cache[this.name]
-	// 	return global_default_cache[this.name] = new DefaultTransformer<T>(this, def)
-	// }
+	adaptable<U>(alternate: Decoder<U>, adapt_func: (input: U) => T) {
+		return new Adaptor(this, alternate, adapt_func)
+	}
+
+	try_adaptable<U>(alternate: Decoder<U>, adapt_func: (input: U) => Result<T>) {
+		return new TryAdaptor(this, alternate, adapt_func)
+	}
 }
 
 export type DecoderTuple<L extends unknown[]> = {

@@ -209,4 +209,19 @@ describe('defaultable Enum', () => {
 		assert_values_callable(WebEvent.default, t(), true)
 		assert_values_callable(WebEvent.default, t(undefined), false)
 	})
+
+	it('generic works', () => {
+		type Actor = {}
+
+		const WebEvent = Enum(<A extends Actor, U>() => ({
+			PageLoad: empty(),
+			PageUnload: empty(),
+			KeyPress: variant<number>(),
+			Incoming: variant<A>(),
+			Request: variant<{ from: A, payload: U }>(),
+		}))
+		type WebEvent<A extends Actor, U> = Enum<typeof WebEvent, [A, U]>
+
+		let event = WebEvent.PageLoad() as WebEvent<Actor, number>
+	})
 })
