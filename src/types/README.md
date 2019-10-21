@@ -1,6 +1,6 @@
 # `@ts-std/types`
 
-> A library of generally useful types and type assertion functions.
+> Various helpful type definitions and type assertion helpers. Includes many tricky recursive and functional types.
 
 ## API
 

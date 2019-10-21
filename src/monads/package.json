@@ -1,13 +1,13 @@
 {
 	"name": "@ts-std/monads",
-	"version": "0.1.2",
-	"description": "Base Maybe and Result types. Used by many other libraries in the ts-std system.",
+	"version": "1.0.0",
+	"description": "`Result` and `Maybe` types that allow a safe and \"functional\" way of dealing with errors and nullable values.",
 	"author": {
 		"name": "Blaine Hansen",
 		"email": "faichenshing@gmail.com",
 		"url": "http://blainehansen.co/"
 	},
-	"homepage": "https://github.com/blainehansen/ts-std#readme",
+	"homepage": "https://github.com/blainehansen/ts-std/tree/master/src/monads#readme",
 	"license": "MIT",
 	"main": "dist/index.js",
 	"typings": "dist/index.d.ts",
@@ -31,6 +31,6 @@
 		"url": "https://github.com/blainehansen/ts-std/issues"
 	},
 	"dependencies": {
-		"@ts-std/types": "^0.1.0"
+		"@ts-std/types": "^1.0.0"
 	}
 }
