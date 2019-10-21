@@ -98,6 +98,32 @@ const err = [{ name: 'alice', apples: 3 }, { name: 'bob', apples: 5 }, { name: '
 err === Err(['false', { name: 'bob', apples: 5 }, { name: 'alice', apples: 3 }])
 ```
 
+### `entries_to_dict<T>(this: [string, T][]): Dict<T>`
+
+Create a dictionary from an array of "entries" shaped tuples.
+
+```ts
+const a = [['a', 1], ['b', 2], ['c', 3], ['a', 4]]
+  .entries_to_dict()
+a === { a: 4, b: 2, c: 3 }
+```
+
+### `entries_to_dict_unique<T>(this: [string, T][]): Result<Dict<T>, [string, T, T]>`
+
+Attempts to create a dictionary from an array of "entries" shaped tuples. If two elements map to the same key, this will return an `Err` showing the key that overlapped and the items that both created it.
+
+```ts
+const ok = [['a', true], ['b', false], ['c', true]]
+  .unique_index_by('name')
+
+ok === Ok({ a: true, b: false, c: true })
+
+const err = [['a', 1], ['b', 2], ['c', 3], ['a', 4]]
+  .entries_to_dict_unique()
+
+err === Err(['a', 1, 4])
+```
+
 ### `unzip<L extends any[]>(this: L[]): Maybe<Unzip<L>>`
 
 Take an array of tuples and pull it apart into a tuple of arrays. Will return `None` if the array is empty, because the function can't know how many arrays to produce.
