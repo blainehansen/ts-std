@@ -2,14 +2,52 @@
 // https://www.freecodecamp.org/news/typescript-curry-ramda-types-f747e99744ab/
 // https://github.com/Microsoft/TypeScript/issues/23182
 
+export function assert_boolean_type<T extends boolean>(
+	expect_true: T extends true ? true : false
+) {}
+export function assert_is_type<T, U>(
+	expect_true: IsType<T, U> extends true ? true : false
+) {}
+export function assert_is_never<T>(
+	expect_true: IsNever<T> extends true ? true : false
+) {}
+
+export function assert_type<T>(
+	value: T
+) {}
+export function assert_value_types<T, U>(
+	a: T, b: U,
+	expect_true: IsType<T, U> extends true ? true : false
+) {}
+
+export function assert_assignable<T, U>(
+	expect_true: T extends U ? true : false
+) {}
+
+export function assert_values_assignable<T, U>(
+	t: T, u: U,
+	expect_true: T extends U ? true : false
+) {}
+
+export function assert_callable<F extends (...args: unknown[]) => unknown, U>(
+	expect_true: U extends Parameters<F> ? true : false
+) {}
+
+export function assert_values_callable<F extends (...args: unknown[]) => unknown, U>(
+	f: F, u: U,
+	expect_true: U extends Parameters<F> ? true : false
+) {}
+
+export function assert_returnable<F extends (...args: unknown[]) => unknown, U>(
+	expect_true: ReturnType<F> extends U ? true : false
+) {}
+
+export function assert_values_returnable<F extends (...args: unknown[]) => unknown, U>(
+	f: F, u: U,
+	expect_true: ReturnType<F> extends U ? true : false
+) {}
+
 export type Dict<T> = { [key: string]: T }
-
-export function assert_boolean_type<T extends boolean>(expectTrue: T extends true ? true : false) {}
-export function assert_is_type<T, U>(expectTrue: IsType<T, U> extends true ? true : false) {}
-export function assert_is_never<T>(expectTrue: IsNever<T> extends true ? true : false) {}
-
-export function assert_type<T>(value: T) {}
-export function assert_value_types<T, U>(a: T, b: U, expectTrue: IsType<T, U> extends true ? true : false) {}
 
 export type Cast<T, U> = T extends U ? T : never
 
@@ -29,6 +67,10 @@ export type KeysOfType<T, U> = T extends any[]
 	? { [K in keyof T]: T[K] extends U ? K : never }[number]
 	: { [K in keyof T]: T[K] extends U ? K : never }[keyof T]
 export type PickOfType<T, U> = Pick<T, Cast<KeysOfType<T, U>, keyof T>>
+
+export type Overwrite<A, B> = {
+	[K in Exclude<keyof A, keyof B>]: A[K]
+} & B
 
 
 export type Head<L extends any[]> =
@@ -129,10 +171,6 @@ export function tuple<L extends any[]>(...values: L): L {
 // 	promise: Promise<T | null> | null,
 // 	value: T | null,
 // }
-
-// type Overwrite<A, B> = {
-// 	[K in Exclude<keyof A, keyof B>]: A[K]
-// } & B
 
 
 // type DetermineReturn<O> =

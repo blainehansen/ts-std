@@ -8,6 +8,47 @@ import {
 } from './index'
 
 describe('Just going to be various type assertions. They should all compile', () => {
+	it('assert_boolean_type', () => {
+		assert_boolean_type<true>(true)
+		assert_boolean_type<false>(false)
+		assert_boolean_type<boolean>(false)
+
+		type E<T, U> = T extends U ? true : false
+		assert_boolean_type<E<string | boolean, boolean>>(true)
+		assert_boolean_type<E<boolean, string | boolean>>(false)
+	})
+	it('assert_is_type', () => {
+		assert_is_type()
+	})
+	it('assert_is_never', () => {
+		assert_is_never()
+	})
+	it('assert_type', () => {
+		assert_type()
+	})
+	it('assert_value_types', () => {
+		assert_value_types()
+	})
+	it('assert_assignable', () => {
+		assert_assignable()
+	})
+	it('assert_values_assignable', () => {
+		assert_values_assignable()
+	})
+	it('assert_callable', () => {
+		assert_callable()
+	})
+	it('assert_values_callable', () => {
+		assert_values_callable()
+	})
+	it('assert_returnable', () => {
+		assert_returnable()
+	})
+	it('assert_values_returnable', () => {
+		assert_values_returnable()
+	})
+
+
 	it('Unshift', () => {
 		assert_is_type< Unshift<number, [string, boolean]>, [number, string, boolean] >(true)
 		assert_is_type< Unshift<number, []>, [number] >(true)
