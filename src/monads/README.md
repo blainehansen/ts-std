@@ -1,16 +1,16 @@
 # `@ts-lib/monads`
 
-> `Result` and `Maybe` types that allow a more safe and "functional" way of dealing with errors and nullable values.
+> `Result` and `Maybe` types that allow a safe and "functional" way of dealing with errors and nullable values.
 
 These types wrap successful or unsuccessful values in a way that allows very convenient chaining and recombination. Ever wanted to do a task on a value only if it is actually there? Or ever wanted to do some task with a bunch of values that all individually could fail or not? Are you sick of having to catch exceptions all the time that come out of nowhere and make your software buggy and unreliable? This library is for you.
 
-## [`type Result<T, E = string> = Ok<T> | Err<E>`](./result.md)
+## [`type Result<T, E = string> = Ok<T> | Err<E>`](./lib/result.md)
 
 This type is a much safer and more predictable alternative to exceptions. Since a `Result` type can either be a successful `Ok` or a failed `Err`, it allows very granular control of how and when errors are dealt with, without threatening to crash programs and cause bad behavior.
 
 Since a function that could fail can choose to return a `Result` rather than throwing an exception, this creates a clear contract between the caller and the callee, and requires the caller to make some intelligent decision about how to deal with that error, rather than being surprised with an exception.
 
-**Full `Result` docs [here](./result.md)**
+**Full `Result` docs [here](./lib/result.md)**
 
 ```ts
 import { Result, Ok, Err } from '@ts-lib/monads'
@@ -48,11 +48,11 @@ combine_err === Err("two failed...")
 ```
 
 
-## [`type Maybe<T> = Some(T) | None`](./maybe.md)
+## [`type Maybe<T> = Some(T) | None`](./lib/maybe.md)
 
 This type is an alternative to `null | undefined`, but it allows for chaining and joining in a functional style.
 
-**Full `Maybe` docs [here](./maybe.md)**
+**Full `Maybe` docs [here](./lib/maybe.md)**
 
 ```ts
 import { Maybe, Some, None } from '@ts-lib/monads'

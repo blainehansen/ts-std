@@ -2,7 +2,11 @@
 	"name": "@ts-lib/enum",
 	"version": "1.0.0",
 	"description": "> TODO: description",
-	"author": "Blaine Hansen <faichenshing@gmail.com>",
+	"author": {
+		"name": "Blaine Hansen",
+		"email": "faichenshing@gmail.com",
+		"url": "http://blainehansen.co/"
+	},
 	"homepage": "https://github.com/blainehansen/ts-lib#readme",
 	"license": "MIT",
 	"main": "dist/index.js",

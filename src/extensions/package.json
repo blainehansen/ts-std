@@ -2,7 +2,11 @@
 	"name": "@ts-lib/extensions",
 	"version": "0.1.3",
 	"description": "A variety of extensions to native types. Heavily use Result and Maybe types.",
-	"author": "Blaine Hansen <faichenshing@gmail.com>",
+	"author": {
+		"name": "Blaine Hansen",
+		"email": "faichenshing@gmail.com",
+		"url": "http://blainehansen.co/"
+	},
 	"homepage": "https://github.com/blainehansen/ts-lib#readme",
 	"license": "MIT",
 	"main": "dist/index.js",

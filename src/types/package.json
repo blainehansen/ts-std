@@ -2,7 +2,11 @@
 	"name": "@ts-lib/types",
 	"version": "0.1.2",
 	"description": "Various helpful type definitions. Includes many tricky recursive and functional types.",
-	"author": "Blaine Hansen <faichenshing@gmail.com>",
+	"author": {
+		"name": "Blaine Hansen",
+		"email": "faichenshing@gmail.com",
+		"url": "http://blainehansen.co/"
+	},
 	"homepage": "https://github.com/blainehansen/ts-lib#readme",
 	"license": "MIT",
 	"main": "dist/index.js",
