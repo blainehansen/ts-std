@@ -31,6 +31,6 @@
 		"url": "https://github.com/blainehansen/ts-std/issues"
 	},
 	"dependencies": {
-		"@ts-std/types": "^0.1.2"
+		"@ts-std/types": "^1.0.0"
 	}
 }

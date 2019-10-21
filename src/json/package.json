@@ -31,8 +31,8 @@
     "url": "https://github.com/blainehansen/ts-std/issues"
   },
   "dependencies": {
-    "@ts-std/monads": "^0.1.0",
-    "@ts-std/types": "^0.1.0"
+    "@ts-std/monads": "^1.0.0",
+    "@ts-std/types": "^1.0.0"
   },
   "keywords": [
     "json",
