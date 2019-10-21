@@ -1,5 +1,5 @@
-import { Result, Ok, Err, Maybe, Some, None } from '@ts-lib/monads'
-import { result_invariant_message as rinv } from '@ts-lib/monads/dist/result'
+import { Result, Ok, Err, Maybe, Some, None } from '@ts-std/monads'
+import { result_invariant_message as rinv } from '@ts-std/monads/dist/result'
 
 // const TransformerTypes = {
 // 	decoder: Symbol('Transformer.decoder'),

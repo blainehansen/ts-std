@@ -1,5 +1,5 @@
 {
-	"name": "@ts-lib/enum",
+	"name": "@ts-std/enum",
 	"version": "1.0.0",
 	"description": "> TODO: description",
 	"author": {
@@ -7,7 +7,7 @@
 		"email": "faichenshing@gmail.com",
 		"url": "http://blainehansen.co/"
 	},
-	"homepage": "https://github.com/blainehansen/ts-lib#readme",
+	"homepage": "https://github.com/blainehansen/ts-std#readme",
 	"license": "MIT",
 	"main": "dist/index.js",
 	"typings": "dist/index.d.ts",
@@ -19,7 +19,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/blainehansen/ts-lib.git"
+		"url": "git+https://github.com/blainehansen/ts-std.git"
 	},
 	"scripts": {
 		"test": "mocha -r ts-node/register lib/**/*.spec.ts",
@@ -28,9 +28,9 @@
 		"postversion": "npm publish"
 	},
 	"bugs": {
-		"url": "https://github.com/blainehansen/ts-lib/issues"
+		"url": "https://github.com/blainehansen/ts-std/issues"
 	},
 	"dependencies": {
-		"@ts-lib/types": "^0.1.2"
+		"@ts-std/types": "^0.1.2"
 	}
 }

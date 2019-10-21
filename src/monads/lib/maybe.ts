@@ -1,4 +1,4 @@
-import { Unshift } from '@ts-lib/types'
+import { Unshift } from '@ts-std/types'
 
 import { Panic, TransformerOrValue, ProducerOrValue } from './common'
 import { Result, Ok, Err } from './result'

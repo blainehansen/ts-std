@@ -1,5 +1,5 @@
 {
-	"name": "ts-lib",
+	"name": "ts-std",
 	"version": "0.0.0",
 	"description": "A collection of libraries for truly safe and functional typescript.",
 	"author": {

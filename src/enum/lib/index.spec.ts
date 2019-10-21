@@ -2,7 +2,7 @@ import 'mocha'
 import { expect } from 'chai'
 
 import { Enum, empty, variant } from './index'
-import { tuple as t, assert_type, assert_assignable, assert_callable, assert_values_callable } from '@ts-lib/types'
+import { tuple as t, assert_type, assert_assignable, assert_callable, assert_values_callable } from '@ts-std/types'
 
 describe('required Enum', () => {
 	it('works', () => {

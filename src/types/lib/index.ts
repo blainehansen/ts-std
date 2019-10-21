@@ -2,50 +2,68 @@
 // https://www.freecodecamp.org/news/typescript-curry-ramda-types-f747e99744ab/
 // https://github.com/Microsoft/TypeScript/issues/23182
 
-export function assert_boolean_type<T extends boolean>(
-	expect_true: T extends true ? true : false
-) {}
-export function assert_is_type<T, U>(
-	expect_true: IsType<T, U> extends true ? true : false
-) {}
-export function assert_is_never<T>(
-	expect_true: IsNever<T> extends true ? true : false
-) {}
+export function tuple<L extends any[]>(...values: L): L {
+	return values as L
+}
 
-export function assert_type<T>(
-	value: T
-) {}
-export function assert_value_types<T, U>(
-	a: T, b: U,
-	expect_true: IsType<T, U> extends true ? true : false
-) {}
+export type AnyFunc = (...args: any[]) => any
 
-export function assert_assignable<T, U>(
-	expect_true: T extends U ? true : false
-) {}
+export namespace assert_type {
+	export function boolean<B extends boolean>(
+		expect_true: B extends true ? true : false
+	) {}
+	export function value_boolean<B extends boolean>(
+		b: B,
+		expect_true: B extends true ? true : false
+	) {}
 
-export function assert_values_assignable<T, U>(
-	t: T, u: U,
-	expect_true: T extends U ? true : false
-) {}
+	export function same<A, B>(
+		expect_true: Same<A, B> extends true ? true : false
+	) {}
+	export function values_same<A, B>(
+		a: A, b: B,
+		expect_true: Same<A, B> extends true ? true : false
+	) {}
 
-export function assert_callable<F extends (...args: unknown[]) => unknown, U>(
-	expect_true: U extends Parameters<F> ? true : false
-) {}
+	export function never<A>(
+		expect_true: IsNever<A> extends true ? true : false
+	) {}
+	export function value_never<A>(
+		a: A,
+		expect_true: IsNever<A> extends true ? true : false
+	) {}
 
-export function assert_values_callable<F extends (...args: unknown[]) => unknown, U>(
-	f: F, u: U,
-	expect_true: U extends Parameters<F> ? true : false
-) {}
+	export function value<A>(
+		a: A
+	) {}
 
-export function assert_returnable<F extends (...args: unknown[]) => unknown, U>(
-	expect_true: ReturnType<F> extends U ? true : false
-) {}
 
-export function assert_values_returnable<F extends (...args: unknown[]) => unknown, U>(
-	f: F, u: U,
-	expect_true: ReturnType<F> extends U ? true : false
-) {}
+	export function assignable<A, B>(
+		expect_true: B extends A ? true : false
+	) {}
+
+	export function values_assignable<A, B>(
+		a: A, b: B,
+		expect_true: B extends A ? true : false
+	) {}
+
+	export function callable<F extends AnyFunc, A>(
+		expect_true: A extends Parameters<F> ? true : false
+	) {}
+	export function values_callable<F extends AnyFunc, A>(
+		f: F, a: A,
+		expect_true: A extends Parameters<F> ? true : false
+	) {}
+
+	export function returnable<R, F extends AnyFunc>(
+		expect_true: ReturnType<F> extends R ? true : false
+	) {}
+	export function values_returnable<R, F extends AnyFunc>(
+		r: R, f: F,
+		expect_true: ReturnType<F> extends R ? true : false
+	) {}
+}
+
 
 export type Dict<T> = { [key: string]: T }
 
@@ -54,13 +72,15 @@ export type Cast<T, U> = T extends U ? T : never
 export type UnionToIntersection<U> =
 	(U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never
 
+export type TupleIntersection<L extends any[]> = UnionToIntersection<L[number]>
+
 // this uses a gross version of "and"
-export type IsType<T, U> =
-	[T] extends [U] ? [U] extends [T]
+export type Same<A, B> =
+	[A] extends [B] ? [B] extends [A]
 		? true
 		: false : false
 
-export type IsNever<T> = IsType<T, never>
+export type IsNever<T> = Same<T, never>
 
 export type Unshift<Item, List extends any[]> =
 	((first: Item, ...rest: List) => any) extends ((...list: infer R) => any) ? R : never
@@ -133,12 +153,6 @@ export type FoldingFunctions<L extends Func[]> = {
 		? 0
 		: 2
 ]
-
-
-export function tuple<L extends any[]>(...values: L): L {
-	return values as L
-}
-
 
 
 

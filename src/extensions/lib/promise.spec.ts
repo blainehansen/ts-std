@@ -2,8 +2,8 @@ import 'mocha'
 import './promise'
 import { expect } from 'chai'
 
-import { tuple as t } from '@ts-lib/types'
-import { Result, Ok, Err, Maybe, Some, None } from '@ts-lib/monads'
+import { tuple as t } from '@ts-std/types'
+import { Result, Ok, Err, Maybe, Some, None } from '@ts-std/monads'
 
 async function av<T>(v: T) {
 	return Promise.resolve(v)

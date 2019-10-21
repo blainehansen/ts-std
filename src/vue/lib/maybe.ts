@@ -1,5 +1,5 @@
 import Vue, { PropOptions, VNode } from 'vue'
-import { Maybe } from '@ts-lib/monads'
+import { Maybe } from '@ts-std/monads'
 
 export default Vue.extend({
 	name: 'maybe',

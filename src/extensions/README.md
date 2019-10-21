@@ -1,4 +1,4 @@
-# `@ts-lib/extensions`
+# `@ts-std/extensions`
 
 > A variety of extensions to native types. Heavily use `Result` and `Maybe` types.
 

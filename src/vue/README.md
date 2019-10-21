@@ -1,11 +1,11 @@
-# `@ts-lib/vue`
+# `@ts-std/vue`
 
 > TODO: description
 
 ## Usage
 
 ```
-const vue = require('@ts-lib/vue');
+const vue = require('@ts-std/vue');
 
 // TODO: DEMONSTRATE API
 ```

@@ -1,4 +1,4 @@
-import { Maybe, Some, None } from '@ts-lib/monads'
+import { Maybe, Some, None } from '@ts-std/monads'
 
 import { Indexable } from './common'
 

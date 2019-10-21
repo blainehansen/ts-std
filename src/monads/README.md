@@ -1,4 +1,4 @@
-# `@ts-lib/monads`
+# `@ts-std/monads`
 
 > `Result` and `Maybe` types that allow a safe and "functional" way of dealing with errors and nullable values.
 
@@ -13,7 +13,7 @@ Since a function that could fail can choose to return a `Result` rather than thr
 **Full `Result` docs [here](./lib/result.md)**
 
 ```ts
-import { Result, Ok, Err } from '@ts-lib/monads'
+import { Result, Ok, Err } from '@ts-std/monads'
 
 const a = Ok(5)
   // perform some infallible operation on a successful value
@@ -55,7 +55,7 @@ This type is an alternative to `null | undefined`, but it allows for chaining an
 **Full `Maybe` docs [here](./lib/maybe.md)**
 
 ```ts
-import { Maybe, Some, None } from '@ts-lib/monads'
+import { Maybe, Some, None } from '@ts-std/monads'
 
 const a = Some(5)
   // perform some infallible operation on a successful value

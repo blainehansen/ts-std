@@ -1,5 +1,5 @@
 import Vue, { PropOptions, VNode } from 'vue'
-import { Result } from '@ts-lib/monads'
+import { Result } from '@ts-std/monads'
 
 export default Vue.extend({
 	name: 'result',

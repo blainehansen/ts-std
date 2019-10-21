@@ -2,8 +2,8 @@ import 'mocha'
 import { expect } from 'chai'
 
 import * as json from './index'
-import { tuple as t } from '@ts-lib/types'
-import { Result, Ok, Err, Maybe, Some, None } from '@ts-lib/monads'
+import { tuple as t } from '@ts-std/types'
+import { Result, Ok, Err, Maybe, Some, None } from '@ts-std/monads'
 
 function validate<T>(decoder: json.Decoder<T>, ok_values: T[], err_values: any[]) {
 	for (const value of ok_values)

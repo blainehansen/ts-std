@@ -1,4 +1,4 @@
-# `@ts-lib/types`
+# `@ts-std/types`
 
 > A library of generally useful types and type assertion functions.
 
@@ -16,7 +16,7 @@ const yuck = [1, 'a', true] as [number, string, boolean]
 
 // the better way
 // especially nice if you need to create many tuples in a file
-import { tuple as t } from '@ts-lib/types'
+import { tuple as t } from '@ts-std/types'
 const yay = t(1, 'a', true)
 ```
 
