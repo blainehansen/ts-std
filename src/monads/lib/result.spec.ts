@@ -163,6 +163,18 @@ describe('Result basic api', () => {
 		const extra = Result.attempt((arg = 1) => arg === 1).expect(im)
 		expect(extra).true
 	})
+
+	it('is_result', () => {
+		expect(Result.is_result(Ok(1))).true
+		expect(Result.is_result(Ok('a'))).true
+		expect(Result.is_result(Err('a'))).true
+		expect(Result.is_result(Err(null))).true
+		expect(Result.is_result(null)).false
+		expect(Result.is_result(undefined)).false
+		expect(Result.is_result('a')).false
+		expect(Result.is_result({ value: 1 })).false
+		expect(Result.is_result([])).false
+	})
 })
 
 function sum(nums: number[]) {

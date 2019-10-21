@@ -141,6 +141,17 @@ describe('Maybe basic api', () => {
 		const extra = Maybe.attempt((arg = 1) => arg === 1).expect(im)
 		expect(extra).true
 	})
+
+	it('is_maybe', () => {
+		expect(Maybe.is_maybe(Some(1))).true
+		expect(Maybe.is_maybe(Some('a'))).true
+		expect(Maybe.is_maybe(None)).true
+		expect(Maybe.is_maybe(null)).false
+		expect(Maybe.is_maybe(undefined)).false
+		expect(Maybe.is_maybe('a')).false
+		expect(Maybe.is_maybe({ value: 1 })).false
+		expect(Maybe.is_maybe([])).false
+	})
 })
 
 
