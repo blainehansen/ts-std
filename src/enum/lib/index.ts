@@ -50,6 +50,10 @@ class ConcreteVariant<M extends VariantManifest, K extends keyof M> {
 
 		throw new Panic(enum_invariant_message)
 	}
+
+	matches(match_key: keyof M): this is ConcreteVariant<M, K> {
+		return this.key === match_key
+	}
 }
 
 
