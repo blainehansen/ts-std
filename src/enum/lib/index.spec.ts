@@ -2,7 +2,7 @@ import 'mocha'
 import { expect } from 'chai'
 
 import { Enum, empty, variant } from './index'
-import { tuple as t, assert_type, assert_assignable, assert_callable, assert_values_callable } from '@ts-std/types'
+import { tuple as t, assert_type as assert } from '@ts-std/types'
 
 describe('required Enum', () => {
 	it('works', () => {
@@ -17,57 +17,57 @@ describe('required Enum', () => {
 
 		const page_load = WebEvent.PageLoad()
 		expect(page_load.key).eql('PageLoad')
-		assert_type<'PageLoad'>(page_load.key)
+		assert.value<'PageLoad'>(page_load.key)
 		expect(page_load.content).eql(undefined)
-		assert_type<void>(page_load.content)
+		assert.value<void>(page_load.content)
 
 		const page_unload = WebEvent.PageUnload()
 		expect(page_unload.key).eql('PageUnload')
-		assert_type<'PageUnload'>(page_unload.key)
+		assert.value<'PageUnload'>(page_unload.key)
 		expect(page_unload.content).eql(undefined)
-		assert_type<void>(page_unload.content)
+		assert.value<void>(page_unload.content)
 
 		const key_press = WebEvent.KeyPress(7)
 		expect(key_press.key).eql('KeyPress')
-		assert_type<'KeyPress'>(key_press.key)
+		assert.value<'KeyPress'>(key_press.key)
 		expect(key_press.content).eql(7)
-		assert_type<number>(key_press.content)
+		assert.value<number>(key_press.content)
 
 		const paste = WebEvent.Paste('stuff')
 		expect(paste.key).eql('Paste')
-		assert_type<'Paste'>(paste.key)
+		assert.value<'Paste'>(paste.key)
 		expect(paste.content).eql('stuff')
-		assert_type<string>(paste.content)
+		assert.value<string>(paste.content)
 
 		const click = WebEvent.Click({ x: 1, y: 2 })
 		expect(click.key).eql('Click')
-		assert_type<'Click'>(click.key)
+		assert.value<'Click'>(click.key)
 		expect(click.content).eql({ x: 1, y: 2 })
-		assert_type<{ x: number, y: number }>(click.content)
+		assert.value<{ x: number, y: number }>(click.content)
 
 		let event = WebEvent.PageLoad() as WebEvent
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = page_load
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = page_unload
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = key_press
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = paste
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = click
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 
 		event = WebEvent.PageLoad()
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.PageUnload()
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.KeyPress(7)
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.Paste('stuff')
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.Click({ x: 1, y: 2 })
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 
 		expect(event.match({
 			Click: () => true,
@@ -79,44 +79,48 @@ describe('required Enum', () => {
 			_: () => true,
 		})).true
 
-		assert_values_callable(event.match, t({
+		assert.values_callable(event.match, t({
 			Paste: () => false,
 			_: () => true,
 		}), true)
 
-		// assert_values_callable(event.match, t({
-		// 	PageLoad: () => 1,
-		// 	PageUnload: () => 2,
-		// 	KeyPress: (n: number) => 3,
-		// 	Paste: (s: string) => 4,
-		// }), false)
+		type A = {
+			PageLoad: () => number,
+			PageUnload: () => number,
+			KeyPress: (n: number) => number,
+			Paste: (s: string) => number,
+		}
+		assert.callable<typeof event.match, [A]>(false)
 
-		// assert_values_callable(event.match, t({
-		// 	PageLoad: () => 1,
-		// 	PageUnload: () => 2,
-		// 	KeyPress: (n: number) => 3,
-		// 	Paste: (s: string) => 4,
-		// 	Click: (o: { x: number, y: number }) => 5,
-		// 	Random: () => 2,
-		// }), false)
+		// type B = {
+		// 	PageLoad: () => number,
+		// 	PageUnload: () => number,
+		// 	KeyPress: (n: number) => number,
+		// 	Paste: (s: string) => number,
+		// 	Click: (o: { x: number, y: number }) => number,
+		// 	Random: () => number,
+		// }
+		// assert.callable<typeof event.match, [B]>(false)
 
-		// assert_values_callable(event.match, t({
-		// 	PageLoad: () => 1,
-		// 	PageUnload: () => 2,
-		// 	KeyPress: (n: number) => 3,
-		// 	Paste: (s: string) => 4,
-		// 	_: (a: any) => 5,
-		// }), false)
+		type C = {
+			PageLoad: () => number,
+			PageUnload: () => number,
+			KeyPress: (n: number) => number,
+			Paste: (s: string) => number,
+			_: (a: any) => number,
+		}
+		assert.callable<typeof event.match, [C]>(false)
 
-		// assert_values_callable(event.match, t({
-		// 	PageLoad: () => 1,
-		// 	PageUnload: () => 2,
-		// 	KeyPress: (n: boolean) => 3,
-		// 	Paste: (s: string) => 4,
-		// 	_: () => 5,
-		// }), false)
+		type D = {
+			PageLoad: () => number,
+			PageUnload: () => number,
+			KeyPress: (n: boolean) => number,
+			Paste: (s: string) => number,
+			_: () => number,
+		}
+		assert.callable<typeof event.match, [D]>(false)
 
-		assert_values_callable(event.match, t({
+		assert.values_callable(event.match, t({
 			Paste: (s: string) => 4,
 			_: () => 5,
 		}), true)
@@ -139,12 +143,12 @@ describe('required Enum', () => {
 			expect(actual).eql(expected)
 		}
 
-		assert_assignable<'default', keyof typeof WebEvent>(false)
-		assert_assignable<'PageLoad', keyof typeof WebEvent>(true)
-		assert_assignable<'PageUnload', keyof typeof WebEvent>(true)
-		assert_assignable<'KeyPress', keyof typeof WebEvent>(true)
-		assert_assignable<'Paste', keyof typeof WebEvent>(true)
-		assert_assignable<'Click', keyof typeof WebEvent>(true)
+		assert.assignable<'default', keyof typeof WebEvent>(false)
+		assert.assignable<'PageLoad', keyof typeof WebEvent>(true)
+		assert.assignable<'PageUnload', keyof typeof WebEvent>(true)
+		assert.assignable<'KeyPress', keyof typeof WebEvent>(true)
+		assert.assignable<'Paste', keyof typeof WebEvent>(true)
+		assert.assignable<'Click', keyof typeof WebEvent>(true)
 	})
 })
 
@@ -161,23 +165,23 @@ describe('defaultable Enum', () => {
 		type WebEvent = Enum<typeof WebEvent>
 
 		let event = WebEvent.default()
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		expect(event.key).eql('PageLoad')
 		expect(event.content).eql(undefined)
 
 		event = WebEvent.PageLoad()
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.PageUnload()
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.KeyPress(7)
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.Paste('stuff')
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.Click({ x: 1, y: 2 })
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 
-		assert_values_callable(WebEvent.default, t(), true)
-		assert_values_callable(WebEvent.default, t(undefined), false)
+		assert.values_callable(WebEvent.default, t(), true)
+		assert.values_callable(WebEvent.default, t(undefined), false)
 	})
 
 	it('non-empty variant works', () => {
@@ -191,37 +195,37 @@ describe('defaultable Enum', () => {
 		type WebEvent = Enum<typeof WebEvent>
 
 		let event = WebEvent.default()
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		expect(event.key).eql('KeyPress')
 		expect(event.content).eql(0)
 
 		event = WebEvent.PageLoad()
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.PageUnload()
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.KeyPress(7)
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.Paste('stuff')
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 		event = WebEvent.Click({ x: 1, y: 2 })
-		assert_type<WebEvent>(event)
+		assert.value<WebEvent>(event)
 
-		assert_values_callable(WebEvent.default, t(), true)
-		assert_values_callable(WebEvent.default, t(undefined), false)
+		assert.values_callable(WebEvent.default, t(), true)
+		assert.values_callable(WebEvent.default, t(undefined), false)
 	})
 
-	it('generic works', () => {
-		type Actor = {}
+	// it('generic works', () => {
+	// 	type Actor = {}
 
-		const WebEvent = Enum(<A extends Actor, U>() => ({
-			PageLoad: empty(),
-			PageUnload: empty(),
-			KeyPress: variant<number>(),
-			Incoming: variant<A>(),
-			Request: variant<{ from: A, payload: U }>(),
-		}))
-		type WebEvent<A extends Actor, U> = Enum<typeof WebEvent, [A, U]>
+	// 	const WebEvent = Enum(<A extends Actor, U>() => ({
+	// 		PageLoad: empty(),
+	// 		PageUnload: empty(),
+	// 		KeyPress: variant<number>(),
+	// 		Incoming: variant<A>(),
+	// 		Request: variant<{ from: A, payload: U }>(),
+	// 	}))
+	// 	type WebEvent<A extends Actor, U> = Enum<typeof WebEvent, [A, U]>
 
-		let event = WebEvent.PageLoad() as WebEvent<Actor, number>
-	})
+	// 	let event = WebEvent.PageLoad() as WebEvent<Actor, number>
+	// })
 })

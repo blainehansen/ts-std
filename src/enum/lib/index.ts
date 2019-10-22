@@ -61,7 +61,7 @@ type DefaultableEnum<M extends VariantManifest, IK extends keyof M> =
 	& { default(): Variants<M> }
 
 
-type ManifestProducer<G extends unknown[], M extends VariantManifest> = <G, M = M>() => M
+// type ManifestProducer<G extends unknown[], M extends VariantManifest> = <G, M = M>() => M
 // const manifest = typeof variant_manifest === 'function' ? variant_manifest() : variant_manifest
 // export type Enum<V extends RequiredEnum<VariantManifest>, G extends unknown[] = []> =
 
