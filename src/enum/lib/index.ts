@@ -2,7 +2,7 @@ class Panic extends Error {}
 const enum_invariant_message = "Enum library invariant broken!"
 
 type VariantManifest = { [variant_key: string]: VariantDescriptor<PossibleArgs> }
-type Variants<M extends VariantManifest> = ConcreteVariant<M, keyof M>
+type Variants<M extends VariantManifest> = Variant<M, keyof M>
 
 type ArgsOf<M extends VariantManifest, K extends keyof M> =
 	M[K] extends VariantDescriptor<infer T> ? T : never
@@ -31,7 +31,7 @@ export type Match<T, M extends VariantManifest> =
 
 type Value<A extends PossibleArgs> = A extends [infer T] ? T : void
 
-class ConcreteVariant<M extends VariantManifest, K extends keyof M> {
+class Variant<M extends VariantManifest, K extends keyof M> {
 	readonly content: Value<ArgsOf<M, K>>
 	constructor(readonly key: K, args: ArgsOf<M, K>) {
 		const content = args[0]
@@ -50,11 +50,15 @@ class ConcreteVariant<M extends VariantManifest, K extends keyof M> {
 
 		throw new Panic(enum_invariant_message)
 	}
+
+	matches(match_key: keyof M): this is Variant<M, K> {
+		return this.key === match_key
+	}
 }
 
 
 type RequiredEnum<M extends VariantManifest> =
-	{ [K in keyof M]: (...variant: ArgsOf<M, K>) => ConcreteVariant<M, K> }
+	{ [K in keyof M]: (...variant: ArgsOf<M, K>) => Variant<M, K> }
 
 type DefaultableEnum<M extends VariantManifest, IK extends keyof M> =
 	RequiredEnum<M>
@@ -81,12 +85,12 @@ export function Enum<M extends VariantManifest, K extends keyof M>(
 ) {
 	const base_enum = {} as RequiredEnum<M>
 	for (const variant_key in variant_manifest) {
-		base_enum[variant_key] = (...args) => new ConcreteVariant(variant_key, args)
+		base_enum[variant_key] = (...args) => new Variant(variant_key, args)
 	}
 
 	if (initial_key !== undefined) {
 		const defaultable_enum = base_enum as DefaultableEnum<M, K>
-		defaultable_enum.default = () => new ConcreteVariant(initial_key, initial_variant) as Variants<M>
+		defaultable_enum.default = () => new Variant(initial_key, initial_variant) as Variants<M>
 		return defaultable_enum
 	}
 

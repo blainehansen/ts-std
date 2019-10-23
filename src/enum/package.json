@@ -1,7 +1,7 @@
 {
 	"name": "@ts-std/enum",
 	"version": "0.1.0",
-	"description": "> TODO: description",
+	"description": "A library that brings ergonomic, matchable, tagged unions to typescript.",
 	"author": {
 		"name": "Blaine Hansen",
 		"email": "faichenshing@gmail.com",
