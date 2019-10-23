@@ -57,7 +57,7 @@ class Variant<M extends VariantManifest, K extends keyof M> {
 }
 
 
-type RequiredEnum<M extends VariantManifest> =
+type RequiredEnum<M extends VariantManifest, G extends any[] = []> =
 	{ [K in keyof M]: (...variant: ArgsOf<M, K>) => Variant<M, K> }
 
 type DefaultableEnum<M extends VariantManifest, IK extends keyof M> =
@@ -68,6 +68,10 @@ type DefaultableEnum<M extends VariantManifest, IK extends keyof M> =
 // type ManifestProducer<G extends unknown[], M extends VariantManifest> = <G, M = M>() => M
 // const manifest = typeof variant_manifest === 'function' ? variant_manifest() : variant_manifest
 // export type Enum<V extends RequiredEnum<VariantManifest>, G extends unknown[] = []> =
+
+// export function Enum<M extends VariantManifest>(
+// 	variant_producer: <G extends any[]>() => M,
+// ): RequiredEnum<M>
 
 export function Enum<M extends VariantManifest, K extends keyof M> (
 	variant_manifest: M,
@@ -102,3 +106,10 @@ export type Enum<V extends RequiredEnum<VariantManifest>> =
 	? M extends VariantManifest ? Variants<M>
 	: never
 	: never
+
+
+function e<G extends any[], M extends VariantManifest>(
+	variant_manifest: <G>() => M,
+) {
+
+}

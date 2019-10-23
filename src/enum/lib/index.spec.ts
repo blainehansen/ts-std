@@ -47,16 +47,39 @@ describe('required Enum', () => {
 
 		let event = WebEvent.PageLoad() as WebEvent
 		assert.value<WebEvent>(event)
+
 		event = page_load
+		expect(event.matches('PageLoad')).true
 		assert.value<WebEvent>(event)
+		if (event.matches('PageLoad'))
+			assert.value<void>(page_load.content)
+
 		event = page_unload
+		expect(event.matches('PageUnload')).true
 		assert.value<WebEvent>(event)
+		if (event.matches('PageUnload'))
+			assert.value<void>(page_unload.content)
+
 		event = key_press
+		expect(event.matches('KeyPress')).true
 		assert.value<WebEvent>(event)
+		if (event.matches('KeyPress'))
+			assert.value<number>(key_press.content)
+
 		event = paste
+		expect(event.matches('Paste')).true
 		assert.value<WebEvent>(event)
+		if (event.matches('Paste'))
+			assert.value<string>(paste.content)
+
 		event = click
+		expect(event.matches('Click')).true
 		assert.value<WebEvent>(event)
+		if (event.matches('Click'))
+			assert.value<{ x: number, y: number }>(click.content)
+
+		assert.values_callable(event.matches, '', false)
+		assert.values_callable(event.matches, 'Click' as string, false)
 
 		event = WebEvent.PageLoad()
 		assert.value<WebEvent>(event)
