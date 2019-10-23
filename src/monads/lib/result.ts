@@ -171,7 +171,7 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 		return this.error
 	}
 	expect(message: string): T | never {
-		throw new Panic(message)
+		throw new Panic(`Result.expect was called on Err.\nMessage: ${message}\nUnderlying Err value:\n${this.error}`)
 	}
 	expect_err(message: string): E | never {
 		return this.error

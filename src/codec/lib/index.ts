@@ -1,3 +1,4 @@
+import { TupleIntersection } from '@ts-std/types'
 import { Result, Ok, Err, Maybe, Some, None } from '@ts-std/monads'
 import { result_invariant_message as rinv } from '@ts-std/monads/dist/result'
 
@@ -55,7 +56,7 @@ class AdaptorDecoder<U, T> extends Decoder<T> {
 	}
 }
 
-export function adaptable<L extends any[], T>(
+export function adapt<L extends any[], T>(
 	decoder: Decoder<T>,
 	...adaptors: AdaptorTuple<L, T>
 ): Decoder<T> {
@@ -80,19 +81,23 @@ function is_object(input: unknown): input is NonNullable<Object> {
 }
 
 
-export interface DecodableConstructor<L extends unknown[], T extends Decodable<L>> {
+export interface CodecConstructor<L extends unknown[], T extends Codec<L>> {
 	new (...args: L): T
-	decoder: Decoder<L>
+	decode: Decoder<L>
 }
 
-export interface Decodable<L extends unknown[] = unknown[]> {
-	serialize(): L
+export interface Codec<L extends unknown[] = unknown[]> {
+	encode(): L
 }
 
 
-export abstract class Serializer {
-	abstract serialize<D extends Decodable>(output: D): string
-	abstract deserialize(input: string): Result<unknown, Error>
+export interface ErrorLike {
+	message: string
+}
+
+export abstract class Serializer<E extends ErrorLike = Error> {
+	abstract serialize<D extends Codec>(output: D): string
+	abstract deserialize(input: string): Result<unknown, E>
 	decode<T>(input: string, decoder: Decoder<T>): Result<T> {
 		return this.deserialize(input)
 			.change_err(e => e.message)
@@ -101,8 +106,8 @@ export abstract class Serializer {
 }
 
 export class JsonSerializer extends Serializer {
-	serialize<D extends Decodable>(output: D): string {
-		return JSON.stringify(output.serialize())
+	serialize<D extends Codec>(output: D): string {
+		return JSON.stringify(output.encode())
 	}
 	deserialize(input: string): Result<unknown, Error> {
 		return Result.attempt(JSON.parse(input))
@@ -110,21 +115,21 @@ export class JsonSerializer extends Serializer {
 }
 
 
-class ClassDecoder<L extends unknown[], T extends Decodable<L>> extends Decoder<T> {
+class ClassDecoder<L extends unknown[], T extends Codec<L>> extends Decoder<T> {
 	readonly name: string
-	constructor(readonly cn: DecodableConstructor<L, T>) {
+	constructor(readonly cn: CodecConstructor<L, T>) {
 		super()
 		this.name = cn.name
 	}
 
 	decode(input: unknown) {
 		if (input instanceof this.cn) return Ok(input)
-		return this.cn.decoder.decode(input)
+		return this.cn.decode.decode(input)
 			.change_err(e => `while decoding class ${this.name}: ${e}`)
 			.change(args => new this.cn(...args))
 	}
 }
-export function cls<L extends unknown[], T extends Decodable<L>>(cn: DecodableConstructor<L, T>): Decoder<T> {
+export function cls<L extends unknown[], T extends Codec<L>>(cn: CodecConstructor<L, T>): Decoder<T> {
 	return new ClassDecoder(cn) as Decoder<T>
 }
 
@@ -241,26 +246,13 @@ class UnionDecoder<L extends unknown[]> extends Decoder<L[number]> {
 	}
 }
 export function union<L extends unknown[]>(...decoders: DecoderTuple<L>): Decoder<L[number]> {
-	return new UnionDecoder(decoders) as Decoder<L[number]>
+	const flattened = decoders.reduce((acc, decoder) => {
+		return decoder instanceof UnionDecoder
+			? acc.concat(decoder.decoders)
+			: acc.concat([decoder])
+	}, [] as DecoderTuple<L>)
+	return new UnionDecoder(flattened) as Decoder<L[number]>
 }
-
-// export class all<L extends ((val: any) => any)[]> extends Decoder<FoldingFunctions<L>> {
-// 	name: string
-// 	readonly decoders: DecoderTuple<L>
-// 	constructor(...decoders: DecoderTuple<L>) {
-// 		this.name = 'all: ' + decoders.map(d => d.name).join(', ')
-// 		this.decoders = decoders
-// 	}
-
-// 	decode(input: unknown) {
-// 		let last_result = input
-// 		for (const decoder of decoders) {
-// 			//
-// 		}
-
-// 		return last_result
-// 	}
-// }
 
 
 type Primitives = string | boolean | number | null | undefined
@@ -280,25 +272,25 @@ class ValuesDecoder<V extends Primitives, L extends V[]> extends Decoder<L[numbe
 		return Err(`expected ${this.name}; got ${input}`)
 	}
 }
-export function value<V extends Primitives>(value: V): Decoder<V> {
+export function literal<V extends Primitives>(value: V): Decoder<V> {
 	return new ValuesDecoder([value]) as Decoder<V>
 }
-export function values<V extends Primitives, L extends V[]>(...values: L): Decoder<L[number]> {
+export function literals<V extends Primitives, L extends V[]>(...values: L): Decoder<L[number]> {
 	return new ValuesDecoder(values) as Decoder<L[number]>
 }
 
 
-export const undefined_value = value(undefined as undefined)
-export const null_value = value(null as null)
+export const undefined_literal = literal(undefined as undefined)
+export const null_literal = literal(null as null)
 
 export function optional<T>(decoder: Decoder<T>): Decoder<T | undefined> {
-	return new UnionDecoder([decoder, undefined_value]) as Decoder<T | undefined>
+	return new UnionDecoder([decoder, undefined_literal]) as Decoder<T | undefined>
 }
 export function nullable<T>(decoder: Decoder<T>): Decoder<T | null> {
-	return new UnionDecoder([decoder, null_value]) as Decoder<T | null>
+	return new UnionDecoder([decoder, null_literal]) as Decoder<T | null>
 }
 export function nillable<T>(decoder: Decoder<T>): Decoder<T | null | undefined> {
-	return new UnionDecoder([decoder, null_value, undefined_value]) as Decoder<T | null | undefined>
+	return new UnionDecoder([decoder, null_literal, undefined_literal]) as Decoder<T | null | undefined>
 }
 
 class MaybeDecoder<T> extends Decoder<Maybe<T>> {
@@ -448,7 +440,48 @@ export function tuple<L extends unknown[]>(...decoders: DecoderTuple<L>): Decode
 }
 
 
-class StrictObjectDecoder<O> extends Decoder<O> {
+
+
+abstract class ObjectDecoder<O extends { [key: string]: any }> extends Decoder<O> {
+	readonly decoders: { [K in keyof O]: Decoder<O[K]> }
+}
+type ObjectDecoderTuple<L extends unknown[]> = {
+	[K in keyof L]: ObjectDecoder<L[K]> | IntersectionDecoder<L[K]>
+}
+
+class IntersectionDecoder<L extends { [key: string]: any }[]> extends Decoder<TupleIntersection<L>> {
+	readonly name: string
+	constructor(readonly decoders: { [K in keyof L]: ObjectDecoder<L[K]> }) {
+		super()
+		this.name = decoders.map(d => d.name).join(' & ')
+	}
+
+	decode(input: unknown) {
+		let give = {} as TupleIntersection<L>
+
+		for (const decoder of this.decoders) {
+			for (const key in decoder.decoders) {
+				const nested_decoder = decoder.decoders[key]
+				const result = nested_decoder.decode(input)
+				if (result.is_err())
+					return result.change_err(e => `while decoding ${decoder.name}: ${e}`)
+				give[key] = result.expect(rinv)
+			}
+		}
+
+		return Ok(give as TupleIntersection<L>)
+	}
+}
+export function intersection<L extends unknown[]>(...decoders: L): Decoder<TupleIntersection<L>> {
+	const flattened = decoders.reduce((acc, decoder) => {
+		return decoder instanceof IntersectionDecoder
+			? acc.concat(decoder.decoders)
+			: acc.concat([decoder])
+	}, [] as L)
+	return new IntersectionDecoder(flattened) as Decoder<TupleIntersection<L>>
+}
+
+class StrictObjectDecoder<O extends { [key: string]: any }> extends ObjectDecoder<O> {
 	constructor(
 		readonly name: string,
 		readonly decoders: { [K in keyof O]: Decoder<O[K]> },
@@ -474,7 +507,7 @@ class StrictObjectDecoder<O> extends Decoder<O> {
 		return Ok(give)
 	}
 }
-export function object<O>(
+export function object<O extends { [key: string]: any }>(
 	name: string,
 	decoders: { [K in keyof O]: Decoder<O[K]> },
 ): Decoder<O> {
@@ -482,7 +515,7 @@ export function object<O>(
 }
 
 
-class LooseObjectDecoder<O> extends Decoder<O> {
+class LooseObjectDecoder<O extends { [key: string]: any }> extends ObjectDecoder<O> {
 	constructor(
 		readonly name: string,
 		readonly decoders: { [K in keyof O]: Decoder<O[K]> },
@@ -514,3 +547,15 @@ export function loose_object<O>(
 ): Decoder<O> {
 	return new LooseObjectDecoder(name, decoders) as Decoder<O>
 }
+
+
+
+// Partial<T>
+// Readonly<T>
+// Record<K,T>
+// Pick<T,K>
+// Omit<T,K>
+// Exclude<T,U>
+// Extract<T,U>
+// NonNullable<T>
+// Required<T>

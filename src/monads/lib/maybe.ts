@@ -144,7 +144,7 @@ class MaybeNone<T> implements MaybeLike<T> {
 		return typeof other === 'function' ? (other as () => T)() : other
 	}
 	expect(message: string): T | never {
-		throw new Panic(message)
+		throw new Panic(`Maybe.expect was called on Err.\nMessage: ${message}`)
 	}
 	join<L extends any[]>(..._args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>> {
 		return new MaybeJoinNone()
