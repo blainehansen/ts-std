@@ -238,16 +238,18 @@ describe('defaultable Enum', () => {
 	})
 
 	// it('generic works', () => {
-	// 	type Actor = {}
-
-	// 	const WebEvent = Enum(<A extends Actor, U>() => ({
-	// 		PageLoad: empty(),
-	// 		PageUnload: empty(),
-	// 		KeyPress: variant<number>(),
-	// 		Incoming: variant<A>(),
-	// 		Request: variant<{ from: A, payload: U }>(),
-	// 	}))
-	// 	type WebEvent<A extends Actor, U> = Enum<typeof WebEvent, [A, U]>
+	// 	let _WebEvent
+	// 	function WebEvent<A, U>() {
+	// 		if (_WebEvent) return _WebEvent
+	// 		return _WebEvent = Enum({
+	// 			PageLoad: empty(),
+	// 			PageUnload: empty(),
+	// 			KeyPress: variant<number>(),
+	// 			Incoming: variant<A>(),
+	// 			Request: variant<{ from: A, payload: U }>(),
+	// 		})
+	// 	}
+	// 	type WebEvent<A, U> = Enum<ReturnType<typeof WebEvent<A, U>>>
 
 	// 	let event = WebEvent.PageLoad() as WebEvent<Actor, number>
 	// })

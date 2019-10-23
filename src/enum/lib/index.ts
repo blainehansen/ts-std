@@ -31,7 +31,7 @@ export type Match<T, M extends VariantManifest> =
 
 type Value<A extends PossibleArgs> = A extends [infer T] ? T : void
 
-class Variant<M extends VariantManifest, K extends keyof M> {
+export class Variant<M extends VariantManifest, K extends keyof M> {
 	readonly content: Value<ArgsOf<M, K>>
 	constructor(readonly key: K, args: ArgsOf<M, K>) {
 		const content = args[0]
@@ -108,8 +108,45 @@ export type Enum<V extends RequiredEnum<VariantManifest>> =
 	: never
 
 
-function e<G extends any[], M extends VariantManifest>(
-	variant_manifest: <G>() => M,
-) {
 
-}
+
+
+
+
+
+
+// type TupleOf<UL extends number, A extends unknown[] = []> = {
+// 	0: TupleOf<UL, Unshift<unknown, A>>,
+// 	1: A
+// }[
+// 	A['length'] extends UL
+// 	? 1
+// 	: 0
+// ]
+
+// function Enum(...args: any[]): EnumCreator<TupleOf<UL>> {
+// 	return {}
+// }
+// type Enum<E extends EnumCreator<any>, G extends unknown[] = []> =
+// 	E extends EnumCreator<infer U>
+// 	? G extends U ? G : never
+// 	: never
+
+// function variant<T, G extends unknown[] = []>(): VariantDescriptor<[T], G> {
+// 	return {}
+// }
+
+// const A = Enum({
+// 	Ok: <T, O>() => variant<{ value: T, tag: O }, [T, O]>(),
+// 	Err: <E>() => variant<E, [E]>(),
+// })
+// type A<T, E> = Enum<typeof A, { Ok: [T], Err: [E] }>
+
+// type GenericVariantsUnion<M extends VariantManifest> = {
+// 	[K in keyof M]: M[K] extends () => VariantDescriptor<unknown, infer G>
+// 		? G extends [unknown]
+// 			? { [K]: G } :  never
+// 		: never
+// }[keyof M]
+
+// type GenericVariants<M extends VariantManifest> = UnionToIntersection<GenericVariantsUnion<M>>
