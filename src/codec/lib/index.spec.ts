@@ -197,6 +197,19 @@ describe('intersection', () => {
 			[{ a: 1, b: 'a' }],
 			[{ a: 1, b: 4 }, { a: 'a', b: 'a' }, { b: 'a' }, { a: 1 }, null, undefined, [], ['a'], {}, true, false, 'a', -2]
 		)
+
+		const n = c.intersection(
+			d,
+			c.object('c', { c: c.boolean }),
+			c.loose_object('d', { d: c.union(c.number, c.string) }),
+		)
+		assert.same<c.TypeOf<typeof n>, { a: number, b: string, c: boolean, d: number | string }>(true)
+
+		validate<{ a: number, b: string, c: boolean, d: number | string }>(
+			n,
+			[{ a: 1, b: 'a', c: true, d: 1 }, { a: 1, b: 'a', c: true, d: 'a' }],
+			[{ a: 1, b: 'a', c: false, d: true }, { a: 'a', b: 'a' }, { b: 'a' }, { a: 1 }, null, undefined, [], ['a'], {}, true, false, 'a', -2]
+		)
 	})
 })
 
