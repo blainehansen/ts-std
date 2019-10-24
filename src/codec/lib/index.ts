@@ -1,6 +1,5 @@
 import { TupleIntersection } from '@ts-std/types'
 import { Result, Ok, Err, Maybe, Some, None } from '@ts-std/monads'
-import { result_invariant_message as rinv } from '@ts-std/monads/dist/result'
 
 export abstract class Decoder<T> {
 	abstract readonly name: string
@@ -39,7 +38,6 @@ class AdaptorDecoder<U, T> extends Decoder<T> {
 		if (base_attempt.is_ok())
 			return base_attempt
 
-		const names = [] as string[]
 		for (const adaptor of this.adaptors) {
 			const adaptor_result = adaptor.decoder.decode(input)
 			const adaptor_attempt = adaptor.is_fallible
@@ -48,11 +46,10 @@ class AdaptorDecoder<U, T> extends Decoder<T> {
 
 			if (adaptor_attempt.is_ok())
 				return adaptor_attempt
-
-			names.push(adaptor.decoder.name)
 		}
 
-		return Err(`in ${this.name}, couldn't decode from any of [${names.join(', ')}]; got ${input}`)
+		const names = this.adaptors.map(a => a.decoder.name).join(', ')
+		return Err(`in ${this.name}, couldn't decode from any of [${names}]; got ${input}`)
 	}
 }
 
@@ -341,9 +338,9 @@ class ArrayDecoder<T> extends Decoder<T[]> {
 			const item = input[index]
 			const result = decoder.decode(item)
 			if (result.is_err())
-				return Err(`while decoding ${name}: at index ${index}, failed to decode ${decoder.name}: ${result.expect_err(rinv)}`)
+				return Err(`while decoding ${name}: at index ${index}, failed to decode ${decoder.name}: ${result.error}`)
 
-			give.push(result.expect(rinv))
+			give.push(result.value)
 		}
 
 		return Ok(give)
@@ -376,9 +373,9 @@ class DictionaryDecoder<T> extends Decoder<Dict<T>> {
 			const value = input[key]
 			const result = decoder.decode(value)
 			if (result.is_err())
-				return Err(`while decoding ${name}, at key ${key}, failed to decode ${decoder.name}: ${result.expect_err(rinv)}`)
+				return Err(`while decoding ${name}, at key ${key}, failed to decode ${decoder.name}: ${result.error}`)
 
-			give[key] = result.expect(rinv)
+			give[key] = result.value
 		}
 
 		return Ok(give)
@@ -427,9 +424,9 @@ class TupleDecoder<L extends unknown[]> extends Decoder<L> {
 			const value = input[index]
 			const result = decoder.decode(value)
 			if (result.is_err())
-				return Err(`while decoding ${name}, at index ${index}, failed to decode ${decoder.name}: ${result.expect_err(rinv)}`)
+				return Err(`while decoding ${name}, at index ${index}, failed to decode ${decoder.name}: ${result.error}`)
 
-			t.push(result.expect(rinv))
+			t.push(result.value)
 		}
 
 		return Ok(t)
@@ -465,7 +462,7 @@ class IntersectionDecoder<L extends { [key: string]: any }[]> extends Decoder<Tu
 				const result = nested_decoder.decode(input)
 				if (result.is_err())
 					return result.change_err(e => `while decoding ${decoder.name}: ${e}`)
-				give[key] = result.expect(rinv)
+				give[key] = result.value
 			}
 		}
 
@@ -501,7 +498,7 @@ class StrictObjectDecoder<O extends { [key: string]: any }> extends ObjectDecode
 			const value = input[key]
 			const result = decoder.decode(value)
 			if (result.is_err()) return Err(`Failed to decode a valid ${name}, key ${key} has invalid value: ${value}`)
-			give[key as keyof O] = result.expect(rinv)
+			give[key as keyof O] = result.value
 		}
 
 		return Ok(give)
@@ -535,7 +532,7 @@ class LooseObjectDecoder<O extends { [key: string]: any }> extends ObjectDecoder
 			const value = give[key]
 			const result = decoder.decode(value)
 			if (result.is_err()) return Err(`Failed to decode a valid ${name}, key ${key} has invalid value: ${value}`)
-			give[key as keyof O] = result.expect(rinv)
+			give[key as keyof O] = result.value
 		}
 
 		return Ok(give as O)
