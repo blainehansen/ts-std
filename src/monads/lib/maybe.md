@@ -15,18 +15,23 @@ function require_even(n: number): Maybe<number> {
 
 ## `Maybe<T>` instances
 
-### `is_some(): boolean`
+### `is_some(): this is Some<T>`
 
-Says if the value is a `Some`.
+Says if the value is a `Some`. This is a guard, so you may access the inner `T` at `value`.
 
 ```ts
 Some(1).is_some() === true
 None.is_some() === false
+
+const some = Some(1)
+if (some.is_some()) {
+  const n: number = some.value
+}
 ```
 
-### `is_none(): boolean`
+### `is_none(): this is None`
 
-Says if the value is `None`.
+Says if the value is `None`. This is a guard.
 
 ```ts
 Some(1).is_none() === false

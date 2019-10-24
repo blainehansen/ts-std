@@ -17,22 +17,32 @@ function require_even(n: number): Result<number> {
 
 ## `Result<T, E>` instances
 
-### `is_ok(): boolean`
+### `is_ok(): this is Ok<T>`
 
-Says if the value is an `Ok`.
+Says if the value is an `Ok`. This is a guard, so you may access the inner `T` at `value`.
 
 ```ts
 Ok(1).is_ok() === true
 Err("error").is_ok() === false
+
+const ok = Ok(1)
+if (ok.is_ok()) {
+  const n: number = ok.value
+}
 ```
 
-### `is_err(): boolean`
+### `is_err(): this is Err<E>`
 
-Says if the value is an `Err`.
+Says if the value is an `Err`. This is a guard, so you may access the inner `E` at `error`.
 
 ```ts
 Ok(1).is_err() === false
 Err("error").is_err() === true
+
+const err = Err("error")
+if (err.is_err()) {
+  const n: string = err.value
+}
 ```
 
 ### `ok_maybe(): Maybe<T>`

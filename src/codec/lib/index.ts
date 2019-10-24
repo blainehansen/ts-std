@@ -242,13 +242,15 @@ class UnionDecoder<L extends unknown[]> extends Decoder<L[number]> {
 		return Err(`expected ${this.name}; got ${input}`)
 	}
 }
-export function union<L extends unknown[]>(...decoders: DecoderTuple<L>): Decoder<L[number]> {
-	const flattened = decoders.reduce((acc, decoder) => {
-		return decoder instanceof UnionDecoder
-			? [...acc, ...decoder.decoders] as DecoderTuple<L>
-			: [...acc, decoder] as DecoderTuple<L>
-	}, [] as unknown as DecoderTuple<L>)
-	return new UnionDecoder(flattened as DecoderTuple<L>) as Decoder<L[number]>
+export function union<L extends unknown[], LO extends unknown[]>(...decoders: DecoderTuple<L>): Decoder<L[number]> {
+	const flattened = [] as unknown as DecoderTuple<LO>
+	for (const decoder of decoders) {
+		if (decoder instanceof UnionDecoder)
+			Array.prototype.push.apply(flattened, decoder.decoders as unknown as any[])
+		else
+			flattened.push(decoder)
+	}
+	return new UnionDecoder(flattened as DecoderTuple<LO>) as Decoder<L[number]>
 }
 
 
@@ -439,17 +441,31 @@ export function tuple<L extends unknown[]>(...decoders: DecoderTuple<L>): Decode
 
 
 
-abstract class ObjectDecoder<O extends { [key: string]: any }> extends Decoder<O> {
+abstract class ObjectDecoder<O extends { [key: string]: unknown }> extends Decoder<O> {
 	abstract readonly decoders: { [K in keyof O]: Decoder<O[K]> }
 }
-type ObjectDecoderTuple<L extends { [key: string]: any }[]> = {
+type ObjectDecoderTuple<L extends { [key: string]: unknown }[]> = {
 	[K in keyof L]: ObjectDecoder<L[K]>
 }
-type ObjectDecoderLikeTuple<L extends { [key: string]: any }[]> = {
-	[K in keyof L]: ObjectDecoder<L[K]> | IntersectionDecoder<L[K]>
+
+type ObjectDecoderOrIntersection = (ObjectDecoder<{ [key: string]: unknown }> | IntersectionDecoder<{ [key: string]: unknown }[]>)[]
+type ObjectDecoderTupleFromComplex<L extends ObjectDecoderOrIntersection> = {
+	[K in keyof L]: L[K] extends ObjectDecoder<infer O>
+		? ObjectDecoder<O>
+		: L[K] extends IntersectionDecoder<infer T>
+		? ObjectDecoder<TupleIntersection<T>>
+		: never
 }
 
-class IntersectionDecoder<L extends { [key: string]: any }[]> extends Decoder<TupleIntersection<L>> {
+// type ComplexObjectDecoder<L extends ObjectDecoderOrIntersection> = {
+// 	[K in keyof L]: L[K] extends ObjectDecoder<infer O>
+// 		? O
+// 		: L[K] extends IntersectionDecoder<infer T>
+// 		? T
+// 		: never
+// }
+
+class IntersectionDecoder<L extends { [key: string]: unknown }[]> extends Decoder<TupleIntersection<L>> {
 	readonly name: string
 	constructor(readonly decoders: ObjectDecoderTuple<L>) {
 		super()
@@ -472,18 +488,21 @@ class IntersectionDecoder<L extends { [key: string]: any }[]> extends Decoder<Tu
 		return Ok(give as TupleIntersection<L>)
 	}
 }
-export function intersection<L extends { [key: string]: any }[]>(
-	...decoders: ObjectDecoderLikeTuple<L>
+export function intersection<L extends ObjectDecoderOrIntersection>(
+	...decoders: L
 ) {
-	const flattened = decoders.reduce((acc, decoder) => {
-		return decoder instanceof IntersectionDecoder
-			? acc.concat(decoder.decoders) as ObjectDecoderTuple<L>
-			: acc.concat([decoder]) as ObjectDecoderTuple<L>
-	}, [] as ObjectDecoderTuple<L>)
+	const flattened = [] as unknown as ObjectDecoderTupleFromComplex<L>
+	for (const decoder of decoders) {
+		if (decoder instanceof IntersectionDecoder)
+			Array.prototype.push.apply(flattened, decoder.decoders as any as any[])
+		else
+			flattened.push(decoder)
+	}
 	return new IntersectionDecoder(flattened)
 }
 
-class StrictObjectDecoder<O extends { [key: string]: any }> extends ObjectDecoder<O> {
+
+class StrictObjectDecoder<O extends { [key: string]: unknown }> extends ObjectDecoder<O> {
 	constructor(
 		readonly name: string,
 		readonly decoders: { [K in keyof O]: Decoder<O[K]> },
@@ -509,7 +528,7 @@ class StrictObjectDecoder<O extends { [key: string]: any }> extends ObjectDecode
 		return Ok(give)
 	}
 }
-export function object<O extends { [key: string]: any }>(
+export function object<O extends { [key: string]: unknown }>(
 	name: string,
 	decoders: { [K in keyof O]: Decoder<O[K]> },
 ) {
@@ -517,7 +536,7 @@ export function object<O extends { [key: string]: any }>(
 }
 
 
-class LooseObjectDecoder<O extends { [key: string]: any }> extends ObjectDecoder<O> {
+class LooseObjectDecoder<O extends { [key: string]: unknown }> extends ObjectDecoder<O> {
 	constructor(
 		readonly name: string,
 		readonly decoders: { [K in keyof O]: Decoder<O[K]> },
@@ -543,7 +562,7 @@ class LooseObjectDecoder<O extends { [key: string]: any }> extends ObjectDecoder
 		return Ok(give as O)
 	}
 }
-export function loose_object<O>(
+export function loose_object<O extends { [key: string]: unknown }>(
 	name: string,
 	decoders: { [K in keyof O]: Decoder<O[K]> },
 ) {
