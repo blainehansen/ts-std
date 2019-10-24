@@ -11,6 +11,9 @@ describe('Maybe basic api', () => {
 	const cases: Maybe<number>[] = [Some(1), None]
 	for (const r of cases) {
 		const is_some = r.is_some()
+		if (r.is_some()) {
+			const s: number = r.value
+		}
 		const message = is_some ? 'Some' : 'None'
 		const changed: Maybe<string> = r.change(n => `n is: ${n}`)
 		const or_some = r.or(Some(2))

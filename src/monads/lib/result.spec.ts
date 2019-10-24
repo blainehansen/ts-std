@@ -12,6 +12,12 @@ describe('Result basic api', () => {
 	const cases: Result<number>[] = [Ok(1), Err('bad')]
 	for (const r of cases) {
 		const is_ok = r.is_ok()
+		if (r.is_ok()) {
+			const t: number = r.value
+		}
+		if (r.is_err()) {
+			const e: string = r.error
+		}
 		const message = is_ok ? 'Ok' : 'Err'
 		const changed: Result<string> = r.change(n => `n is: ${n}`)
 		const changed_err: Result<number, number> = r.change_err(e => e.length)

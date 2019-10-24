@@ -3,9 +3,6 @@ import { Unshift } from '@ts-std/types'
 import { Panic, TransformerOrValue, ProducerOrValue }from './common'
 import { Maybe, Some, None } from './maybe'
 
-
-export const result_invariant_message = "Result library invariant broken!"
-
 const ResultType = {
 	Ok: Symbol('Result.Ok'),
 	Err: Symbol('Result.Err'),
@@ -17,8 +14,8 @@ export type ResultMatch<T, E, U> = {
 }
 
 export interface ResultLike<T, E> {
-	is_ok(): boolean,
-	is_err(): boolean,
+	is_ok(): this is ResultOk<T, any>,
+	is_err(): this is ResultErr<any, E>,
 	ok_maybe(): Maybe<T>,
 	ok_undef(): T | undefined,
 	ok_null(): T | null,
@@ -50,12 +47,12 @@ export type Result<T, E = string> = ResultOk<T, E> | ResultErr<T, E>
 
 class ResultOk<T, E> implements ResultLike<T, E> {
 	private readonly type = ResultType.Ok
-	constructor(private readonly value: T) {}
+	constructor(readonly value: T) {}
 
-	is_ok(): boolean {
+	is_ok(): this is ResultOk<T, any> {
 		return true
 	}
-	is_err(): boolean {
+	is_err(): this is ResultErr<any, E> {
 		return false
 	}
 	ok_maybe(): Maybe<T> {
@@ -120,14 +117,14 @@ class ResultOk<T, E> implements ResultLike<T, E> {
 	join<L extends any[]>(...others: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E> {
 		const others_result = _join(others)
 		return others_result.is_ok()
-			? new ResultJoinOk([this.value as T, ...others_result.expect(result_invariant_message) as L] as Unshift<T, L>)
-			: new ResultJoinErr(others_result.expect_err(result_invariant_message) as E)
+			? new ResultJoinOk([this.value as T, ...others_result.value as L] as Unshift<T, L>)
+			: new ResultJoinErr(others_result.error as E)
 	}
 	join_collect_err<L extends any[]>(...others: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E[]> {
 		const others_result = _join_collect_err(others)
 		return others_result.is_ok()
-			? new ResultJoinOk([this.value as T, ...others_result.expect(result_invariant_message) as L] as Unshift<T, L>)
-			: new ResultJoinErr(others_result.expect_err(result_invariant_message))
+			? new ResultJoinOk([this.value as T, ...others_result.value as L] as Unshift<T, L>)
+			: new ResultJoinErr(others_result.error)
 	}
 }
 
@@ -138,12 +135,12 @@ export function Ok<T>(value: T): Result<T, any> {
 
 class ResultErr<T, E> implements ResultLike<T, E> {
 	private readonly type = ResultType.Err
-	constructor(private readonly error: E) {}
+	constructor(readonly error: E) {}
 
-	is_ok(): boolean {
+	is_ok(): this is ResultOk<T, any> {
 		return false
 	}
-	is_err(): boolean {
+	is_err(): this is ResultErr<any, E> {
 		return true
 	}
 	ok_maybe(): Maybe<T> {
@@ -217,7 +214,7 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 	join_collect_err<L extends any[]>(...others: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E[]> {
 		return new ResultJoinErr(others.reduce((errors, other) => {
 			if (other.is_err())
-				errors.push(other.expect_err(result_invariant_message))
+				errors.push(other.error)
 			return errors
 		}, [this.error] as E[]) as E[])
 	}
@@ -269,7 +266,8 @@ function _join<L extends any[], E>(results: ResultTuple<L, E>): Result<L, E> {
 	// DANGER: test to ensure type invariant holds
 	const args = [] as any as L
 	for (const result of results)
-		if (result.is_ok()) args.push(result.expect(result_invariant_message))
+		if (result.is_ok())
+			args.push(result.value)
 		else return result
 
 	return Ok(args)
@@ -283,11 +281,11 @@ function _join_collect_err<L extends any[], E>(results: ResultTuple<L, E>): Resu
 	for (const result of results) {
 		if (result.is_ok()) {
 			if (!seen_err)
-				args.push(result.expect(result_invariant_message))
+				args.push(result.value)
 		}
 		else {
 			seen_err = true
-			errs.push(result.expect_err(result_invariant_message))
+			errs.push(result.error)
 		}
 	}
 
@@ -318,22 +316,22 @@ export namespace Result {
 	export function join<L extends any[], E>(...results: ResultTuple<L, E>): ResultJoin<L, E> {
 		const results_join = _join(results)
 		return results_join.is_ok()
-			? new ResultJoinOk(results_join.expect(result_invariant_message))
-			: new ResultJoinErr(results_join.expect_err(result_invariant_message) as E)
+			? new ResultJoinOk(results_join.value)
+			: new ResultJoinErr(results_join.error as E)
 	}
 
 	export function join_collect_err<L extends any[], E>(...results: ResultTuple<L, E>): ResultJoin<L, E[]> {
 		const results_join = _join_collect_err(results)
 		return results_join.is_ok()
-			? new ResultJoinOk(results_join.expect(result_invariant_message) as L)
-			: new ResultJoinErr(results_join.expect_err(result_invariant_message) as E[])
+			? new ResultJoinOk(results_join.value as L)
+			: new ResultJoinErr(results_join.error as E[])
 	}
 
 	export function filter<T, E>(results: Result<T, E>[]): T[] {
 		const give = [] as T[]
 		for (const result of results) {
 			if (result.is_ok()) {
-				give.push(result.expect(result_invariant_message))
+				give.push(result.value)
 			}
 		}
 
@@ -345,9 +343,9 @@ export namespace Result {
 		const errs = [] as E[]
 		for (const result of results) {
 			if (result.is_ok())
-				oks.push(result.expect(result_invariant_message))
+				oks.push(result.value)
 			else
-				errs.push(result.expect_err(result_invariant_message))
+				errs.push(result.error)
 		}
 
 		return [oks, errs]

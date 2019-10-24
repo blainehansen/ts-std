@@ -3,8 +3,6 @@ import { Unshift } from '@ts-std/types'
 import { Panic, TransformerOrValue, ProducerOrValue } from './common'
 import { Result, Ok, Err } from './result'
 
-export const maybe_invariant_message = "Maybe library invariant broken!"
-
 const MaybeType = {
 	Some: Symbol("Maybe.Some"),
 	None: Symbol("Maybe.None"),
@@ -16,8 +14,8 @@ export type MaybeMatch<T, U> = {
 }
 
 export interface MaybeLike<T> {
-	is_some(): boolean
-	is_none(): boolean
+	is_some(): this is MaybeSome<T>
+	is_none(): this is MaybeNone<T>
 	to_undef(): T | undefined
 	to_null(): T | null
 	to_result<E>(err: E): Result<T, E>
@@ -40,12 +38,12 @@ export type Maybe<T> = MaybeSome<T> | MaybeNone<T>
 
 class MaybeSome<T> implements MaybeLike<T> {
 	private readonly type = MaybeType.Some
-	constructor(private readonly value: T) {}
+	constructor(readonly value: T) {}
 
-	is_some(): boolean {
+	is_some(): this is MaybeSome<T> {
 		return true
 	}
-	is_none(): boolean {
+	is_none(): this is MaybeNone<T> {
 		return false
 	}
 	to_undef(): T | undefined {
@@ -89,7 +87,7 @@ class MaybeSome<T> implements MaybeLike<T> {
 	join<L extends any[]>(...args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>> {
 		const others_maybe = _join(args)
 		return others_maybe.is_some()
-			? new MaybeJoinSome([this.value as T, ...others_maybe.expect(maybe_invariant_message) as L] as Unshift<T, L>)
+			? new MaybeJoinSome([this.value as T, ...others_maybe.value as L] as Unshift<T, L>)
 			: new MaybeJoinNone()
 	}
 }
@@ -102,10 +100,10 @@ export function Some<T>(value: T): Maybe<T> {
 class MaybeNone<T> implements MaybeLike<T> {
 	private readonly type = MaybeType.None
 
-	is_some(): boolean {
+	is_some(): this is MaybeSome<T> {
 		return false
 	}
-	is_none(): boolean {
+	is_none(): this is MaybeNone<T> {
 		return true
 	}
 	to_undef(): T | undefined {
@@ -192,7 +190,7 @@ function _join<L extends any[]>(maybes: MaybeTuple<L>): Maybe<L> {
 	// DANGER: test to ensure type invariant holds
 	const args = [] as any as L
 	for (const maybe of maybes) {
-		if (maybe.is_some()) args.push(maybe.expect(maybe_invariant_message))
+		if (maybe.is_some()) args.push(maybe.value)
 		else return maybe
 	}
 
@@ -219,7 +217,7 @@ export namespace Maybe {
 		const give = [] as T[]
 		for (const maybe of maybes) {
 			if (maybe.is_some()) {
-				give.push(maybe.expect(maybe_invariant_message))
+				give.push(maybe.value)
 			}
 		}
 
@@ -229,7 +227,7 @@ export namespace Maybe {
 	export function join<L extends any[]>(...maybes: MaybeTuple<L>): MaybeJoin<L> {
 		const others_maybe = _join(maybes)
 		return others_maybe.is_some()
-			? new MaybeJoinSome(others_maybe.expect(maybe_invariant_message) as L)
+			? new MaybeJoinSome(others_maybe.value as L)
 			: new MaybeJoinNone()
 	}
 
