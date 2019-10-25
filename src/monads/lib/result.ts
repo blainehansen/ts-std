@@ -41,6 +41,10 @@ export interface ResultLike<T, E> {
 	default_err(def_err: ProducerOrValue<E>): E,
 	join<L extends any[]>(...args: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E>
 	join_collect_err<L extends any[]>(...args: ResultTuple<L, E>): ResultJoin<Unshift<T, L>, E[]>
+
+	log(): Result<T, E>
+	log_ok(): Result<T, E>
+	log_err(): Result<T, E>
 }
 
 export type Result<T, E = string> = ResultOk<T, E> | ResultErr<T, E>
@@ -125,6 +129,17 @@ class ResultOk<T, E> implements ResultLike<T, E> {
 		return others_result.is_ok()
 			? new ResultJoinOk([this.value as T, ...others_result.value as L] as Unshift<T, L>)
 			: new ResultJoinErr(others_result.error)
+	}
+
+	log(): Result<T, E> {
+		console.info(`Result.Ok(${this.value})`)
+		return this
+	}
+	log_ok(): Result<T, E> {
+		return this.log()
+	}
+	log_err(): Result<T, E> {
+		return this
 	}
 }
 
@@ -217,6 +232,17 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 				errors.push(other.error)
 			return errors
 		}, [this.error] as E[]) as E[])
+	}
+
+	log(): Result<T, E> {
+		console.error(`Result.Err(${this.error})`)
+		return this
+	}
+	log_ok(): Result<T, E> {
+		return this
+	}
+	log_err(): Result<T, E> {
+		return this.log()
 	}
 }
 
