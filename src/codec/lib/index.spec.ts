@@ -388,7 +388,7 @@ describe('object', () => {
 				c: c.union(c.number, c.null_literal),
 			}),
 			[{ a: 'a', b: true, c: 5 }, { a: 'a', b: true, c: null }],
-			[null, undefined, [], ['a'], { a: 'a', b: 0, c: 4 }, { a: 'a', b: true, c: 4, d: 'a' }, true, 'a', 2, -2, 5.5, -5.5, Infinity, NaN],
+			[{}, null, undefined, [], ['a'], { a: 'a', b: 0, c: 4 }, { a: 'a', b: true, c: 4, d: 'a' }, true, 'a', 2, 5.5, -5.5, Infinity, NaN],
 		)
 
 		// const separated = c.object('separated', { a: c.number }).decode
@@ -409,7 +409,7 @@ describe('loose_object', () => {
 				{ a: 'a', b: true, c: null },
 				{ a: 'a', b: true, c: 4, d: 'a' } as any as { a: string, b: boolean, c: number | null },
 			],
-			[null, undefined, [], ['a'], { a: 'a', b: 0, c: 4 }, { a: 'a', b: true, d: 'a' }, true, 'a', 2, -2, 5.5, -5.5, Infinity, NaN],
+			[{}, null, undefined, [], ['a'], { a: 'a', b: 0, c: 4 }, { a: 'a', b: true, d: 'a' }, true, 'a', 2, -2, 5.5, -5.5, Infinity, NaN],
 		)
 
 		// const separated = c.object('separated', { a: c.number }).decode

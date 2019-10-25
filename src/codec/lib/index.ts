@@ -521,11 +521,13 @@ class StrictObjectDecoder<O extends { [key: string]: any }> extends ObjectDecode
 
 		if (!is_object(input)) return Err(`Failed to decode a valid ${name}, input is not an object: ${input}`)
 
-		const give = {} as O
 		for (const key in input) {
 			if (!(key in decoders)) return Err(`Failed to decode a valid ${name}, input had invalid extra key ${key}`)
+		}
+		const give = {} as O
+		for (const key in decoders) {
 			const decoder = decoders[key]
-			const value = input[key]
+			const value = (input as any)[key]
 			const result = decoder.decode(value)
 			if (result.is_err()) return Err(`Failed to decode a valid ${name}, key ${key} has invalid value: ${value}`)
 			give[key as keyof O] = result.value
@@ -557,7 +559,6 @@ class LooseObjectDecoder<O extends { [key: string]: any }> extends ObjectDecoder
 
 		const give = { ...input } as O
 		for (const key in decoders) {
-			if (!(key in give)) return Err(`Failed to decode a valid ${name}, input doesn't have value for key: ${key}`)
 			const decoder = decoders[key]
 			const value = give[key]
 			const result = decoder.decode(value)
