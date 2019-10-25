@@ -219,7 +219,7 @@ Err("error").default(() => 0) === 0
 
 Returns the err value if it is `Err`, else `def_err`.
 
-`def_err` can be a function that returns a value, for lazy execution.
+`default_err` can be a function that returns a value, for lazy execution.
 
 ```ts
 Ok(1).default_err("Uh oh") === "Uh oh"
@@ -341,9 +341,9 @@ Result.from_nillable(undefined, () => "was nillable") === Err("was nillable")
 Checks if a value is a `Result`.
 
 ```ts
-Result.is_maybe(Ok(1)) === true
-Result.is_maybe(Err("error")) === true
-Result.is_maybe('a') === false
+Result.is_result(Ok(1)) === true
+Result.is_result(Err("error")) === true
+Result.is_result('a') === false
 ```
 
 ### `Result.all<T, E>(results: Result<T, E>[]): Result<T[], E>`
