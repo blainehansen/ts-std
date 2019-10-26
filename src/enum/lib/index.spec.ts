@@ -173,6 +173,24 @@ describe('required Enum', () => {
 		assert.assignable<'Paste', keyof typeof WebEvent>(true)
 		assert.assignable<'Click', keyof typeof WebEvent>(true)
 	})
+
+	// it('stupid bug fixed', () => {
+	// 	const BufferState = Enum({
+	// 		Holding: variant<string[]>(),
+	// 		Ready: empty(),
+	// 		Exhausted: empty(),
+	// 	})
+	// 	type BufferState = Enum<typeof BufferState>
+
+	// 	function thing(buffer: BufferState): string {
+	// 		if (buffer.matches('Exhausted'))
+	// 			return ''
+	// 		if (buffer.matches('Holding')) {
+	// 			return buffer.content[0] || ''
+	// 		}
+	// 		return ''
+	// 	}
+	// })
 })
 
 

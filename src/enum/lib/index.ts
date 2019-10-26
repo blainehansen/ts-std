@@ -2,7 +2,9 @@ class Panic extends Error {}
 const enum_invariant_message = "Enum library invariant broken!"
 
 type VariantManifest = { [variant_key: string]: VariantDescriptor<PossibleArgs> }
-type Variants<M extends VariantManifest> = Variant<M, keyof M>
+type Variants<M extends VariantManifest> = {
+	[K in keyof M]: Variant<M, K>
+}[keyof M]
 
 type ArgsOf<M extends VariantManifest, K extends keyof M> =
 	M[K] extends VariantDescriptor<infer T> ? T : never
