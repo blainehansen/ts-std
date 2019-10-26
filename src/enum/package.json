@@ -1,6 +1,6 @@
 {
 	"name": "@ts-std/enum",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "A library that brings ergonomic, matchable, tagged unions to typescript.",
 	"author": {
 		"name": "Blaine Hansen",
