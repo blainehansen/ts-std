@@ -28,6 +28,9 @@ declare global {
 		join_object<O extends { [key: string]: Promise<any> }>(obj: O): PromiseObject<O>,
 
 		// result_join<T, L extends (Result<T, any> | Maybe<T>)[]>(): Promise<Result<T, >>,
+
+		delay<T>(time: number, value: T): Promise<T>,
+		delay(time: number): Promise<void>,
 	}
 }
 
@@ -73,3 +76,20 @@ Promise.prototype.use_result = function<T>(): Promise<Result<T, Error>> {
 		.then(Ok)
 		.catch(Err)
 }
+
+
+function delay<T>(time: number, value: T): Promise<T>
+function delay(time: number): Promise<void>
+function delay<T>(time: number, value?: T): any {
+	let timer
+	return new Promise(resolve => {
+		timer = setTimeout(value => {
+			resolve(value)
+		}, time, value)
+	})
+		.finally(() => {
+			clearTimeout(timer)
+		})
+}
+
+Promise.delay = delay

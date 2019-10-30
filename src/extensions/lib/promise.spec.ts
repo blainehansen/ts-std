@@ -74,3 +74,14 @@ describe('use_result', () => {
 		expect((await p).expect_err('uh oh').message).eql('ev')
 	})
 })
+
+describe('Promise.delay', () => {
+	it('with value', async () => {
+		const p: Promise<string> = Promise.delay(500, 'a')
+		expect(await p).eql('a')
+	})
+	it('without value', async () => {
+		const p: Promise<void> = Promise.delay(500)
+		expect(await p).eql(undefined)
+	})
+})
