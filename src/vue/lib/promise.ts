@@ -7,7 +7,7 @@ export default Vue.extend({
 	data: () => ({
 		resolved: false,
 		ok: null as unknown | null,
-		err: null as Error | null,
+		err: null as unknown | null,
 	}),
 
 	props: {
@@ -16,7 +16,7 @@ export default Vue.extend({
 			validator: p =>
 				!p || (typeof p.then === 'function' && typeof p.catch === 'function'),
 			default: null,
-		} as PropOptions<Promise<Result<unknown, Error>> | null>,
+		} as PropOptions<Promise<Result<unknown, unknown>> | null>,
 
 		tag: {
 			type: String,

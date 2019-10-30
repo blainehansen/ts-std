@@ -7,26 +7,33 @@ export type MapFunc<T, U> = (element: T, index: number, array: T[]) => U
 
 export type Unzip<L extends any[]> = { [K in keyof L]: L[K][] }
 
+export type ValueProducer<T, U> = KeysOfType<T, U> | MapFunc<T, U>
+
 declare global {
 	interface Array<T> {
 		sum(this: number[]): number
-		sum(this: T[], key: KeysOfType<T, number> | MapFunc<T, number>): number
+		sum(this: T[], key: ValueProducer<T, number>): number
 
 		filter_map<U>(fn: MapFunc<T, U | undefined>): U[]
 
 		maybe_find(fn: MapFunc<T, boolean>): Maybe<T>
 
 		index_by(
-			arg: KeysOfType<T, Indexable> | MapFunc<T, Indexable>
+			arg: ValueProducer<T, Indexable>
 		): Dict<T>
 		unique_index_by(
-			arg: KeysOfType<T, Indexable> | MapFunc<T, Indexable>
+			arg: ValueProducer<T, Indexable>
 		): Result<Dict<T>, [string, T, T]>
 
 		entries_to_dict<T>(this: [string, T][]): Dict<T>
 		unique_entries_to_dict<T>(this: [string, T][]): Result<Dict<T>, [string, T, T]>
 
 		unzip<L extends any[]>(this: L[]): Maybe<Unzip<L>>
+
+
+		sort_by<T extends number | string>(this: T[]): T[]
+		sort_by(this: T[], key: ValueProducer<T, number | string>): T[]
+		// mutate_sort_by(this: T[], key: ValueProducer<T, number | string>): T[]
 	}
 
 	interface ArrayConstructor {
@@ -46,8 +53,8 @@ function make_key_accessor<T, U>(
 
 
 function sum(this: number[]): number
-function sum<T>(this: T[], key: KeysOfType<T, number> | MapFunc<T, number>): number
-function sum<T>(this: T[], key?: KeysOfType<T, number> | MapFunc<T, number>): number {
+function sum<T>(this: T[], key: ValueProducer<T, number>): number
+function sum<T>(this: T[], key?: ValueProducer<T, number>): number {
 	const to_number =
 		key === undefined ? (v: T) => v as any as number
 		: make_key_accessor<T, number>(key)
@@ -88,7 +95,7 @@ Array.prototype.maybe_find = function<T>(this: T[], fn: MapFunc<T, boolean>) {
 
 Array.prototype.index_by = function<T>(
 	this: T[],
-	arg: KeysOfType<T, Indexable> | MapFunc<T, Indexable>,
+	arg: ValueProducer<T, Indexable>,
 ): Dict<T> {
 	const to_key = make_key_accessor<T, Indexable>(arg)
 
@@ -105,7 +112,7 @@ Array.prototype.index_by = function<T>(
 
 Array.prototype.unique_index_by = function<T>(
 	this: T[],
-	arg: KeysOfType<T, Indexable> | MapFunc<T, Indexable>,
+	arg: ValueProducer<T, Indexable>,
 ): Result<Dict<T>, [string, T, T]> {
 	const to_key = make_key_accessor<T, Indexable>(arg)
 
@@ -165,6 +172,13 @@ Array.prototype.unzip = function<L extends any[]>(this: L[]): Maybe<Unzip<L>> {
 
 	return Some(give)
 }
+
+function sort_by<T extends number | string>(this: T[], order: 'asc' | 'desc' = 'asc'): T[]
+function sort_by(this: T[], key: ValueProducer<T, number | string>): T[]
+function sort_by(this: T[], key?: ValueProducer<T, number | string>): T[] {
+	const give = this.slice()
+}
+Array.prototype.sort_by = sort_by
 
 Array.zip_lenient = function<L extends any[]>(...arrays: Unzip<L>): L[] {
 	let give_length
