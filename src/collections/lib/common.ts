@@ -1,3 +1,5 @@
+import { Dict } from '@ts-std/types'
+
 export interface Hashable {
 	to_hash(): number
 }
@@ -72,3 +74,39 @@ export function difference_items<T>(items: Items<T>, others: ItemsHolder<T>[]) {
 // 		}.bind(this)
 // 	}
 // }
+
+
+
+export abstract class SpecialDict<T> {
+	protected items: Dict<T> = {}
+
+	into_array<K extends string, I extends string>(
+		key_symbol: K,
+		item_symbol: I
+	): ({ [k in K]: string } & { [i in I]: T })[] {
+		const give = [] as ({ [k in K]: string } & { [i in I]: T })[]
+		for (const key in this.items) {
+			const item = this.items[key]
+			give.push({
+				[key_symbol]: key,
+				[item_symbol]: item,
+			} as ({ [k in K]: string } & { [i in I]: T }))
+		}
+
+		return give
+	}
+
+	into_dict() {
+		return { ...this.items }
+	}
+
+	entries() {
+		return Object.entries(this.items)
+	}
+	keys() {
+		return Object.keys(this.items)
+	}
+	values() {
+		return Object.values(this.items)
+	}
+}

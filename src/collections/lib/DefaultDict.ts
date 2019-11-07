@@ -1,29 +1,12 @@
 import { Dict } from '@ts-std/types'
+import { SpecialDict } from './common'
 
-export class DefaultDict<T> {
-	protected items: Dict<T> = {}
-	constructor(readonly initializer: () => T) {}
+export class DefaultDict<T> extends SpecialDict<T> {
+	constructor(readonly initializer: () => T) { super() }
 
 	get(key: string): T {
-		const item = this.items[key]
-		if (item === undefined)
+		if (!(key in this.items))
 			return this.items[key] = this.initializer()
-		return item
-	}
-
-	into_array<K extends string, I extends string>(
-		key_symbol: K,
-		item_symbol: I,
-	): { [k in K]: string, [i in I]: T }[] {
-		const give = [] as { [k in K]: string, [i in I]: T }[]
-		for (const key in this.items) {
-			const item = this.items[key]
-			give.push({
-				[key_symbol]: key,
-				[item_symbol]: item,
-			})
-		}
-
-		return give
+		return this.items[key]
 	}
 }

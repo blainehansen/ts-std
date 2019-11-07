@@ -25,6 +25,22 @@ export class HashSet<T extends Hashable> implements Iterable<T> {
 		this.set_items(items)
 	}
 
+	equal(other: HashSet<T>): boolean {
+		const this_hash_keys = Object.keys(this.items).sort()
+		const other_hash_keys = Object.keys(other.items).sort()
+
+		if (this_hash_keys.length !== other_hash_keys.length)
+			return false
+
+		let t
+		let o
+		while ((t = this_hash_keys.pop()) && (o = other_hash_keys.pop())) {
+			if (t !== o)
+				return false
+		}
+		return true
+	}
+
 	// protected _size: number
 	// get size() { return this._size }
 	get size() { return Object.keys(this.items).length }

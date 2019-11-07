@@ -45,6 +45,52 @@ describe('filter_map', () => {
 		expect([1, 2, 3, 4].filter_map(string_even)).eql(['2', '4'])
 	})
 })
+describe('flat_map', () => {
+	const string_fn = (n: number) => n % 3 === 0 ? [] : n % 3 === 1 ? ['a'] : ['b', 'c']
+	it('empty', () => {
+		expect([].flat_map(string_fn)).eql([])
+	})
+
+	it('works', () => {
+		expect([0, 1, 2, 3, 4].flat_map(string_fn)).eql(['a', 'b', 'c', 'a'])
+	})
+})
+describe('try_map', () => {
+	const string_fn = (n: number) => n % 2 === 0 ? Ok(true) : Err('not even')
+	it('empty', () => {
+		expect([].try_map(string_fn)).eql(Ok([]))
+	})
+
+	it('works', () => {
+		expect([0, 2, 4].try_map(string_fn)).eql(Ok([true, true, true]))
+		expect([1].try_map(string_fn)).eql(Err('not even'))
+		expect([0, 1].try_map(string_fn)).eql(Err('not even'))
+		expect([0, 1, 2].try_map(string_fn)).eql(Err('not even'))
+	})
+})
+describe('index_map', () => {
+	const string_fn = (n: number) => t(n % 3, `${n}`)
+	it('empty', () => {
+		expect([].index_map(string_fn)).eql({})
+	})
+
+	it('works', () => {
+		expect([0, 1, 2].index_map(string_fn)).eql({ 0: '0', 1: '1', 2: '2' })
+		expect([0, 1, 2, 3].index_map(string_fn)).eql({ 0: '3', 1: '1', 2: '2' })
+	})
+})
+describe('unique_index_map', () => {
+	const string_fn = (n: number) => t(n % 3, `${n}`)
+	it('empty', () => {
+		expect([].unique_index_map(string_fn)).eql(Ok({}))
+	})
+
+	it('works', () => {
+		expect([0, 1, 2].unique_index_map(string_fn)).eql(Ok({ 0: '0', 1: '1', 2: '2' }))
+		expect([0, 1, 2, 3].unique_index_map(string_fn)).eql(Err(t('0', '0', '3')))
+	})
+})
+
 
 describe('maybe_find', () => {
 	const finder = (n: number) => n === 3
@@ -134,6 +180,20 @@ describe('unique_index_by', () => {
 })
 
 
+describe('group_by', () => {
+	it('works', () => {
+		expect(([] as A[]).group_by('a')).eql({})
+
+		expect(a_array.group_by('a')).eql({ 1: a_array })
+		expect(a_array.group_by('b')).eql({ b: a_array })
+
+		// const e_array = [t('a', 1), t('b', 2)]
+		expect(e_array.group_by('0')).eql({ a: [t('a', 1)], b: [t('b', 2)] })
+		expect(e_array.group_by('1')).eql({ 1: [t('a', 1)], 2: [t('b', 2)] })
+	})
+})
+
+
 describe('entries_to_dict', () => {
 	it('empty', () => {
 		expect(([] as E[]).entries_to_dict()).eql({})
@@ -173,6 +233,28 @@ describe('unzip', () => {
 	})
 })
 
+// describe('unzip_by', () => {
+// 	it('empty', () => {
+// 		const a = [] as { a: string, b: number }[]
+// 		const u: [string[], number[], { v: boolean }[]] = a.unzip_by('a', 'b', a => ({ v: a.b === 0 }))
+// 		const e = [[], [], []]
+// 		expect(u).eql(e)
+// 	})
+
+// 	it('tuple', () => {
+// 		const a = [t('1', 0), t('2', 1)]
+// 		const u: [string[], number[], { v: boolean }[]] = a.unzip_by('0', '1', a => ({ v: a[1] === 0 }))
+// 		const e = [['1', '2'], [0, 1], [true, false]]
+// 		expect(u).eql(e)
+// 	})
+
+// 	it('object', () => {
+// 		const a = [{ a: '1', b: 0 }, { a: '2', b: 1 }]
+// 		const u: [string[], number[], { v: boolean }[]] = a.unzip_by('a', 'b', a => ({ v: a.b === 0 }))
+// 		const e = [['1', '2'], [0, 1], [true, false]]
+// 		expect(u).eql(e)
+// 	})
+// })
 
 describe('zip_lenient', () => {
 	it('empty', () => {

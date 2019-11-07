@@ -63,6 +63,38 @@ describe('HashSet', () => {
 		expect(e.has(two_key)).true
 	})
 
+	it('equatable', () => {
+		const s = new HashSet(...initial_items)
+		expect(s.equal(s)).true
+		const f = HashSet.from(initial_items)
+		expect(f.equal(f)).true
+
+		expect(s.equal(f)).true
+		const e = new HashSet<Key>()
+
+		expect(s.equal(e)).false
+		expect(e.equal(s)).false
+		expect(s.equal(f)).true
+		expect(f.equal(s)).true
+
+		const a = new HashSet(1, 2, 3)
+		const b = new HashSet(3, 2, 1)
+		expect(a.equal(b)).true
+		expect(b.equal(a)).true
+
+		const c = new HashSet(3, 2)
+		expect(a.equal(c)).false
+		expect(b.equal(c)).false
+		expect(c.equal(a)).false
+		expect(c.equal(b)).false
+
+		const d = new HashSet(2)
+		expect(a.equal(d)).false
+		expect(b.equal(d)).false
+		expect(d.equal(a)).false
+		expect(d.equal(b)).false
+	})
+
 	it('iterable', () => {
 		const s = HashSet.from(initial_items)
 		const a: typeof initial_items = []

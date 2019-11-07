@@ -1,3 +1,5 @@
 export { Hashable, Hasher } from './common'
 export { HashSet } from './HashSet'
 export { HashMap } from './HashMap'
+export { UniqueDict } from './UniqueDict'
+export { DefaultDict } from './DefaultDict'
