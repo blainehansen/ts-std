@@ -39,6 +39,10 @@ declare global {
 		group_by(
 			arg: ValueProducer<T, Indexable>
 		): Dict<T>
+		split_by(
+			predicate: ValueProducer<T, boolean>,
+		): [T[], T[]]
+
 
 		entries_to_dict<T>(this: [string, T][]): Dict<T>
 		unique_entries_to_dict<T>(this: [string, T][]): Result<Dict<T>, [string, T, T]>
@@ -209,6 +213,24 @@ Array.prototype.group_by = function<T>(
 			.push(element)
 	}
 	return give
+}
+
+Array.prototype.split_by = function<T>(
+	predicate: ValueProducer<T, boolean>,
+): [T[], T[]] {
+	const test = make_key_accessor<T, boolean>(predicate)
+
+	const t = [] as T[]
+	const f = [] as T[]
+	for (let index = 0; index < this.length; index++) {
+		const element = this[index]
+		if (test(element, index, this))
+			t.push(element)
+		else
+			f.push(element)
+	}
+
+	return [t, f]
 }
 
 

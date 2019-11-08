@@ -179,7 +179,6 @@ describe('unique_index_by', () => {
 	})
 })
 
-
 describe('group_by', () => {
 	it('works', () => {
 		expect(([] as A[]).group_by('a')).eql({})
@@ -187,12 +186,32 @@ describe('group_by', () => {
 		expect(a_array.group_by('a')).eql({ 1: a_array })
 		expect(a_array.group_by('b')).eql({ b: a_array })
 
-		// const e_array = [t('a', 1), t('b', 2)]
 		expect(e_array.group_by('0')).eql({ a: [t('a', 1)], b: [t('b', 2)] })
 		expect(e_array.group_by('1')).eql({ 1: [t('a', 1)], 2: [t('b', 2)] })
+
+		expect(e_array.group_by(e => e[0])).eql({ a: [t('a', 1)], b: [t('b', 2)] })
+		expect(e_array.group_by(e => e[1])).eql({ 1: [t('a', 1)], 2: [t('b', 2)] })
 	})
 })
 
+describe('split_by', () => {
+	it('works', () => {
+		type T = { a: number, b: boolean }
+		const arr = [{ a: 0, b: false }, { a: 0, b: true }, { a: 1, b: true }]
+
+		expect(([] as T[]).split_by('b')).eql([[], []])
+
+		const a: [T[], T[]] = arr.split_by(t => !!t.a)
+		const b: [T[], T[]] = arr.split_by('b')
+		expect(a).eql([[{ a: 1, b: true }], [{ a: 0, b: false }, { a: 0, b: true }]])
+		expect(b).eql([[{ a: 0, b: true }, { a: 1, b: true }], [{ a: 0, b: false }]])
+
+		expect(a_array.split_by(a => a.a === 0)).eql([[], a_array])
+
+		expect(e_array.split_by(e => e[0] === 'a')).eql([[t('a', 1)], [t('b', 2)]])
+		expect(e_array.split_by(e => e[1] === 1)).eql([[t('a', 1)], [t('b', 2)]])
+	})
+})
 
 describe('entries_to_dict', () => {
 	it('empty', () => {
