@@ -31,15 +31,19 @@ declare global {
 		maybe_find(fn: MapFunc<T, boolean>): Maybe<T>
 
 		index_by(
+			this: T[],
 			arg: ValueProducer<T, Indexable>
 		): Dict<T>
 		unique_index_by(
+			this: T[],
 			arg: ValueProducer<T, Indexable>
 		): Result<Dict<T>, [string, T, T]>
 		group_by(
+			this: T[],
 			arg: ValueProducer<T, Indexable>
-		): Dict<T>
+		): Dict<T[]>
 		split_by(
+			this: T[],
 			predicate: ValueProducer<T, boolean>,
 		): [T[], T[]]
 

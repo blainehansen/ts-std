@@ -183,7 +183,8 @@ describe('group_by', () => {
 	it('works', () => {
 		expect(([] as A[]).group_by('a')).eql({})
 
-		expect(a_array.group_by('a')).eql({ 1: a_array })
+		const a: { [key: string]: A[] } = a_array.group_by('a')
+		expect(a).eql({ 1: a_array })
 		expect(a_array.group_by('b')).eql({ b: a_array })
 
 		expect(e_array.group_by('0')).eql({ a: [t('a', 1)], b: [t('b', 2)] })
