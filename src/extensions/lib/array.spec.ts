@@ -68,6 +68,19 @@ describe('try_map', () => {
 		expect([0, 1, 2].try_map(string_fn)).eql(Err('not even'))
 	})
 })
+describe('maybe_map', () => {
+	const string_fn = (n: number) => n % 2 === 0 ? Some(true) : None
+	it('empty', () => {
+		expect([].maybe_map(string_fn)).eql(Some([]))
+	})
+
+	it('works', () => {
+		expect([0, 2, 4].maybe_map(string_fn)).eql(Some([true, true, true]))
+		expect([1].maybe_map(string_fn)).eql(None)
+		expect([0, 1].maybe_map(string_fn)).eql(None)
+		expect([0, 1, 2].maybe_map(string_fn)).eql(None)
+	})
+})
 describe('index_map', () => {
 	const string_fn = (n: number) => t(n % 3, `${n}`)
 	it('empty', () => {

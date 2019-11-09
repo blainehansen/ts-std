@@ -22,13 +22,16 @@ declare global {
 		sum(this: number[]): number
 		sum(this: T[], key: ValueProducer<T, number>): number
 
-		filter_map<U>(fn: MapFunc<T, U | undefined>): U[]
-		flat_map<U>(fn: MapFunc<T, U[]>): U[]
-		try_map<U, E>(fn: MapFunc<T, Result<U, E>>): Result<U[], E>
-		index_map<U>(fn: MapFunc<T, [Indexable, U]>): Dict<U>
-		unique_index_map<U>(fn: MapFunc<T, [Indexable, U]>): Result<Dict<U>, [string, T, T]>
+		filter_map<U>(this: T[], fn: MapFunc<T, U | undefined>): U[]
+		flat_map<U>(this: T[], fn: MapFunc<T, U[]>): U[]
 
-		maybe_find(fn: MapFunc<T, boolean>): Maybe<T>
+		try_map<U, E>(this: T[], fn: MapFunc<T, Result<U, E>>): Result<U[], E>
+		maybe_map<U>(this: T[], fn: MapFunc<T, Maybe<U>>): Maybe<U[]>
+
+		index_map<U>(this: T[], fn: MapFunc<T, [Indexable, U]>): Dict<U>
+		unique_index_map<U>(this: T[], fn: MapFunc<T, [Indexable, U]>): Result<Dict<U>, [string, T, T]>
+
+		maybe_find(this: T[], fn: MapFunc<T, boolean>): Maybe<T>
 
 		index_by(
 			this: T[],
@@ -128,6 +131,19 @@ Array.prototype.try_map = function<T, U, E>(this: T[], fn: MapFunc<T, Result<U, 
 	}
 
 	return Ok(give)
+}
+
+Array.prototype.maybe_map = function<T, U>(this: T[], fn: MapFunc<T, Maybe<U>>): Maybe<U[]> {
+	const give = [] as U[]
+	for (let index = 0; index < this.length; index++) {
+		const element = this[index]
+		const maybe = fn(element, index, this)
+		if (maybe.is_none())
+			return None
+		give.push(maybe.value)
+	}
+
+	return Some(give)
 }
 
 Array.prototype.index_map = function<T, U>(this: T[], fn: MapFunc<T, [Indexable, U]>): Dict<U> {
