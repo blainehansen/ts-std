@@ -32,6 +32,8 @@ declare global {
 		unique_index_map<U>(this: T[], fn: MapFunc<T, [Indexable, U]>): Result<Dict<U>, [string, T, T]>
 
 		maybe_find(this: T[], fn: MapFunc<T, boolean>): Maybe<T>
+		maybe_get(this: T[], index: number): Maybe<T>
+		wrapping_get(this: T[], index: number): Maybe<T>
 
 		index_by(
 			this: T[],
@@ -178,6 +180,18 @@ Array.prototype.maybe_find = function<T>(this: T[], fn: MapFunc<T, boolean>) {
 			return Some(element)
 	}
 	return None
+}
+
+Array.prototype.maybe_get = function<T>(this: T[], index: number): Maybe<T> {
+	return Maybe.from_nillable(
+		index < 0
+			? this[this.length + index]
+			: this[index]
+	)
+}
+
+Array.prototype.wrapping_get = function<T>(this: T[], index: number): Maybe<T> {
+	return this.maybe_get(index % this.length)
 }
 
 

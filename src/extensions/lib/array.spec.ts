@@ -125,6 +125,46 @@ describe('maybe_find', () => {
 	})
 })
 
+describe('maybe_get', () => {
+	it('works', () => {
+		expect([].maybe_get(0)).eql(None)
+		expect([].maybe_get(1)).eql(None)
+		expect([].maybe_get(-1)).eql(None)
+
+		expect([1, 2, 3].maybe_get(0)).eql(Some(1))
+		expect([1, 2, 3].maybe_get(1)).eql(Some(2))
+		expect([1, 2, 3].maybe_get(2)).eql(Some(3))
+		expect([1, 2, 3].maybe_get(3)).eql(None)
+
+		expect([1, 2, 3].maybe_get(-1)).eql(Some(3))
+		expect([1, 2, 3].maybe_get(-2)).eql(Some(2))
+		expect([1, 2, 3].maybe_get(-3)).eql(Some(1))
+		expect([1, 2, 3].maybe_get(-4)).eql(None)
+	})
+})
+
+describe('wrapping_get', () => {
+	it('works', () => {
+		expect([].wrapping_get(0)).eql(None)
+		expect([].wrapping_get(1)).eql(None)
+		expect([].wrapping_get(-1)).eql(None)
+
+		expect([1, 2, 3].wrapping_get(0)).eql(Some(1))
+		expect([1, 2, 3].wrapping_get(1)).eql(Some(2))
+		expect([1, 2, 3].wrapping_get(2)).eql(Some(3))
+		expect([1, 2, 3].wrapping_get(3)).eql(Some(1))
+		expect([1, 2, 3].wrapping_get(4)).eql(Some(2))
+		expect([1, 2, 3].wrapping_get(5)).eql(Some(3))
+
+		expect([1, 2, 3].wrapping_get(-1)).eql(Some(3))
+		expect([1, 2, 3].wrapping_get(-2)).eql(Some(2))
+		expect([1, 2, 3].wrapping_get(-3)).eql(Some(1))
+		expect([1, 2, 3].wrapping_get(-4)).eql(Some(3))
+		expect([1, 2, 3].wrapping_get(-5)).eql(Some(2))
+		expect([1, 2, 3].wrapping_get(-6)).eql(Some(1))
+	})
+})
+
 describe('index_by', () => {
 	it('empty', () => {
 		expect(([] as A[]).index_by('a')).eql({})
