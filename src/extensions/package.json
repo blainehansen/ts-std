@@ -1,6 +1,6 @@
 {
 	"name": "@ts-std/extensions",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"description": "A variety of extensions to native types. Heavily use `Result` and `Maybe` types from ts-std/monads.",
 	"author": {
 		"name": "Blaine Hansen",
