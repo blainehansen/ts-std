@@ -77,7 +77,7 @@ declare global {
 }
 
 
-function make_key_accessor<T, U>(
+export function make_key_accessor<T, U>(
 	arg: ValueProducer<T, U>,
 ): MapFunc<T, U> {
 	return typeof arg === 'function'
