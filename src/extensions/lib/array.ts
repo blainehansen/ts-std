@@ -22,6 +22,8 @@ declare global {
 		sum(this: number[]): number
 		sum(this: T[], key: ValueProducer<T, number>): number
 
+		push_all(this: T[], ...others: T[][]): void
+
 		filter_map<U>(this: T[], fn: MapFunc<T, U | undefined>): U[]
 		flat_map<U>(this: T[], fn: MapFunc<T, U[]>): U[]
 
@@ -99,6 +101,13 @@ function sum<T>(this: T[], key?: ValueProducer<T, number>): number {
 	return sum
 }
 Array.prototype.sum = sum
+
+Array.prototype.push_all = function<T>(this: T[], ...others: T[][]) {
+	for (let index = 0; index < others.length; index++) {
+		const other = others[index]
+		Array.prototype.push.apply(this, other)
+	}
+}
 
 Array.prototype.filter_map = function<T, U>(this: T[], fn: MapFunc<T, U | undefined>): U[] {
 	const give = [] as U[]

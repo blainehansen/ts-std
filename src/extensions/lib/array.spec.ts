@@ -34,6 +34,19 @@ describe('sum', () => {
 	})
 })
 
+describe('push_all', () => {
+	it('works', () => {
+		const a = [] as number[]
+		expect(a.length).equal(0)
+		a.push_all([1])
+		expect(a.length).equal(1)
+		a.push_all([2, 3])
+		expect(a.length).equal(3)
+		a.push_all([4, 5, 6], [7, 8, 9], [10])
+		expect(a.length).equal(10)
+	})
+})
+
 describe('filter_map', () => {
 	const string_even = (n: number) => n % 2 === 0 ? `${n}` : undefined
 
