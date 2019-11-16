@@ -31,6 +31,7 @@
 		"url": "https://github.com/blainehansen/ts-std/issues"
 	},
 	"dependencies": {
+		"@ts-std/extensions": "^1.0.9",
 		"@ts-std/monads": "^1.0.0",
 		"@ts-std/types": "^1.0.0",
 		"xxhashjs": "^0.2.2"
