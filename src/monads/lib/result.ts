@@ -25,6 +25,8 @@ export interface ResultLike<T, E> {
 
 	match<U>(fn: ResultMatch<T, E, U>): U,
 
+	unwrap(): T | never,
+	unwrap_err(): E | never,
 	expect(message: string): T | never,
 	expect_err(message: string): E | never,
 
@@ -83,11 +85,17 @@ class ResultOk<T, E> implements ResultLike<T, E> {
 	default_err(def_err: ProducerOrValue<E>): E {
 		return typeof def_err === 'function' ? (def_err as () => E)() : def_err
 	}
+	unwrap(): T | never {
+		return this.value
+	}
+	unwrap_err(): E | never {
+		throw new Panic(`Result.unwrap_err was called on Ok.\nUnderlying Ok value:\n${this.value}`)
+	}
 	expect(message: string): T | never {
 		return this.value
 	}
 	expect_err(message: string): E | never {
-		throw new Panic(message)
+		throw new Panic(`Result.expect_err was called on Ok.\nMessage: ${message}\nUnderlying Ok value:\n${this.value}`)
 	}
 	match<U>(fn: ResultMatch<T, E, U>): U {
 		return typeof fn.ok === 'function'
@@ -180,6 +188,12 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 		return typeof def === 'function' ? (def as () => T)() : def
 	}
 	default_err(def_err: ProducerOrValue<E>): E {
+		return this.error
+	}
+	unwrap(): T | never {
+		throw new Panic(`Result.unwrap was called on Err.\nUnderlying Err value:\n${this.error}`)
+	}
+	unwrap_err(): E | never {
 		return this.error
 	}
 	expect(message: string): T | never {

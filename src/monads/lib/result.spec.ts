@@ -52,8 +52,10 @@ describe('Result basic api', () => {
 
 		it(message, () => {
 			if (is_ok) {
+				expect(r.unwrap()).equal(1)
 				expect(r.expect(im)).equal(1)
 				expect(() => r.expect_err(pm)).throw(Panic, pm)
+				expect(() => r.unwrap_err()).throw(Panic)
 				expect(r.is_err()).false
 				expect(changed.expect(im)).equal(`n is: 1`)
 				expect(changed_err.expect(im)).equal(1)
@@ -95,7 +97,9 @@ describe('Result basic api', () => {
 				expect(correct).true
 			}
 			else {
+				expect(() => r.unwrap()).throw(Panic)
 				expect(() => r.expect(pm)).throw(Panic, pm)
+				expect(r.unwrap_err()).equal('bad')
 				expect(r.expect_err(im)).equal('bad')
 				expect(r.is_err()).true
 				expect(changed.expect_err(im)).equal('bad')

@@ -30,6 +30,7 @@ export interface MaybeLike<T> {
 	xor(other: ProducerOrValue<Maybe<T>>): Maybe<T>
 
 	default(def: ProducerOrValue<T>): T
+	unwrap(): T | never
 	expect(message: string): T | never
 	join<L extends any[]>(...args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>>
 }
@@ -79,6 +80,9 @@ class MaybeSome<T> implements MaybeLike<T> {
 			: this
 	}
 	default(value: ProducerOrValue<T>): T {
+		return this.value
+	}
+	unwrap(): T | never {
 		return this.value
 	}
 	expect(message: string): T | never {
@@ -141,8 +145,11 @@ class MaybeNone<T> implements MaybeLike<T> {
 	default(other: ProducerOrValue<T>): T {
 		return typeof other === 'function' ? (other as () => T)() : other
 	}
+	unwrap(): T | never {
+		throw new Panic(`Maybe.unwrap was called on None.\n`)
+	}
 	expect(message: string): T | never {
-		throw new Panic(`Maybe.expect was called on Err.\nMessage: ${message}`)
+		throw new Panic(`Maybe.expect was called on None.\nMessage: ${message}`)
 	}
 	join<L extends any[]>(..._args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>> {
 		return new MaybeJoinNone()

@@ -42,6 +42,7 @@ describe('Maybe basic api', () => {
 
 		it(message, () => {
 			if (is_some) {
+				expect(r.unwrap()).equal(1)
 				expect(r.expect(im)).equal(1)
 				expect(r.is_none()).false
 				expect(changed.expect(im)).equal(`n is: 1`)
@@ -79,6 +80,7 @@ describe('Maybe basic api', () => {
 				expect(correct).true
 			}
 			else {
+				expect(() => r.unwrap()).throw(Panic)
 				expect(() => r.expect(pm)).throw(Panic, pm)
 				expect(r.is_none()).true
 				expect(changed.is_none()).true
