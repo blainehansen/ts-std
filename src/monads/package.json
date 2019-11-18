@@ -1,6 +1,6 @@
 {
 	"name": "@ts-std/monads",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "`Result` and `Maybe` types that allow a safe and \"functional\" way of dealing with errors and nullable values.",
 	"author": {
 		"name": "Blaine Hansen",
