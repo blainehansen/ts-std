@@ -174,6 +174,51 @@ describe('Result basic api', () => {
 		expect(extra).true
 	})
 
+	it('join_object', () => {
+		const r: Result<{ a: number, b: string }> = Result.join_object({
+			a: Ok(1), b: Ok('b')
+		})
+
+		expect(r).eql(Ok({ a: 1, b: 'b' }))
+
+		expect(Result.join_object({
+			a: Err('a'),
+			b: Ok('b'),
+		})).eql(Err('a'))
+
+		expect(Result.join_object({
+			a: Ok(1),
+			b: Err('b'),
+		})).eql(Err('b'))
+
+		expect(Result.join_object({
+			a: Err('a'),
+			b: Err('b'),
+		})).eql(Err('a'))
+	})
+	it('join_object_collect_err', () => {
+		const r: Result<{ a: number, b: string }, string[]> = Result.join_object_collect_err({
+			a: Ok(1), b: Ok('b')
+		})
+
+		expect(r).eql(Ok({ a: 1, b: 'b' }))
+
+		expect(Result.join_object_collect_err({
+			a: Err('a'),
+			b: Ok('b'),
+		})).eql(Err(['a']))
+
+		expect(Result.join_object_collect_err({
+			a: Ok(1),
+			b: Err('b'),
+		})).eql(Err(['b']))
+
+		expect(Result.join_object_collect_err({
+			a: Err('a'),
+			b: Err('b'),
+		})).eql(Err(['a', 'b']))
+	})
+
 	it('is_result', () => {
 		expect(Result.is_result(Ok(1))).true
 		expect(Result.is_result(Ok('a'))).true

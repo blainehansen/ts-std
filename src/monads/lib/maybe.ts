@@ -1,4 +1,4 @@
-import { Unshift } from '@ts-std/types'
+import { Unshift, Dict } from '@ts-std/types'
 
 import { Panic, TransformerOrValue, ProducerOrValue } from './common'
 import { Result, Ok, Err } from './result'
@@ -236,6 +236,20 @@ export namespace Maybe {
 		return others_maybe.is_some()
 			? new MaybeJoinSome(others_maybe.value as L)
 			: new MaybeJoinNone()
+	}
+
+	export function join_object<O extends Dict<any>>(
+		obj: { [K in keyof O]: Maybe<O[K]> }
+	): Maybe<O> {
+		const give = {} as O
+		for (const key in obj) {
+			const maybe = obj[key] as Maybe<any>
+			if (maybe.is_none())
+				return None
+			give[key] = maybe.value
+		}
+
+		return Some(give)
 	}
 
 	export function attempt<T>(fn: () => T): Maybe<T> {

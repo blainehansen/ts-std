@@ -147,6 +147,29 @@ describe('Maybe basic api', () => {
 		expect(extra).true
 	})
 
+	it('join_object', () => {
+		const m: Maybe<{ a: number, b: string }> = Maybe.join_object({
+			a: Some(1), b: Some('b')
+		})
+
+		expect(m).eql(Some({ a: 1, b: 'b' }))
+
+		expect(Maybe.join_object({
+			a: None,
+			b: Some('b'),
+		})).eql(None)
+
+		expect(Maybe.join_object({
+			a: Some(1),
+			b: None,
+		})).eql(None)
+
+		expect(Maybe.join_object({
+			a: None,
+			b: None,
+		})).eql(None)
+	})
+
 	it('is_maybe', () => {
 		expect(Maybe.is_maybe(Some(1))).true
 		expect(Maybe.is_maybe(Some('a'))).true

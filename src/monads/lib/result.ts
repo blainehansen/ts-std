@@ -1,4 +1,4 @@
-import { Unshift } from '@ts-std/types'
+import { Unshift, Dict } from '@ts-std/types'
 
 import { Panic, TransformerOrValue, ProducerOrValue }from './common'
 import { Maybe, Some, None } from './maybe'
@@ -365,6 +365,37 @@ export namespace Result {
 		return results_join.is_ok()
 			? new ResultJoinOk(results_join.value as L)
 			: new ResultJoinErr(results_join.error as E[])
+	}
+
+	export function join_object<O extends Dict<any>, E>(
+		obj: { [K in keyof O]: Result<O[K], E> }
+	): Result<O, E> {
+		const give = {} as O
+		for (const key in obj) {
+			const result = obj[key] as Result<any, E>
+			if (result.is_err())
+				return Err(result.error)
+			give[key] = result.value
+		}
+
+		return Ok(give)
+	}
+
+	export function join_object_collect_err<O extends Dict<any>, E>(
+		obj: { [K in keyof O]: Result<O[K], E> }
+	): Result<O, E[]> {
+		const give = {} as O
+		const errors = [] as E[]
+		for (const key in obj) {
+			const result = obj[key] as Result<any, E>
+			if (result.is_err()) {
+				errors.push(result.error)
+				continue
+			}
+			give[key] = result.value
+		}
+
+		return errors.length === 0 ? Ok(give) : Err(errors)
 	}
 
 	export function filter<T, E>(results: Result<T, E>[]): T[] {
