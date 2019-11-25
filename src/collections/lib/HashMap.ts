@@ -1,34 +1,58 @@
 import { Maybe, Some, None } from '@ts-std/monads'
 
-import { Items, Hashable, ItemsHolder, union_items, intersection_items, difference_items } from './common'
+import {
+	Items, ItemsHolder, Hashable, ValueProducer, string_to_hash, make_transformer,
+	union_items, intersection_items, difference_items,
+} from './common'
 
-export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
+export function HashMap<K, T>(to_hash: ValueProducer<K, number>, ...items: [K, T][]): HashMapClass<K, T> {
+	return new HashMapClass(make_transformer(to_hash), items)
+}
+
+export namespace HashMap {
+	export function from<K, T>(to_hash: ValueProducer<K, number>, items: [K, T][]): HashMapClass<K, T> {
+		return new HashMapClass(make_transformer(to_hash), items)
+	}
+	export function from_hashable<K extends Hashable, T>(items: [K, T][]) {
+		return new HashMapClass(t => t.to_hash(), items)
+	}
+	export function of_hashable<K extends Hashable, T>(...items: [K, T][]) {
+		return new HashMapClass(t => t.to_hash(), items)
+	}
+	export function from_numbers<T>(items: [number, T][]) {
+		return new HashMapClass(n => n, items)
+	}
+	export function of_numbers<T>(...items: [number, T][]) {
+		return new HashMapClass(n => n, items)
+	}
+	export function from_strings<T>(items: [string, T][]) {
+		return new HashMapClass(string_to_hash, items)
+	}
+	export function of_strings<T>(...items: [string, T][]) {
+		return new HashMapClass(string_to_hash, items)
+	}
+}
+
+class HashMapClass<K, T> implements Iterable<[K, T]> {
 	protected items!: Items<[K, T]>
-
-	static from<K extends Hashable, T>(items: [K, T][]): HashMap<K, T> {
-		const s = new HashMap<K, T>()
-		s.set_items(items)
-		return s
+	constructor(
+		readonly to_hash: (key: K) => number,
+		items: [K, T][],
+	) {
+		this.set_items(items)
 	}
 
 	set_items(items: [K, T][]): this {
-		// this._size = items.length
 		this.items = {}
 		for (let index = 0; index < items.length; index++) {
 			const [key, item] = items[index]
-			const hash_key = key.to_hash()
+			const hash_key = this.to_hash(key)
 			this.items[hash_key] = [key, item]
 		}
 
 		return this
 	}
 
-	constructor(...items: [K, T][]) {
-		this.set_items(items)
-	}
-
-	// protected _size: number
-	// get size() { return this._size }
 	get size() { return Object.keys(this.items).length }
 
 	*[Symbol.iterator]() {
@@ -52,32 +76,42 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 
 
 	has(key: K): boolean {
-		const hash_key = key.to_hash()
+		const hash_key = this.to_hash(key)
 		return hash_key in this.items
 	}
 
 	get(key: K): Maybe<T> {
-		const hash_key = key.to_hash()
+		const hash_key = this.to_hash(key)
 		return hash_key in this.items
 			? Some(this.items[hash_key][1])
 			: None
 	}
 
 	set(key: K, item: T): this {
-		const hash_key = key.to_hash()
+		const hash_key = this.to_hash(key)
 		this.items[hash_key] = [key, item]
 		return this
 	}
+	set_all(...entries: [K, T][]): this {
+		for (let index = 0; index < entries.length; index++) {
+			const entry = entries[index]
+			const hash_key = this.to_hash(entry[0])
+			this.items[hash_key] = entry
+		}
+		return this
+	}
 
-	delete(key: K, ...rest: K[]): this {
-		const keys = [key].concat(rest)
-
+	delete(key: K): this {
+		const hash_key = this.to_hash(key)
+		delete this.items[hash_key]
+		return this
+	}
+	delete_all(...keys: K[]): this {
 		for (let index = 0; index < keys.length; index++) {
 			const key = keys[index]
-			const hash_key = key.to_hash()
+			const hash_key = this.to_hash(key)
 			delete this.items[hash_key]
 		}
-
 		return this
 	}
 
@@ -87,65 +121,64 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 	}
 
 
-
-	protected static union_items<K extends Hashable, T>(items: Items<[K, T]>, others: HashMap<K, T>[]) {
+	protected static union_items<K, T>(items: Items<[K, T]>, others: HashMapClass<K, T>[]) {
 		return union_items(items, others as any as ItemsHolder<[K, T]>[])
 	}
 
 	// mutating version of union
-	mutate_merge(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): this {
-		this.items = HashMap.union_items(this.items, [other].concat(rest))
+	mutate_merge(other: HashMapClass<K, T>, ...rest: HashMapClass<K, T>[]): this {
+		this.items = HashMapClass.union_items(this.items, [other].concat(rest))
 		return this
 	}
 
 	// non-mutating
-	merge(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): HashMap<K, T> {
-		const items = HashMap.union_items({ ...this.items }, [other].concat(rest))
-		const s = new HashMap<K, T>()
+	merge(other: HashMapClass<K, T>, ...rest: HashMapClass<K, T>[]): HashMapClass<K, T> {
+		const items = HashMapClass.union_items({ ...this.items }, [other].concat(rest))
+		const s = new HashMapClass<K, T>(this.to_hash, [])
 		s.items = items
 		return s
 	}
 
 
-	protected static intersection_items<K extends Hashable, T>(items: Items<[K, T]>, others: HashMap<K, T>[]) {
+	protected static intersection_items<K, T>(items: Items<[K, T]>, others: HashMapClass<K, T>[]) {
 		return intersection_items(items, others as any as ItemsHolder<[K, T]>[])
 	}
 
 	// in place version of intersection
-	mutate_filter(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): this {
-		this.items = HashMap.intersection_items(this.items, [other].concat(rest))
+	mutate_filter(other: HashMapClass<K, T>, ...rest: HashMapClass<K, T>[]): this {
+		this.items = HashMapClass.intersection_items(this.items, [other].concat(rest))
 		return this
 	}
 
 	// non-mutating
-	filter(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): HashMap<K, T> {
-		const items = HashMap.intersection_items({ ...this.items }, [other].concat(rest))
-		const s = new HashMap<K, T>()
+	filter(other: HashMapClass<K, T>, ...rest: HashMapClass<K, T>[]): HashMapClass<K, T> {
+		const items = HashMapClass.intersection_items({ ...this.items }, [other].concat(rest))
+		const s = new HashMapClass<K, T>(this.to_hash, [])
 		s.items = items
 		return s
 	}
 
 
-	protected static difference_items<K extends Hashable, T>(items: Items<[K, T]>, others: HashMap<K, T>[]) {
+	protected static difference_items<K, T>(items: Items<[K, T]>, others: HashMapClass<K, T>[]) {
 		return difference_items(items, others as any as ItemsHolder<[K, T]>[])
 	}
 
 	// in place version of difference
-	mutate_remove(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): this {
-		this.items = HashMap.difference_items(this.items, [other].concat(rest))
+	mutate_remove(other: HashMapClass<K, T>, ...rest: HashMapClass<K, T>[]): this {
+		this.items = HashMapClass.difference_items(this.items, [other].concat(rest))
 		return this
 	}
 
 	// non-mutating
-	remove(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): HashMap<K, T> {
-		const items = HashMap.difference_items({ ...this.items }, [other].concat(rest))
-		const s = new HashMap<K, T>()
+	remove(other: HashMapClass<K, T>, ...rest: HashMapClass<K, T>[]): HashMapClass<K, T> {
+		const items = HashMapClass.difference_items({ ...this.items }, [other].concat(rest))
+		const s = new HashMapClass<K, T>(this.to_hash, [])
 		s.items = items
 		return s
 	}
 
 
-	protected static defaults_items<K extends Hashable, T>(items: Items<[K, T]>, others: HashMap<K, T>[]) {
+	protected static defaults_items<K, T>(items: Items<[K, T]>, others: HashMapClass<K, T>[]) {
 		for (let index = 0; index < others.length; index++) {
 			const other = others[index]
 			for (const hash_key in other.items) {
@@ -157,14 +190,14 @@ export class HashMap<K extends Hashable, T> implements Iterable<[K, T]> {
 		return items
 	}
 
-	mutate_defaults(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): this {
-		this.items = HashMap.defaults_items(this.items, [other].concat(rest))
+	mutate_defaults(other: HashMapClass<K, T>, ...rest: HashMapClass<K, T>[]): this {
+		this.items = HashMapClass.defaults_items(this.items, [other].concat(rest))
 		return this
 	}
 
-	defaults(other: HashMap<K, T>, ...rest: HashMap<K, T>[]): HashMap<K, T> {
-		const items = HashMap.defaults_items({ ...this.items }, [other].concat(rest))
-		const s = new HashMap<K, T>()
+	defaults(other: HashMapClass<K, T>, ...rest: HashMapClass<K, T>[]): HashMapClass<K, T> {
+		const items = HashMapClass.defaults_items({ ...this.items }, [other].concat(rest))
+		const s = new HashMapClass<K, T>(this.to_hash, [])
 		s.items = items
 		return s
 	}

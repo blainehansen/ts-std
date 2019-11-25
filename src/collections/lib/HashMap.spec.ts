@@ -1,24 +1,17 @@
 import 'mocha'
 import { expect } from 'chai'
-
 import { tuple as t } from '@ts-std/types'
 import { Result, Ok, Err, Maybe, Some, None } from '@ts-std/monads'
 
 import { Hashable } from './common'
 import { HashMap } from './HashMap'
 
-class Key implements Hashable {
-	constructor(readonly s: string) {}
+type Key = { id: number }
 
-	to_hash() {
-		return this.s.length % 3
-	}
-}
-
-const zero_key = new Key('')
-const one_key = new Key('|')
-const two_key = new Key('||')
-
+const zero_key: Key = { id: 1 }
+const one_key: Key = { id: 2 }
+const two_key: Key = { id: 3 }
+const key_hash = 'id' as const
 const initial_items = [
 	t(zero_key, 0),
 	t(one_key, 1),
@@ -27,13 +20,13 @@ const initial_items = [
 
 describe('HashMap', () => {
 	it('empty', () => {
-		const s = new HashMap<Key, number>()
+		const s = HashMap<Key, number>(key_hash)
 		expect(s.size).equal(0)
 		expect(s.has(zero_key)).false
 		expect(s.has(one_key)).false
 		expect(s.has(two_key)).false
 
-		const f = HashMap.from<Key, number>([])
+		const f = HashMap.from<Key, number>(key_hash, [])
 		expect(f.size).equal(0)
 		expect(f.has(zero_key)).false
 		expect(f.has(one_key)).false
@@ -41,19 +34,19 @@ describe('HashMap', () => {
 	})
 
 	it('full', () => {
-		const s = new HashMap(...initial_items)
+		const s = HashMap(key_hash, ...initial_items)
 		expect(s.size).equal(3)
 		expect(s.has(zero_key)).true
 		expect(s.has(one_key)).true
 		expect(s.has(two_key)).true
 
-		const f = HashMap.from(initial_items)
+		const f = HashMap.from(key_hash, initial_items)
 		expect(f.size).equal(3)
 		expect(f.has(zero_key)).true
 		expect(f.has(one_key)).true
 		expect(f.has(two_key)).true
 
-		const e = new HashMap<Key, number>()
+		const e = HashMap<Key, number>(key_hash)
 		e.set_items(initial_items)
 		expect(e.size).equal(3)
 		expect(e.has(zero_key)).true
@@ -62,7 +55,7 @@ describe('HashMap', () => {
 	})
 
 	it('iterable', () => {
-		const s = HashMap.from(initial_items)
+		const s = HashMap.from(key_hash, initial_items)
 		const a: typeof initial_items = []
 		for (const item of s) {
 			a.push(item)
@@ -72,19 +65,19 @@ describe('HashMap', () => {
 	})
 
 	it('entries', () => {
-		const s = HashMap.from(initial_items)
+		const s = HashMap.from(key_hash, initial_items)
 		expect(s.entries()).deep.members(initial_items)
 	})
 
 	it('get', () => {
-		const s = HashMap.from(initial_items)
+		const s = HashMap.from(key_hash, initial_items)
 		expect(s.get(zero_key)).eql(Some(0))
 		expect(s.get(one_key)).eql(Some(1))
 		expect(s.get(two_key)).eql(Some(2))
 	})
 
 	it('set', () => {
-		const s = HashMap.from(initial_items)
+		const s = HashMap.from(key_hash, initial_items)
 
 		s.set(zero_key, 9)
 		expect(s.get(zero_key)).eql(Some(9))
@@ -98,7 +91,7 @@ describe('HashMap', () => {
 	})
 
 	it('delete', () => {
-		const s = HashMap.from(initial_items)
+		const s = HashMap.from(key_hash, initial_items)
 
 		s.delete(zero_key)
 		expect(s.get(zero_key)).eql(None)
@@ -112,7 +105,7 @@ describe('HashMap', () => {
 	})
 
 	it('clear', () => {
-		const s = HashMap.from(initial_items)
+		const s = HashMap.from(key_hash, initial_items)
 		s.clear()
 		expect(s.get(zero_key)).eql(None)
 		expect(s.get(one_key)).eql(None)
@@ -126,16 +119,16 @@ describe('HashMap', () => {
 
 	it('mutate_merge', () => {
 		const s = HashMap
-			.from(initial_items)
-			.mutate_merge(new HashMap([zero_key, 9]))
+			.from(key_hash, initial_items)
+			.mutate_merge(HashMap(key_hash, [zero_key, 9]))
 
 		expect(s.get(zero_key)).eql(Some(9))
 		expect(s.get(one_key)).eql(Some(1))
 		expect(s.get(two_key)).eql(Some(2))
 
 		const o = HashMap
-			.from(initial_items)
-			.mutate_merge(new HashMap([zero_key, 9]), new HashMap([zero_key, 999], [one_key, 99]))
+			.from(key_hash, initial_items)
+			.mutate_merge(HashMap(key_hash, [zero_key, 9]), HashMap(key_hash, [zero_key, 999], [one_key, 99]))
 
 		expect(o.get(zero_key)).eql(Some(999))
 		expect(o.get(one_key)).eql(Some(99))
@@ -143,9 +136,9 @@ describe('HashMap', () => {
 	})
 
 	it('merge', () => {
-		const a = new HashMap([zero_key, 9])
-		const b = new HashMap([zero_key, 99], [one_key, 1])
-		const c = new HashMap([zero_key, 999], [two_key, 2])
+		const a = HashMap(key_hash, [zero_key, 9])
+		const b = HashMap(key_hash, [zero_key, 99], [one_key, 1])
+		const c = HashMap(key_hash, [zero_key, 999], [two_key, 2])
 		const u = a.merge(b, c)
 
 		expect(a.get(zero_key)).eql(Some(9))
@@ -168,15 +161,15 @@ describe('HashMap', () => {
 
 
 	it('mutate_filter', () => {
-		const s = new HashMap([zero_key, 9])
-			.mutate_filter(new HashMap([zero_key, 99], [one_key, 1]))
+		const s = HashMap(key_hash, [zero_key, 9])
+			.mutate_filter(HashMap(key_hash, [zero_key, 99], [one_key, 1]))
 
 		expect(s.get(zero_key)).eql(Some(9))
 		expect(s.get(one_key)).eql(None)
 		expect(s.get(two_key)).eql(None)
 
-		const o = new HashMap([zero_key, 9], [two_key, 2])
-			.mutate_filter(new HashMap([zero_key, 99]), new HashMap([zero_key, 999], [one_key, 1]))
+		const o = HashMap(key_hash, [zero_key, 9], [two_key, 2])
+			.mutate_filter(HashMap(key_hash, [zero_key, 99]), HashMap(key_hash, [zero_key, 999], [one_key, 1]))
 
 		expect(o.get(zero_key)).eql(Some(9))
 		expect(o.get(one_key)).eql(None)
@@ -184,9 +177,9 @@ describe('HashMap', () => {
 	})
 
 	it('filter', () => {
-		const a = new HashMap([zero_key, 9])
-		const b = new HashMap([zero_key, 99], [one_key, 1])
-		const c = new HashMap([zero_key, 999], [two_key, 2])
+		const a = HashMap(key_hash, [zero_key, 9])
+		const b = HashMap(key_hash, [zero_key, 99], [one_key, 1])
+		const c = HashMap(key_hash, [zero_key, 999], [two_key, 2])
 		const u = a.filter(b, c)
 
 		expect(a.get(zero_key)).eql(Some(9))
@@ -209,16 +202,16 @@ describe('HashMap', () => {
 
 	it('mutate_remove', () => {
 		const s = HashMap
-			.from(initial_items)
-			.mutate_remove(new HashMap([zero_key, 9]))
+			.from(key_hash, initial_items)
+			.mutate_remove(HashMap(key_hash, [zero_key, 9]))
 
 		expect(s.get(zero_key)).eql(None)
 		expect(s.get(one_key)).eql(Some(1))
 		expect(s.get(two_key)).eql(Some(2))
 
 		const o = HashMap
-			.from(initial_items)
-			.mutate_remove(new HashMap([zero_key, 9]), new HashMap([zero_key, 999], [one_key, 99]))
+			.from(key_hash, initial_items)
+			.mutate_remove(HashMap(key_hash, [zero_key, 9]), HashMap(key_hash, [zero_key, 999], [one_key, 99]))
 
 		expect(o.get(zero_key)).eql(None)
 		expect(o.get(one_key)).eql(None)
@@ -226,9 +219,9 @@ describe('HashMap', () => {
 	})
 
 	it('remove', () => {
-		const a = HashMap.from(initial_items)
-		const b = new HashMap([one_key, 9])
-		const c = new HashMap([two_key, 9])
+		const a = HashMap.from(key_hash, initial_items)
+		const b = HashMap(key_hash, [one_key, 9])
+		const c = HashMap(key_hash, [two_key, 9])
 		const u = a.remove(b, c)
 
 		expect(a.get(zero_key)).eql(Some(0))
@@ -250,15 +243,15 @@ describe('HashMap', () => {
 
 
 	it('mutate_defaults', () => {
-		const s = new HashMap([zero_key, 0])
-			.mutate_defaults(new HashMap([zero_key, 9], [one_key, 1]))
+		const s = HashMap(key_hash, [zero_key, 0])
+			.mutate_defaults(HashMap(key_hash, [zero_key, 9], [one_key, 1]))
 
 		expect(s.get(zero_key)).eql(Some(0))
 		expect(s.get(one_key)).eql(Some(1))
 		expect(s.get(two_key)).eql(None)
 
-		const o = new HashMap([zero_key, 0])
-			.mutate_defaults(new HashMap([one_key, 1]), new HashMap([zero_key, 999], [one_key, 99]))
+		const o = HashMap(key_hash, [zero_key, 0])
+			.mutate_defaults(HashMap(key_hash, [one_key, 1]), HashMap(key_hash, [zero_key, 999], [one_key, 99]))
 
 		expect(o.get(zero_key)).eql(Some(0))
 		expect(o.get(one_key)).eql(Some(1))
@@ -266,9 +259,9 @@ describe('HashMap', () => {
 	})
 
 	it('defaults', () => {
-		const a = new HashMap([zero_key, 9])
-		const b = new HashMap([zero_key, 99], [one_key, 1])
-		const c = new HashMap([zero_key, 999], [two_key, 2])
+		const a = HashMap(key_hash, [zero_key, 9])
+		const b = HashMap(key_hash, [zero_key, 99], [one_key, 1])
+		const c = HashMap(key_hash, [zero_key, 999], [two_key, 2])
 		const u = a.defaults(b, c)
 
 		expect(a.get(zero_key)).eql(Some(9))

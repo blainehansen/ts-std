@@ -1,24 +1,22 @@
-import { Dict } from '@ts-std/types'
+import { Dict, KeysOfType } from '@ts-std/types'
+
+type ValueTransformer<T, U> = (value: T) => U
+export type ValueProducer<T, U> = KeysOfType<T, U> | ValueTransformer<T, U>
+export function make_transformer<T, U>(
+	arg: ValueProducer<T, U>,
+): ValueTransformer<T, U> {
+	return typeof arg === 'function'
+		? arg
+		: ((v: T) => v[arg as any as keyof T] as any as U) as ValueTransformer<T, U>
+}
+
+import xxhashjs from 'xxhashjs'
+export function string_to_hash(value: string): number {
+	return xxhashjs.h32(value, 0).toNumber()
+}
 
 export interface Hashable {
 	to_hash(): number
-}
-
-class HashWrapper<T> implements Hashable {
-	constructor(
-		readonly value: T,
-		protected readonly _to_hash: (value: T) => number,
-	) {}
-
-	to_hash(): number {
-		return this._to_hash(this.value)
-	}
-}
-
-export function Hasher<T>(to_hash: (value: T) => number) {
-	return function(value: T) {
-		return new HashWrapper<T>(value, to_hash)
-	}
 }
 
 export type Items<T> = { [hash_key: number]: T }
