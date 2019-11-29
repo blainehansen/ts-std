@@ -66,6 +66,10 @@ export class OrderedDict<T> extends SpecialDict<T> {
 		return new OrderedDict(array, items)
 	}
 
+	to_array() {
+		return this.array.slice()
+	}
+
 	get_by_index(index: number): Maybe<T> {
 		return this.array.maybe_get(index)
 	}
