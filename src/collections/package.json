@@ -1,6 +1,6 @@
 {
 	"name": "@ts-std/collections",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "HashSet and HashMap collections for typescript.",
 	"author": {
 		"name": "Blaine Hansen",
