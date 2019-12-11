@@ -15,7 +15,7 @@
 		"lerna": "^3.16.4",
 		"mocha": "^6.2.0",
 		"ts-node": "^8.3.0",
-		"typescript": "^3.5.3",
+		"typescript": "^3.7.3",
 		"xxhashjs": "^0.2.2"
 	}
 }

@@ -8,6 +8,7 @@ export type MapFunc<T, U> = (element: T, index: number, array: T[]) => U
 export type Unzip<L extends any[]> = { [K in keyof L]: L[K][] }
 
 export type ValueProducer<T, U> = KeysOfType<T, U> | MapFunc<T, U>
+export type SimpleProducer<T, U> = KeysOfType<T, U> | ((value: T) => U)
 
 // type ValueProducerTuple<T, L extends any[]> =
 // 	{ [K in keyof L]: L[K] extends keyof T ? K : MapFunc<> }
@@ -66,8 +67,8 @@ declare global {
 
 
 		// sort_by<T extends number | string>(this: T[]): T[]
-		// sort_by(this: T[], key: ValueProducer<T, number | string>): T[]
-		// mutate_sort_by(this: T[], key: ValueProducer<T, number | string>): T[]
+		sort_by(this: T[], key: SimpleProducer<T, number | string>, order?: 'asc' | 'desc'): T[]
+		mutate_sort_by(this: T[], key: SimpleProducer<T, number | string>, order?: 'asc' | 'desc'): T[]
 	}
 
 	interface ArrayConstructor {
@@ -340,7 +341,7 @@ Array.prototype.unzip = function<L extends any[]>(this: L[]): Maybe<Unzip<L>> {
 // ): T[]
 // function sort_by<T>(
 // 	this: T[],
-// 	key: ValueProducer<T, number | string>,
+// 	key: SimpleProducer<T, number | string>,
 // 	order: 'asc' | 'desc' = 'asc',
 // ): T[]
 // function sort_by<T>(
@@ -359,6 +360,43 @@ Array.prototype.unzip = function<L extends any[]>(this: L[]): Maybe<Unzip<L>> {
 // 	return give.sort(comparator)
 // }
 // Array.prototype.sort_by = sort_by
+
+function make_comparator<T>(
+	key: SimpleProducer<T, number | string>,
+	order: 'asc' | 'desc',
+): (a: T, b: T) => (-1 | 1) {
+	const sort_key = typeof key === 'function'
+		? key
+		: (v: T) => v[key as unknown as keyof T]
+
+	return order === 'asc'
+		? (a: T, b: T) => sort_key(a) < sort_key(b) ? -1 : 1
+		: (a: T, b: T) => sort_key(a) > sort_key(b) ? -1 : 1
+}
+
+Array.prototype.sort_by = function<T>(
+	this: T[],
+	key: SimpleProducer<T, number | string>,
+	order: 'asc' | 'desc' = 'asc',
+): T[] {
+	// const comparator = order === undefined
+	// 	? (key_or_order as 'asc' | 'desc') === 'asc'
+	// 		? undefined
+	// 		: (a, b) => b >= a ? 1 : -1
+	// 	: make_key_accessor(key_or_order as ValueProducer<T, number | string>)
+	const comparator = make_comparator(key, order)
+	return this.slice().sort(comparator)
+}
+
+Array.prototype.mutate_sort_by = function<T>(
+	this: T[],
+	key: SimpleProducer<T, number | string>,
+	order: 'asc' | 'desc' = 'asc',
+): T[] {
+	const comparator = make_comparator(key, order)
+	return this.sort(comparator)
+}
+
 
 Array.zip_lenient = function<L extends any[]>(...arrays: Unzip<L>): L[] {
 	let give_length

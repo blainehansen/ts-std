@@ -342,6 +342,75 @@ describe('unzip', () => {
 // 	})
 // })
 
+
+describe('sort_by', () => {
+	it('empty', () => {
+		expect(([] as A[]).sort_by('a')).eql([])
+		expect(([] as A[]).sort_by(a => a.b.toLowerCase())).eql([])
+	})
+
+	it('asc', () => {
+		const a = [{ a: 5 }, { a: 3 }, { a: 9 }, { a: 2 }]
+		expect(a.sort_by('a')).eql([{ a: 2 }, { a: 3 }, { a: 5 }, { a: 9 }])
+		expect(a).eql([{ a: 5 }, { a: 3 }, { a: 9 }, { a: 2 }])
+
+		expect(a.sort_by('a', 'asc')).eql([{ a: 2 }, { a: 3 }, { a: 5 }, { a: 9 }])
+		expect(a.sort_by(v => v.a + 1)).eql([{ a: 2 }, { a: 3 }, { a: 5 }, { a: 9 }])
+
+		const b = [{ name: 'b' }, { name: 'y' }, { name: 'a' }, { name: 'h' }]
+		expect(b.sort_by('name')).eql([{ name: 'a' }, { name: 'b' }, { name: 'h' }, { name: 'y' }])
+		expect(b).eql([{ name: 'b' }, { name: 'y' }, { name: 'a' }, { name: 'h' }])
+	})
+
+	it('desc', () => {
+		const a = [{ a: 5 }, { a: 3 }, { a: 9 }, { a: 2 }]
+		expect(a.sort_by('a', 'desc')).eql([{ a: 9 }, { a: 5 }, { a: 3 }, { a: 2 }])
+		expect(a).eql([{ a: 5 }, { a: 3 }, { a: 9 }, { a: 2 }])
+
+		expect(a.sort_by('a', 'desc')).eql([{ a: 9 }, { a: 5 }, { a: 3 }, { a: 2 }])
+		expect(a.sort_by(v => v.a + 1)).eql([{ a: 2 }, { a: 3 }, { a: 5 }, { a: 9 }])
+
+		const b = [{ name: 'b' }, { name: 'y' }, { name: 'a' }, { name: 'h' }]
+		expect(b.sort_by('name', 'desc')).eql([{ name: 'y' }, { name: 'h' }, { name: 'b' }, { name: 'a' }])
+		expect(b).eql([{ name: 'b' }, { name: 'y' }, { name: 'a' }, { name: 'h' }])
+	})
+})
+
+describe('mutate_sort_by', () => {
+	it('empty', () => {
+		expect(([] as A[]).mutate_sort_by('a')).eql([])
+		expect(([] as A[]).mutate_sort_by(a => a.b.toLowerCase())).eql([])
+	})
+
+	it('asc', () => {
+		const a = [{ a: 5 }, { a: 3 }, { a: 9 }, { a: 2 }]
+		expect(a.mutate_sort_by('a')).eql([{ a: 2 }, { a: 3 }, { a: 5 }, { a: 9 }])
+		expect(a).eql([{ a: 2 }, { a: 3 }, { a: 5 }, { a: 9 }])
+
+		expect(a.mutate_sort_by('a', 'asc')).eql([{ a: 2 }, { a: 3 }, { a: 5 }, { a: 9 }])
+		expect(a.mutate_sort_by(v => v.a + 1)).eql([{ a: 2 }, { a: 3 }, { a: 5 }, { a: 9 }])
+
+		const b = [{ name: 'b' }, { name: 'y' }, { name: 'a' }, { name: 'h' }]
+		expect(b.mutate_sort_by('name')).eql([{ name: 'a' }, { name: 'b' }, { name: 'h' }, { name: 'y' }])
+		expect(b).eql([{ name: 'a' }, { name: 'b' }, { name: 'h' }, { name: 'y' }])
+	})
+
+	it('desc', () => {
+		const a = [{ a: 5 }, { a: 3 }, { a: 9 }, { a: 2 }]
+		expect(a.mutate_sort_by('a', 'desc')).eql([{ a: 9 }, { a: 5 }, { a: 3 }, { a: 2 }])
+		expect(a).eql([{ a: 9 }, { a: 5 }, { a: 3 }, { a: 2 }])
+
+		expect(a.mutate_sort_by('a', 'desc')).eql([{ a: 9 }, { a: 5 }, { a: 3 }, { a: 2 }])
+		expect(a.mutate_sort_by(v => v.a + 1)).eql([{ a: 2 }, { a: 3 }, { a: 5 }, { a: 9 }])
+
+		const b = [{ name: 'b' }, { name: 'y' }, { name: 'a' }, { name: 'h' }]
+		expect(b.mutate_sort_by('name', 'desc')).eql([{ name: 'y' }, { name: 'h' }, { name: 'b' }, { name: 'a' }])
+		expect(b).eql([{ name: 'y' }, { name: 'h' }, { name: 'b' }, { name: 'a' }])
+	})
+})
+
+
+
 describe('zip_lenient', () => {
 	it('empty', () => {
 		expect(Array.zip_lenient([], [], [])).eql([])
