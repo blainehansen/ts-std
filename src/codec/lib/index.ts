@@ -232,6 +232,23 @@ export const uint = new WrapDecoder(
 ) as Decoder<number>
 
 
+class RecursiveDecoder<T> extends Decoder<T> {
+	readonly name!: string
+	constructor(readonly fn: () => Decoder<T>) { super() }
+
+	decode(input: unknown) {
+		const decoder = this.fn()
+		if ((this.name as any) === undefined)
+			(this.name as any) = decoder.name
+
+		return decoder.decode(input)
+	}
+}
+export function recursive<T>(fn: () => Decoder<T>) {
+	return new RecursiveDecoder(fn)
+}
+
+
 class UnionDecoder<L extends unknown[]> extends Decoder<L[number]> {
 	readonly name: string
 	constructor(readonly decoders: DecoderTuple<L>) {
@@ -575,7 +592,6 @@ export function loose_object<O extends { [key: string]: any }>(
 ): Decoder<O> {
 	return new LooseObjectDecoder(name, decoders)
 }
-
 
 
 // Partial<T>

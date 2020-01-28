@@ -1,5 +1,7 @@
 set -e
 
+# npx lerna bootstrap --ignore-prepublish
+
 npx lerna exec --scope @ts-std/types -- npm test
 npx lerna exec --scope @ts-std/types -- npm run build
 npx lerna link
