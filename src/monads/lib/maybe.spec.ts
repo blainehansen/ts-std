@@ -297,6 +297,23 @@ describe('Maybe joining functions', () => {
 	}
 })
 
+describe('Maybe.join_nillable', () => it('works', () => {
+	const combiner = (a: string, b = '', c = '') => a + b + c
+	const a = 'a'
+	const b = null as string | null
+	const c = undefined as string | undefined
+	const d = 'd' as string | undefined
+	expect(Maybe.join_nillable(a, b, c).combine(combiner)).eql(None)
+	expect(Maybe.join_nillable(b, c, a).combine(combiner)).eql(None)
+	expect(Maybe.join_nillable(b, a).combine(combiner)).eql(None)
+	expect(Maybe.join_nillable(c, a).combine(combiner)).eql(None)
+	expect(Maybe.join_nillable(a, c).combine(combiner)).eql(None)
+	expect(Maybe.join_nillable(a, b).combine(combiner)).eql(None)
+
+	expect(Maybe.join_nillable(a, d).combine(combiner)).eql(Some('ad'))
+	expect(Maybe.join_nillable(d).combine(combiner)).eql(Some('d'))
+	expect(Maybe.join_nillable(a).combine(combiner)).eql(Some('a'))
+}))
 
 describe('Maybe dangerous any casts', () => {
 	it('None.change', () => {

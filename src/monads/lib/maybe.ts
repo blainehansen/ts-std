@@ -159,6 +159,7 @@ class MaybeNone<T> implements MaybeLike<T> {
 export const None: Maybe<any> = new MaybeNone()
 
 export type MaybeTuple<L extends any[]> = { [K in keyof L]: Maybe<L[K]> }
+export type NillableTuple<L extends any[]> = { [K in keyof L]: L[K] | null | undefined }
 
 export type MaybeJoin<L extends any[]> = MaybeJoinSome<L> | MaybeJoinNone<L>
 
@@ -204,6 +205,17 @@ function _join<L extends any[]>(maybes: MaybeTuple<L>): Maybe<L> {
 	return Some(args)
 }
 
+function _join_nillable<L extends any[]>(nillables: NillableTuple<L>): Maybe<L> {
+	// DANGER: test to ensure type invariant holds
+	const args = [] as any as L
+	for (const nillable of nillables) {
+		if (nillable !== undefined && nillable !== null) args.push(nillable)
+		else return None
+	}
+
+	return Some(args)
+}
+
 export namespace Maybe {
 	export function from_nillable<T>(value: T | null | undefined): Maybe<T> {
 		return value === null || value === undefined
@@ -233,6 +245,13 @@ export namespace Maybe {
 
 	export function join<L extends any[]>(...maybes: MaybeTuple<L>): MaybeJoin<L> {
 		const others_maybe = _join(maybes)
+		return others_maybe.is_some()
+			? new MaybeJoinSome(others_maybe.value as L)
+			: new MaybeJoinNone()
+	}
+
+	export function join_nillable<L extends any[]>(...nillables: NillableTuple<L>): MaybeJoin<L> {
+		const others_maybe = _join_nillable(nillables)
 		return others_maybe.is_some()
 			? new MaybeJoinSome(others_maybe.value as L)
 			: new MaybeJoinNone()
