@@ -38,23 +38,14 @@ declare global {
 		maybe_get(this: T[], index: number): Maybe<T>
 		wrapping_get(this: T[], index: number): Maybe<T>
 
-		index_by(
-			this: T[],
-			arg: ValueProducer<T, Indexable>
-		): Dict<T>
-		unique_index_by(
-			this: T[],
-			arg: ValueProducer<T, Indexable>
-		): Result<Dict<T>, [string, T, T]>
-		group_by(
-			this: T[],
-			arg: ValueProducer<T, Indexable>
-		): Dict<T[]>
-		split_by(
-			this: T[],
-			predicate: ValueProducer<T, boolean>,
-		): [T[], T[]]
+		index_by(this: T[], arg: ValueProducer<T, Indexable>): Dict<T>
+		unique_index_by(this: T[], arg: ValueProducer<T, Indexable>): Result<Dict<T>, [string, T, T]>
 
+		group_by(this: T[], arg: ValueProducer<T, Indexable>): Dict<T[]>
+		group_by_map<U>(this: T[], arg: MapFunc<T, [Indexable, U]>): Dict<U[]>
+
+		split_by(this: T[], predicate: ValueProducer<T, boolean>): [T[], T[]]
+		split_by_map<U>(this: T[], predicate: MapFunc<T, [boolean, U]>): [U[], U[]]
 
 		entries_to_dict<T>(this: [string, T][]): Dict<T>
 		unique_entries_to_dict<T>(this: [string, T][]): Result<Dict<T>, [string, T, T]>
@@ -259,6 +250,21 @@ Array.prototype.group_by = function<T>(
 	return give
 }
 
+Array.prototype.group_by_map = function<T, U>(
+	arg: MapFunc<T, [Indexable, U]>,
+): Dict<U[]> {
+	const give = {} as Dict<U[]>
+	for (let index = 0; index < this.length; index++) {
+		const element = this[index]
+		const [key, mapped] = arg(element, index, this)
+		const final_key = '' + key
+		;(give[final_key] = give[final_key] || [])
+			.push(mapped)
+	}
+	return give
+}
+
+
 Array.prototype.split_by = function<T>(
 	predicate: ValueProducer<T, boolean>,
 ): [T[], T[]] {
@@ -272,6 +278,23 @@ Array.prototype.split_by = function<T>(
 			t.push(element)
 		else
 			f.push(element)
+	}
+
+	return [t, f]
+}
+
+Array.prototype.split_by_map = function<T, U>(
+	predicate: MapFunc<T, [boolean, U]>,
+): [U[], U[]] {
+	const t = [] as U[]
+	const f = [] as U[]
+	for (let index = 0; index < this.length; index++) {
+		const element = this[index]
+		const [test, mapped] = predicate(element, index, this)
+		if (test)
+			t.push(mapped)
+		else
+			f.push(mapped)
 	}
 
 	return [t, f]
@@ -334,32 +357,6 @@ Array.prototype.unzip = function<L extends any[]>(this: L[]): Maybe<Unzip<L>> {
 
 // 	return give
 // }
-
-// function sort_by<T extends number | string>(
-// 	this: T[],
-// 	order: 'asc' | 'desc' = 'asc',
-// ): T[]
-// function sort_by<T>(
-// 	this: T[],
-// 	key: SimpleProducer<T, number | string>,
-// 	order: 'asc' | 'desc' = 'asc',
-// ): T[]
-// function sort_by<T>(
-// 	this: T[],
-// 	key_or_order: any,
-// 	order?: 'asc' | 'desc',
-// ): T[] {
-// 	const give = this.slice()
-
-// 	const comparator = order === undefined
-// 		? (key_or_order as 'asc' | 'desc') === 'asc'
-// 			? undefined
-// 			: (a, b) => b >= a ? 1 : -1
-// 		: make_key_accessor(key_or_order as ValueProducer<T, number | string>)
-
-// 	return give.sort(comparator)
-// }
-// Array.prototype.sort_by = sort_by
 
 function make_comparator<T>(
 	key: SimpleProducer<T, number | string>,

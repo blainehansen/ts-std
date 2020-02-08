@@ -261,6 +261,22 @@ describe('group_by', () => {
 	})
 })
 
+describe('group_by_map', () => it('works', () => {
+	expect(([] as string[]).group_by_map(s => [s[0], s.length])).eql({})
+
+	expect(['a', 'ab', 'bc', 'eesd', 'es'].group_by_map(s => [s[0], s.length])).eql({
+		a: [1, 2], b: [2], e: [4, 2],
+	})
+
+	expect(
+		[{ name: 'a', count: 1 }, { name: 'b', count: 1 }, { name: 'c', count: 1 }].group_by_map(a => [a.name, a.count])
+	).eql({ a: [1], b: [1], c: [1] })
+
+	expect(
+		[{ name: 'a', count: 1 }, { name: 'b', count: 1 }, { name: 'a', count: 1 }].group_by_map(a => [a.name, a.count])
+	).eql({ a: [1, 1], b: [1] })
+}))
+
 describe('split_by', () => {
 	it('works', () => {
 		type T = { a: number, b: boolean }
@@ -279,6 +295,18 @@ describe('split_by', () => {
 		expect(e_array.split_by(e => e[1] === 1)).eql([[t('a', 1)], [t('b', 2)]])
 	})
 })
+
+describe('split_by_map', () => it('works', () => {
+	type T = { a: number, b: boolean }
+	const arr = [{ a: 0, b: false }, { a: 0, b: true }, { a: 1, b: true }]
+
+	expect(([] as T[]).split_by_map(a => [a.b, a.a])).eql([[], []])
+
+	const a: [number[], number[]] = arr.split_by_map(t => [!!t.a, t.a])
+	const b: [number[], number[]] = arr.split_by_map(a => [a.b, a.a])
+	expect(a).eql([[1], [0, 0]])
+	expect(b).eql([[0, 1], [0]])
+}))
 
 describe('entries_to_dict', () => {
 	it('empty', () => {
