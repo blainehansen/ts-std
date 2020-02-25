@@ -423,6 +423,21 @@ describe('Result joining functions', () => {
 	}
 })
 
+describe('error inference', () => it('works', () => {
+	const a: Result<true> = Result.join(Ok(3), Err('a'), Ok('b'))
+		.combine((num, bool, str): true => { throw new Error() })
+
+	const b: Result<true, number> = Result.join(
+		Ok(3) as Result<3, number>,
+		Err(1) as Result<'a', number>,
+		Ok('b') as Result<'b', number>,
+	)
+		.combine((num, bool, str): true => { throw new Error() })
+
+	const c: Result<any> = Result.join_object({ a: Ok(5), b: Err('d') })
+
+	const d: Result<any, number> = Result.join_object({ a: Ok(5) as Result<number, number>, b: Err(5) })
+}))
 
 describe('Result dangerous any casts', () => {
 	it('Ok.change_err', () => {

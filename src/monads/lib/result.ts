@@ -267,6 +267,19 @@ export function Err<E>(error: E): Result<any, E> {
 
 export type ResultTuple<L extends any[], E> = { [K in keyof L]: Result<L[K], E> }
 
+export type ResultTupleUnpack<L extends Result<any, any>[]> =
+	{ [K in keyof L]: L[K] extends Result<infer T, any> ? T : never }
+
+export type ResultTupleError<L extends Result<any, any>[]> =
+	L extends Result<any, infer E>[] ? E : never
+
+export type ResultObjectUnpack<O extends Dict<Result<any, any>>> =
+	{ [K in keyof O]: O[K] extends Result<infer T, any> ? T : never }
+
+export type ResultObjectError<O extends Dict<Result<any, any>>> =
+	O extends Dict<Result<any, infer E>> ? E : never
+
+
 export type ResultJoin<L extends any[], E = string> = ResultJoinOk<L, E> | ResultJoinErr<L, E>
 
 class ResultJoinOk<L extends any[], E> {
@@ -302,9 +315,9 @@ class ResultJoinErr<L extends any[], E> {
 }
 
 
-function _join<L extends any[], E>(results: ResultTuple<L, E>): Result<L, E> {
+function _join<L extends Result<any, any>[]>(results: L): Result<ResultTupleUnpack<L>, ResultTupleError<L>> {
 	// DANGER: test to ensure type invariant holds
-	const args = [] as any as L
+	const args = [] as any as ResultTupleUnpack<L>
 	for (const result of results)
 		if (result.is_ok())
 			args.push(result.value)
@@ -313,10 +326,10 @@ function _join<L extends any[], E>(results: ResultTuple<L, E>): Result<L, E> {
 	return Ok(args)
 }
 
-function _join_collect_err<L extends any[], E>(results: ResultTuple<L, E>): Result<L, E[]> {
+function _join_collect_err<L extends Result<any, any>[]>(results: L): Result<ResultTupleUnpack<L>, ResultTupleError<L>[]> {
 	// DANGER: test to ensure type invariant holds
-	const args = [] as any as L
-	const errs = [] as E[]
+	const args = [] as any as ResultTupleUnpack<L>
+	const errs = [] as ResultTupleError<L>[]
 	let seen_err = false
 	for (const result of results) {
 		if (result.is_ok()) {
@@ -353,26 +366,26 @@ export namespace Result {
 		return _join_collect_err(results)
 	}
 
-	export function join<L extends any[], E>(...results: ResultTuple<L, E>): ResultJoin<L, E> {
+	export function join<L extends Result<any, any>[]>(...results: L): ResultJoin<ResultTupleUnpack<L>, ResultTupleError<L>> {
 		const results_join = _join(results)
 		return results_join.is_ok()
 			? new ResultJoinOk(results_join.value)
-			: new ResultJoinErr(results_join.error as E)
+			: new ResultJoinErr(results_join.error)
 	}
 
-	export function join_collect_err<L extends any[], E>(...results: ResultTuple<L, E>): ResultJoin<L, E[]> {
+	export function join_collect_err<L extends Result<any, any>[]>(...results: L): ResultJoin<ResultTupleUnpack<L>, ResultTupleError<L>[]> {
 		const results_join = _join_collect_err(results)
 		return results_join.is_ok()
-			? new ResultJoinOk(results_join.value as L)
-			: new ResultJoinErr(results_join.error as E[])
+			? new ResultJoinOk(results_join.value)
+			: new ResultJoinErr(results_join.error)
 	}
 
-	export function join_object<O extends Dict<any>, E>(
-		obj: { [K in keyof O]: Result<O[K], E> }
-	): Result<O, E> {
-		const give = {} as O
+	export function join_object<O extends Dict<Result<any, any>>>(
+		obj: O,
+	): Result<ResultObjectUnpack<O>, ResultObjectError<O>> {
+		const give = {} as ResultObjectUnpack<O>
 		for (const key in obj) {
-			const result = obj[key] as Result<any, E>
+			const result = obj[key] as Result<any, ResultObjectError<O>>
 			if (result.is_err())
 				return Err(result.error)
 			give[key] = result.value
@@ -381,13 +394,13 @@ export namespace Result {
 		return Ok(give)
 	}
 
-	export function join_object_collect_err<O extends Dict<any>, E>(
-		obj: { [K in keyof O]: Result<O[K], E> }
-	): Result<O, E[]> {
-		const give = {} as O
-		const errors = [] as E[]
+	export function join_object_collect_err<O extends Dict<Result<any, any>>>(
+		obj: O,
+	): Result<ResultObjectUnpack<O>, ResultObjectError<O>[]> {
+		const give = {} as ResultObjectUnpack<O>
+		const errors = [] as ResultObjectError<O>[]
 		for (const key in obj) {
-			const result = obj[key] as Result<any, E>
+			const result = obj[key] as Result<any, ResultObjectError<O>>
 			if (result.is_err()) {
 				errors.push(result.error)
 				continue
