@@ -365,6 +365,19 @@ describe('object', () => it('works', () => {
 		[{}, null, undefined, [], ['a'], { a: 'a', b: 0, c: 4 }, { a: 'a', b: true, c: 4, d: 'a' }, true, 'a', 2, 5.5, -5.5, Infinity, NaN],
 	)
 
+	const anon = c.object({
+		a: c.string,
+		b: c.boolean,
+		c: c.union(c.number, c.null_literal),
+	})
+	validate<{ a: string, b: boolean, c: number | null }>(
+		anon,
+		[{ a: 'a', b: true, c: 5 }, { a: 'a', b: true, c: null }],
+		[{}, null, undefined, [], ['a'], { a: 'a', b: 0, c: 4 }, { a: 'a', b: true, c: 4, d: 'a' }, true, 'a', 2, 5.5, -5.5, Infinity, NaN],
+	)
+
+	expect(anon.name).equal('{ a: string, b: boolean, c: number | null }')
+
 	// const separated = c.object('separated', { a: c.number }).decode
 	// expect(separated({ a: 1 })).eql(Ok({ a: 1 }))
 }))
@@ -372,6 +385,20 @@ describe('object', () => it('works', () => {
 describe('loose_object', () => it('works', () => {
 	validate(
 		c.loose_object('thing', {
+			a: c.string,
+			b: c.boolean,
+			c: c.union(c.number, c.null_literal),
+		}),
+		[
+			{ a: 'a', b: true, c: 5 },
+			{ a: 'a', b: true, c: null },
+			{ a: 'a', b: true, c: 4, d: 'a' } as any as { a: string, b: boolean, c: number | null },
+		],
+		[{}, null, undefined, [], ['a'], { a: 'a', b: 0, c: 4 }, { a: 'a', b: true, d: 'a' }, true, 'a', 2, -2, 5.5, -5.5, Infinity, NaN],
+	)
+
+	validate(
+		c.loose_object({
 			a: c.string,
 			b: c.boolean,
 			c: c.union(c.number, c.null_literal),

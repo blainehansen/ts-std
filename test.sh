@@ -18,9 +18,9 @@ npx lerna exec --scope @ts-std/collections -- npm test
 npx lerna exec --scope @ts-std/collections -- npm run build
 npx lerna link
 
-# npx lerna exec --scope @ts-std/codec -- npm test
-# npx lerna exec --scope @ts-std/codec -- npm run build
-# npx lerna link
+npx lerna exec --scope @ts-std/codec -- npm test
+npx lerna exec --scope @ts-std/codec -- npm run build
+npx lerna link
 
 # npx lerna exec --scope @ts-std/enum -- npm test
 # npx lerna exec --scope @ts-std/enum -- npm run build

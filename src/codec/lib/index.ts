@@ -283,7 +283,7 @@ class ValuesDecoder<V extends Primitives, L extends V[]> extends Decoder<L[numbe
 	readonly name: string
 	constructor(readonly values: L) {
 		super()
-		this.name = values.join(' | ')
+		this.name = values.map(v => `${v}`).join(' | ')
 	}
 
 	decode(input: unknown): Result<L[number]> {
@@ -463,9 +463,10 @@ export function tuple<L extends unknown[]>(...decoders: DecoderTuple<L>): Decode
 
 
 
+type DecoderObject<O extends Dict<any>> = { [K in keyof O]: Decoder<O[K]> }
 
-abstract class ObjectDecoder<O extends { [key: string]: any }> extends Decoder<O> {
-	abstract readonly decoders: { [K in keyof O]: Decoder<O[K]> }
+abstract class ObjectDecoder<O extends Dict<any>> extends Decoder<O> {
+	abstract readonly decoders: DecoderObject<O>
 }
 // type ObjectDecoderTuple<L extends { [key: string]: unknown }[]> = {
 // 	[K in keyof L]: ObjectDecoder<L[K]>
@@ -525,10 +526,10 @@ abstract class ObjectDecoder<O extends { [key: string]: any }> extends Decoder<O
 // }
 
 
-class StrictObjectDecoder<O extends { [key: string]: any }> extends ObjectDecoder<O> {
+class StrictObjectDecoder<O extends Dict<any>> extends ObjectDecoder<O> {
 	constructor(
 		readonly name: string,
-		readonly decoders: { [K in keyof O]: Decoder<O[K]> },
+		readonly decoders: DecoderObject<O>,
 	) {
 		super()
 	}
@@ -553,18 +554,34 @@ class StrictObjectDecoder<O extends { [key: string]: any }> extends ObjectDecode
 		return Ok(give)
 	}
 }
-export function object<O extends { [key: string]: any }>(
-	name: string,
-	decoders: { [K in keyof O]: Decoder<O[K]> },
+
+
+function object_name_builder<O extends Dict<any>>(
+	args: [string, DecoderObject<O>] | [DecoderObject<O>]
+): [string, DecoderObject<O>] {
+	if (args.length === 2) return args
+
+	const [decoders] = args
+	const pairs = Object.entries(decoders).map(([key, value]) => `${key}: ${value.name}`)
+	const name = pairs.length < 5
+		? `{ ${pairs.join(', ')} }`
+		: `{\n\t${pairs.join(',\n\t')}\n}`
+
+	return [name, decoders]
+}
+
+export function object<O extends Dict<any>>(
+	...args: [string, DecoderObject<O>] | [DecoderObject<O>]
 ): Decoder<O> {
+	const [name, decoders] = object_name_builder(args)
 	return new StrictObjectDecoder(name, decoders)
 }
 
 
-class LooseObjectDecoder<O extends { [key: string]: any }> extends ObjectDecoder<O> {
+class LooseObjectDecoder<O extends Dict<any>> extends ObjectDecoder<O> {
 	constructor(
 		readonly name: string,
-		readonly decoders: { [K in keyof O]: Decoder<O[K]> },
+		readonly decoders: DecoderObject<O>,
 	) {
 		super()
 	}
@@ -586,10 +603,10 @@ class LooseObjectDecoder<O extends { [key: string]: any }> extends ObjectDecoder
 		return Ok(give as O)
 	}
 }
-export function loose_object<O extends { [key: string]: any }>(
-	name: string,
-	decoders: { [K in keyof O]: Decoder<O[K]> },
+export function loose_object<O extends Dict<any>>(
+	...args: [string, DecoderObject<O>] | [DecoderObject<O>]
 ): Decoder<O> {
+	const [name, decoders] = object_name_builder(args)
 	return new LooseObjectDecoder(name, decoders)
 }
 
