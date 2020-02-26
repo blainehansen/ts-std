@@ -4,7 +4,8 @@ import { expect } from 'chai'
 import {
 	assert_type as assert,
 	UnionToIntersection, TupleIntersection,
-	Unshift, KeysOfType, PickOfType, UnionKeys, ExcludeVariants, Head, Tail, HasTail, Last, OnlyOne, SingleParameter, FoldingFunctions,
+	Unshift, KeysOfType, PickOfType, UnionKeys, OmitVariants, PickVariants,
+	Head, Tail, HasTail, Last, OnlyOne, SingleParameter, FoldingFunctions,
 	tuple,
 } from './index'
 
@@ -260,14 +261,26 @@ describe('Just going to be various type assertions. They should all compile', ()
 		assert.same< UnionKeys<{ a: void, b: void }>, 'a' | 'b' >(true)
 		assert.same< UnionKeys<{ a: void, b: void } | { c: void, d: void }>, 'a' | 'b' | 'c' | 'd' >(true)
 	})
-	it('ExcludeVariants', () => {
-		assert.same< ExcludeVariants<U, 'type', 'b' | 'c'>, { type: 'a', a: number } >(true)
-		assert.same< ExcludeVariants<U, 'type', 'b'>, { type: 'a', a: number } | { type: 'c', c: boolean } >(true)
+	it('OmitVariants', () => {
+		assert.same< OmitVariants<U, 'type', 'b' | 'c'>, { type: 'a', a: number } >(true)
+		assert.same< OmitVariants<U, 'type', 'b'>, { type: 'a', a: number } | { type: 'c', c: boolean } >(true)
 
-		assert.same< ExcludeVariants<O, 'discriminant', 'b' | 'c'>, { discriminant: 'a', a: number } >(true)
-		assert.same< ExcludeVariants<O, 'discriminant', 'b'>, { discriminant: 'a', a: number } | { discriminant: 'c', c: boolean } >(true)
+		assert.same< OmitVariants<O, 'discriminant', 'b' | 'c'>, { discriminant: 'a', a: number } >(true)
+		assert.same< OmitVariants<O, 'discriminant', 'b'>, { discriminant: 'a', a: number } | { discriminant: 'c', c: boolean } >(true)
 
-		assert.same< ExcludeVariants<U, 'type', 'b'>, { type: 'a' | 'c', a: number, c: boolean } >(false)
+		assert.same< OmitVariants<U, 'type', 'b'>, { type: 'a' | 'c', a: number, c: boolean } >(false)
+
+		type U = { type: 'a', a: number } | { type: 'b', b: string } | { type: 'c', c: boolean }
+		type O = { discriminant: 'a', a: number } | { discriminant: 'b', b: string } | { discriminant: 'c', c: boolean }
+	})
+	it('PickVariants', () => {
+		assert.same< PickVariants<U, 'type', 'a' | 'c'>, { type: 'a', a: number } | { type: 'c', c: boolean } >(true)
+		assert.same< PickVariants<U, 'type', 'b'>, { type: 'b', b: string } >(true)
+
+		assert.same< PickVariants<O, 'discriminant', 'a' | 'c'>, { discriminant: 'a', a: number } | { discriminant: 'c', c: boolean } >(true)
+		assert.same< PickVariants<O, 'discriminant', 'b'>, { discriminant: 'b', b: string } >(true)
+
+		assert.same< PickVariants<U, 'type', 'a' | 'c'>, { type: 'a' | 'c', a: number, c: boolean } >(false)
 
 		type U = { type: 'a', a: number } | { type: 'b', b: string } | { type: 'c', c: boolean }
 		type O = { discriminant: 'a', a: number } | { discriminant: 'b', b: string } | { discriminant: 'c', c: boolean }
