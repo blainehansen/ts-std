@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import {
 	assert_type as assert,
 	UnionToIntersection, TupleIntersection,
-	Unshift, KeysOfType, PickOfType, Head, Tail, HasTail, Last, OnlyOne, SingleParameter, FoldingFunctions,
+	Unshift, KeysOfType, PickOfType, UnionKeys, ExcludeVariants, Head, Tail, HasTail, Last, OnlyOne, SingleParameter, FoldingFunctions,
 	tuple,
 } from './index'
 
@@ -254,6 +254,23 @@ describe('Just going to be various type assertions. They should all compile', ()
 	it('PickOfType', () => {
 		assert.same< PickOfType<{ a: number, b: boolean, c: string }, number>, { a: number } >(true)
 		assert.same< PickOfType<{ a: number, b: boolean, c: string }, number | string>, { a: number, c: string } >(true)
+	})
+
+	it('UnionKeys', () => {
+		assert.same< UnionKeys<{ a: void, b: void }>, 'a' | 'b' >(true)
+		assert.same< UnionKeys<{ a: void, b: void } | { c: void, d: void }>, 'a' | 'b' | 'c' | 'd' >(true)
+	})
+	it('ExcludeVariants', () => {
+		assert.same< ExcludeVariants<U, 'type', 'b' | 'c'>, { type: 'a', a: number } >(true)
+		assert.same< ExcludeVariants<U, 'type', 'b'>, { type: 'a', a: number } | { type: 'c', c: boolean } >(true)
+
+		assert.same< ExcludeVariants<O, 'discriminant', 'b' | 'c'>, { discriminant: 'a', a: number } >(true)
+		assert.same< ExcludeVariants<O, 'discriminant', 'b'>, { discriminant: 'a', a: number } | { discriminant: 'c', c: boolean } >(true)
+
+		assert.same< ExcludeVariants<U, 'type', 'b'>, { type: 'a' | 'c', a: number, c: boolean } >(false)
+
+		type U = { type: 'a', a: number } | { type: 'b', b: string } | { type: 'c', c: boolean }
+		type O = { discriminant: 'a', a: number } | { discriminant: 'b', b: string } | { discriminant: 'c', c: boolean }
 	})
 
 	it('Head', () => {

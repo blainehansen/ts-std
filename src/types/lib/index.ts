@@ -96,6 +96,14 @@ export type Overwrite<A, B> = {
 } & B
 
 
+// https://github.com/microsoft/TypeScript/issues/28791#issuecomment-443520161
+export type UnionKeys<T> = T extends T ? keyof T : never
+
+export type ExcludeVariants<U, K extends UnionKeys<U>, V extends U[K]> = U extends U
+  ? U[K] extends V ? never : U
+  : never
+
+
 export type Head<L extends any[]> =
 	L extends [any, ...any[]]
 	? L[0]
