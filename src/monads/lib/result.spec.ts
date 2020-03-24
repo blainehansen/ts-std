@@ -464,3 +464,40 @@ describe('Result dangerous any casts', () => {
 		expect(r.expect_err(im)).a('string')
 	})
 })
+
+describe('tap', () => it('works', () => {
+	const o: Result<number> = Ok(1)
+	const e: Result<number> = Err('nope')
+
+	for (const r of [o, e]) {
+		let tap_count = 0
+		let tap_ok_count = 0
+		let tap_err_count = 0
+
+		const a: boolean = r
+			.tap((_: Result<number>) => {
+				tap_count++
+			})
+			.tap_ok((_: number) => {
+				tap_ok_count++
+			})
+			.tap_err((_: string) => {
+				tap_err_count++
+			})
+			.change(n => n > 0)
+			.default(false)
+
+		if (r.is_ok()) {
+			expect(a).true
+			expect(tap_count).equal(1)
+			expect(tap_ok_count).equal(1)
+			expect(tap_err_count).equal(0)
+		}
+		else {
+			expect(a).false
+			expect(tap_count).equal(1)
+			expect(tap_ok_count).equal(0)
+			expect(tap_err_count).equal(1)
+		}
+	}
+}))

@@ -47,6 +47,10 @@ export interface ResultLike<T, E> {
 	log(): Result<T, E>
 	log_ok(): Result<T, E>
 	log_err(): Result<T, E>
+
+	tap(fn: (r: Result<T, E>) => unknown): Result<T, E>
+	tap_ok(fn: (v: T) => unknown): Result<T, E>
+	tap_err(fn: (e: E) => unknown): Result<T, E>
 }
 
 export type Result<T, E = string> = ResultOk<T, E> | ResultErr<T, E>
@@ -147,6 +151,17 @@ class ResultOk<T, E> implements ResultLike<T, E> {
 		return this.log()
 	}
 	log_err(): Result<T, E> {
+		return this
+	}
+	tap(fn: (r: Result<T, E>) => unknown): Result<T, E> {
+		fn(this)
+		return this
+	}
+	tap_ok(fn: (v: T) => unknown): Result<T, E> {
+		fn(this.value)
+		return this
+	}
+	tap_err(fn: (e: E) => unknown): Result<T, E> {
 		return this
 	}
 }
@@ -257,6 +272,17 @@ class ResultErr<T, E> implements ResultLike<T, E> {
 	}
 	log_err(): Result<T, E> {
 		return this.log()
+	}
+	tap(fn: (r: Result<T, E>) => unknown): Result<T, E> {
+		fn(this)
+		return this
+	}
+	tap_ok(fn: (v: T) => unknown): Result<T, E> {
+		return this
+	}
+	tap_err(fn: (e: E) => unknown): Result<T, E> {
+		fn(this.error)
+		return this
 	}
 }
 

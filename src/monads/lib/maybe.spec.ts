@@ -337,3 +337,41 @@ describe('Maybe dangerous any casts', () => {
 		expect(() => m.expect(pm)).throw(Panic, pm)
 	})
 })
+
+
+describe('tap', () => it('works', () => {
+	const s = Some(1)
+	const n = None as Maybe<number>
+
+	for (const m of [s, n]) {
+		let tap_count = 0
+		let tap_some_count = 0
+		let tap_none_count = 0
+
+		const a: boolean = m
+			.tap((_: Maybe<number>) => {
+				tap_count++
+			})
+			.tap_some((_: number) => {
+				tap_some_count++
+			})
+			.tap_none(() => {
+				tap_none_count++
+			})
+			.change(n => n > 0)
+			.default(false)
+
+		if (m.is_some()) {
+			expect(a).true
+			expect(tap_count).equal(1)
+			expect(tap_some_count).equal(1)
+			expect(tap_none_count).equal(0)
+		}
+		else {
+			expect(a).false
+			expect(tap_count).equal(1)
+			expect(tap_some_count).equal(0)
+			expect(tap_none_count).equal(1)
+		}
+	}
+}))

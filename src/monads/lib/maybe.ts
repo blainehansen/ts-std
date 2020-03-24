@@ -33,6 +33,14 @@ export interface MaybeLike<T> {
 	unwrap(): T | never
 	expect(message: string): T | never
 	join<L extends any[]>(...args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>>
+
+	log(): Maybe<T>
+	log_some(): Maybe<T>
+	log_none(): Maybe<T>
+
+	tap(fn: (m: Maybe<T>) => unknown): Maybe<T>
+	tap_some(fn: (v: T) => unknown): Maybe<T>
+	tap_none(fn: () => unknown): Maybe<T>
 }
 
 export type Maybe<T> = MaybeSome<T> | MaybeNone<T>
@@ -94,6 +102,28 @@ class MaybeSome<T> implements MaybeLike<T> {
 			? new MaybeJoinSome([this.value as T, ...others_maybe.value as L] as Unshift<T, L>)
 			: new MaybeJoinNone()
 	}
+
+	log(): Maybe<T> {
+		console.info(`Maybe.Some(${this.value})`)
+		return this
+	}
+	log_some(): Maybe<T> {
+		return this.log()
+	}
+	log_none(): Maybe<T> {
+		return this
+	}
+	tap(fn: (m: Maybe<T>) => unknown): Maybe<T> {
+		fn(this)
+		return this
+	}
+	tap_some(fn: (v: T) => unknown): Maybe<T> {
+		fn(this.value)
+		return this
+	}
+	tap_none(fn: () => unknown): Maybe<T> {
+		return this
+	}
 }
 
 export function Some<T>(value: T): Maybe<T> {
@@ -153,6 +183,28 @@ class MaybeNone<T> implements MaybeLike<T> {
 	}
 	join<L extends any[]>(..._args: MaybeTuple<L>): MaybeJoin<Unshift<T, L>> {
 		return new MaybeJoinNone()
+	}
+
+	log(): Maybe<T> {
+		console.info(`Maybe.None`)
+		return this
+	}
+	log_some(): Maybe<T> {
+		return this
+	}
+	log_none(): Maybe<T> {
+		return this.log()
+	}
+	tap(fn: (m: Maybe<T>) => unknown): Maybe<T> {
+		fn(this)
+		return this
+	}
+	tap_some(fn: (v: T) => unknown): Maybe<T> {
+		return this
+	}
+	tap_none(fn: () => unknown): Maybe<T> {
+		fn()
+		return this
 	}
 }
 
