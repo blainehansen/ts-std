@@ -7,7 +7,7 @@ declare global {
 	}
 }
 
-Set.prototype.to_array = function<T, U>(this: Set<T>): T[] {
+Set.prototype.to_array = function<T>(this: Set<T>): T[] {
 	return Array.from(this)
 }
 
@@ -16,6 +16,5 @@ Set.prototype.map_to_array = function<T, U>(this: Set<T>, fn: MapFunc<T, U>): U[
 	for (const element of this) {
 		give.push(fn(element))
 	}
-
 	return give
 }
